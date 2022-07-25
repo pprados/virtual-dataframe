@@ -8,8 +8,6 @@ from pandas._typing import Axes, Dtype
 import pandera
 from .env import VDF_MODE, Mode
 
-_T = TypeVar('_T')
-
 # %%
 
 if VDF_MODE in (Mode.pandas, Mode.cudf):
@@ -41,7 +39,7 @@ if VDF_MODE in (Mode.pandas, Mode.cudf):
             return decorate
 
 # %%
-if VDF_MODE in (Mode.dask, Mode.dask_cudf):
+if VDF_MODE == Mode.dask_cudf:
     import pandas
     import dask
     import dask.distributed
@@ -60,6 +58,12 @@ if VDF_MODE in (Mode.dask, Mode.dask_cudf):
     delayed: Any = dask.delayed
 
     compute: Any = dask.compute
+
+    concat: Any = dask.dataframe.multi.concat
+
+    from_pandas:Any = dask.dataframe.from_pandas
+
+    read_csv:Any = dask.dataframe.read_csv
 
     _from_back: Any = dask_cudf.from_cudf
 
@@ -85,6 +89,12 @@ if VDF_MODE == Mode.dask:
 
     compute: Any = dask.compute
 
+    concat: Any = dask.dataframe.multi.concat
+
+    from_pandas: Any = dask.dataframe.from_pandas
+
+    read_csv:Any = dask.dataframe.read_csv
+
     _from_back: Any = dask.dataframe.from_pandas
 
 # %%
@@ -102,6 +112,12 @@ if VDF_MODE == Mode.cudf:
     # Add fake delayed
     delayed: Any = _delayed
 
+    concat: Any = cudf.concat
+
+    from_pandas: Any = cudf.from_pandas
+
+    read_csv:Any = cudf.read_csv
+
     # Add fake compute() in cuDF
     _VDataFrame.compute = lambda self, **kwargs: self
     _VSeries.compute = lambda self, **kwargs: self
@@ -115,7 +131,7 @@ if VDF_MODE == Mode.cudf:
                 get=None,
                 **kwargs
                 ) -> Tuple:
-        return args
+        return list(args)
 
 
     def _from_back(
@@ -142,6 +158,15 @@ if VDF_MODE == Mode.pandas:
 
     # Add Fake delayed
     delayed: Any = _delayed
+
+    concat: Any = pandas.concat
+
+    read_csv:Any = pandas.read_csv
+
+    MultiIndex = pandas.MultiIndex
+
+    #npartitions: int | None = None, chunksize: int | None = None, sort: bool = True, name: str | None = None
+    from_pandas:Any = lambda df,npartitions=1,chuncksize=None,sort=True,name=None: df
 
     # Add fake compute() in pandas
     _VDataFrame.compute = lambda self, **kwargs: self
