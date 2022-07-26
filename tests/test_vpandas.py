@@ -10,6 +10,7 @@ import dask
 import pandas
 import pytest as pytest
 
+import virtual_dataframe as vdf
 import virtual_dataframe.vpandas as vpd
 import pandera.typing.pandas
 
@@ -103,3 +104,34 @@ def test_DataFrame_MODE_dask_cudf():
     assert rc.to_pandas().equals(SimpleDF({"data": [1, 2]}))
     assert isinstance(input_df, dask.dataframe.DataFrame)
     assert isinstance(rc, cudf.DataFrame)
+
+def test_delayed():
+    @vdf.delayed
+    def f(i):
+        return i
+    assert vdf.compute(f(42)) == 42
+
+def test_concat():
+    pass
+
+def test_read_csv():
+    pass
+
+def test_MultiIndex():
+    pass
+
+def test_DataFrame_to_from_pandas():
+    pdf = pandas.DataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, None, 0.3]})
+    df = vpd.from_pandas(pdf, npartitions=2)
+    assert df.to_pandas().equals(pandas.DataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, None, 0.3]}))
+
+def test_Series_to_from_pandas():
+    ps = pandas.Series([1, 2, 3, None, 4])
+    s = vpd.from_pandas(ps, npartitions=2)
+    assert s.to_pandas().equals(pandas.Series([1, 2, 3, None, 4]))
+
+def test_DataFrame_compute():
+    vpd.VDataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, None, 0.3]}).compute()
+
+def test_Series_compute():
+    vpd.VSeries([1, 2, 3, None, 4]).compute()

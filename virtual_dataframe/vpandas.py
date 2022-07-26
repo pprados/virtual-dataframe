@@ -16,6 +16,17 @@ if VDF_MODE in (Mode.pandas, Mode.cudf):
     """
 
 
+    def _remove_dask_parameters(func, *part_args,**kwargs):
+        def wrapper(*args,**kwargs):
+            kwargs.pop("npartitions",None)
+            kwargs.pop("chunksize",None)
+            kwargs.pop("sort",None)
+            kwargs.pop("name",None)
+            return func(*args,**kwargs)
+
+        return wrapper
+
+
     def _delayed(name: Optional[str] = None,
                  pure: Optional[bool] = None,
                  nout: Optional[int] = None,
@@ -114,9 +125,11 @@ if VDF_MODE == Mode.cudf:
 
     concat: Any = cudf.concat
 
-    from_pandas: Any = cudf.from_pandas
+    from_pandas: Any = _remove_dask_parameters(cudf.from_pandas)
 
     read_csv:Any = cudf.read_csv
+
+    MultiIndex = cudf.MultiIndex
 
     # Add fake compute() in cuDF
     _VDataFrame.compute = lambda self, **kwargs: self
@@ -212,7 +225,7 @@ class VDataFrame(_VDataFrame):
                 sort: bool = True,
                 name: Optional[str] = None,
                 ) -> _VDataFrame:
-        return _from_back(
+        return _from_back(  # FIXME _remove_dask_parameters ?
             _BackDataFrame(data=data, index=index, columns=columns, dtype=dtype),
             npartitions=npartitions,
             chunksize=chunksize,

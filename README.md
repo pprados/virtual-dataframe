@@ -61,16 +61,15 @@ with (VClient()):
         return data
 
 
-    rc = my_function(VDataFrame({"data": [1, 2]})).compute()
+    rc = my_function(VDataFrame({"data": [1, 2]},npartitions=2)).compute()
     print(rc.to_pandas())
 
 ```
 
 With this framework, you can update your environment, to debuging your code.
 
-+--------------------------------------------------------------+---------------------------------------+
 | env                                                          | Environement                          |
-+--------------------------------------------------------------+---------------------------------------+
+|--------------------------------------------------------------|---------------------------------------|
 | VDF_MODE=pandas                                              | Only Python with classical pandas     |
 | VDF_MODE=cudf                                                | Python with cuDF                      |
 | VDF_MODE=pandas<br />DEBUG=True                              | Dask with single thread and pandas    |
@@ -81,14 +80,18 @@ With this framework, you can update your environment, to debuging your code.
 | VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=locahost | Dask with local cuda cluster and cuDF |
 | VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=...           | Dask with remote cluster and Pandas   |
 | VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=...      | Dask with remote cluster and cuDF     |
-+--------------------------------------------------------------+---------------------------------------+
+|--------------------------------------------------------------|---------------------------------------|
 
 The real compatibilty between the differents simulation of Pandas, depends on the implement of the cudf or dask.
 You can use the `VDF_MODE` variable, to update some part of code, between the selected backend.
 
 ## The latest version
 
-Clone the git repository (see upper button)
+Clone the git repository
+
+```bash
+$ git clone --recurse-submodules https://github.com/pprados/virtual-dataframe.git
+```
 
 ## Installation
 

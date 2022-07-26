@@ -85,7 +85,7 @@ class VClient():
                         client = dask.distributed.Client(LocalCluster(), **kwargs)
                         LOGGER.warning("Use LocalCluster scheduler")
 
-                # Initialize for DOMINO
+                # Initialize for remote cluster
                 client = dask.distributed.Client(
                     address=f"{host}:{port}",
                     **kwargs)
