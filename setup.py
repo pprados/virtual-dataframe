@@ -46,8 +46,8 @@ test_requirements: List[str] = [
     # 'pytest-httpbin>=0.0.7',
     'pytest-mock',
 
-    #'unittest2',
     'werkzeug==2.0.3',
+    'papermill',
 ]
 
 # Package nécessaires aux builds mais pas au run

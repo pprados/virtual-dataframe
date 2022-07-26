@@ -105,6 +105,7 @@ def test_DataFrame_MODE_dask_cudf():
     assert isinstance(input_df, dask.dataframe.DataFrame)
     assert isinstance(rc, cudf.DataFrame)
 
+@pytest.mark.skip(reason="not implemented yet")
 def test_delayed():
     @vdf.delayed
     def f(i):

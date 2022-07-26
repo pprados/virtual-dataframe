@@ -1,14 +1,33 @@
 """
 """
 from functools import wraps
-from typing import Any, List, TypeVar, Tuple, Optional, Union
+from typing import Any, List, Tuple, Optional, Union
 
 from pandas._typing import Axes, Dtype
 
 import pandera
 from .env import VDF_MODE, Mode
 
+
 # %%
+
+def _remove_parameters(func, _params: List[str], *part_args, **kwargs):
+    def wrapper(*args, **kwargs):
+        for k in _params:
+            kwargs.pop(k, None)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def _remove_to_csv(func, *part_args, **kwargs):
+    return _remove_parameters(func,
+                              ["single_file",
+                               "name_function",
+                               "compute",
+                               "scheduler",
+                               "header_first_partition_only",
+                               "compute_kwargs"])
 
 if VDF_MODE in (Mode.pandas, Mode.cudf):
     """
@@ -16,15 +35,8 @@ if VDF_MODE in (Mode.pandas, Mode.cudf):
     """
 
 
-    def _remove_dask_parameters(func, *part_args,**kwargs):
-        def wrapper(*args,**kwargs):
-            kwargs.pop("npartitions",None)
-            kwargs.pop("chunksize",None)
-            kwargs.pop("sort",None)
-            kwargs.pop("name",None)
-            return func(*args,**kwargs)
-
-        return wrapper
+    def _remove_dask_parameters(func, *part_args, **kwargs):
+        return _remove_parameters(func, ["npartitions", "chunksize", "sort", "name"])
 
 
     def _delayed(name: Optional[str] = None,
@@ -66,16 +78,19 @@ if VDF_MODE == Mode.dask_cudf:
     _VDataFrame.to_pandas = lambda self: self.compute()
     _VSeries.to_pandas = lambda self: self.compute()
 
+    _VDataFrame.to_numpy = lambda self: self.compute().to_numpy()
+    _VSeries.to_numpy = lambda self: self.compute().to_numpy()
+
     delayed: Any = dask.delayed
 
     compute: Any = dask.compute
 
     concat: Any = dask.dataframe.multi.concat
 
-    from_pandas:Any = dask.dataframe.from_pandas
-    from_virtual:Any = _remove_dask_parameters(dask_cudf.from_cudf)
+    from_pandas: Any = dask.dataframe.from_pandas
+    from_virtual: Any = dask_cudf.from_cudf
 
-    read_csv:Any = dask.dataframe.read_csv
+    read_csv: Any = dask.dataframe.read_csv
 
     _from_back: Any = dask_cudf.from_cudf
 
@@ -107,9 +122,9 @@ if VDF_MODE == Mode.dask:
     concat: Any = dask.dataframe.multi.concat
 
     from_pandas: Any = dask.dataframe.from_pandas
-    from_virtual:Any = dask.dataframe.from_pandas
+    from_virtual: Any = dask.dataframe.from_pandas
 
-    read_csv:Any = dask.dataframe.read_csv
+    read_csv: Any = dask.dataframe.read_csv
 
     _from_back: Any = dask.dataframe.from_pandas
 
@@ -118,6 +133,7 @@ if VDF_MODE == Mode.cudf:
     import cudf
     import pandas
     import dask_cudf
+    import glob
 
     _BackDataFrame: Any = cudf.DataFrame
     _BackSeries: Any = cudf.Series
@@ -131,15 +147,31 @@ if VDF_MODE == Mode.cudf:
     concat: Any = cudf.concat
 
     from_pandas: Any = _remove_dask_parameters(cudf.from_pandas)
-    from_virtual:Any = _remove_dask_parameters(lambda self: self)
+    from_virtual: Any = _remove_dask_parameters(lambda self: self)
 
-    read_csv:Any = cudf.read_csv
+
+    def _read_csv(filepath_or_buffer, **kwargs):
+        if not isinstance(filepath_or_buffer, list):
+            return cudf.concat([cudf.read_csv(f, **kwargs) for f in glob.glob(filepath_or_buffer)])
+        else:
+            return cudf.read_csv(filepath_or_buffer, **kwargs)
+
+
+    read_csv:Any= _read_csv
 
     # Add fake compute() in cuDF
     _VDataFrame.compute = lambda self, **kwargs: self
     _VSeries.compute = lambda self, **kwargs: self
 
+    _old_to_csv = _VDataFrame.to_csv
+    def _to_csv(self, filepath_or_buffer,**kwargs):
+        if "*" in str(filepath_or_buffer):
+            filepath_or_buffer = filepath_or_buffer.replace("*","")
+        return _old_to_csv(self, filepath_or_buffer,**kwargs)
+    _VDataFrame.to_csv = _remove_to_csv(_to_csv)
+
     _VDataFrame.categorize = lambda self: self
+
 
     # noinspection PyUnusedLocal
     def compute(*args,
@@ -148,7 +180,7 @@ if VDF_MODE == Mode.cudf:
                 scheduler: bool = None,
                 get=None,
                 **kwargs
-                ) -> Tuple:
+                ) -> List:
         return list(args)
 
 
@@ -164,6 +196,7 @@ if VDF_MODE == Mode.cudf:
 # %%
 if VDF_MODE == Mode.pandas:
     import pandas
+    import glob
 
     # _BackDataFrame = pandas.DataFrame
     # _BackSeries = pandas.Series
@@ -179,10 +212,18 @@ if VDF_MODE == Mode.pandas:
 
     concat: Any = pandas.concat
 
-    read_csv:Any = pandas.read_csv
 
-    from_pandas:Any = lambda df,npartitions=1,chuncksize=None,sort=True,name=None: df
-    from_virtual:Any = lambda df,npartitions=1,chuncksize=None,sort=True,name=None: df
+    def _read_csv(filepath_or_buffer, **kwargs):
+        if not isinstance(filepath_or_buffer, list):
+            return pandas.concat([pandas.read_csv(f, **kwargs) for f in glob.glob(filepath_or_buffer)])
+        else:
+            return pandas.read_csv(filepath_or_buffer, **kwargs)
+
+
+    read_csv:Any= _read_csv
+
+    from_pandas: Any = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
+    from_virtual: Any = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
 
     # Add fake compute() in pandas
     _VDataFrame.compute = lambda self, **kwargs: self
@@ -192,7 +233,14 @@ if VDF_MODE == Mode.pandas:
     _VDataFrame.to_pandas = lambda self: self
     _VSeries.to_pandas = lambda self: self
 
+    _old_to_csv = _VDataFrame.to_csv
+    def _to_csv(self, filepath_or_buffer,**kwargs):
+        if "*" in str(filepath_or_buffer):
+            filepath_or_buffer = filepath_or_buffer.replace("*","")
+        return _old_to_csv(self, filepath_or_buffer,**kwargs)
+    _VDataFrame.to_csv = _remove_to_csv(_to_csv)
     _VDataFrame.categorize = lambda self: self
+
 
     # noinspection PyUnusedLocal
     def compute(*args,  # noqa: F811

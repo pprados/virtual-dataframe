@@ -78,7 +78,7 @@ NPROC?=$(shell nproc)
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour pouvoir lancer un browser avec un fichier local
 define BROWSER
-	python -c '
+	python $(PYTHON_PARAMS) -c '
 	import os, sys, webbrowser
 	from urllib.request import pathname2url
 
@@ -125,6 +125,8 @@ VENV ?= $(PRJ)
 KERNEL ?=$(VENV)
 PRJ_PACKAGE:=$(PRJ)
 PYTHON_VERSION:=3.9
+PYTHONWARNINGS=ignore
+PYTHON_PARAMS?=
 CUDF_VERSION=22.06
 PYTHON_SRC=$(shell find -L "$(PRJ)" -type f -iname '*.py' | grep -v __pycache__)
 PYTHON_TST=$(shell find -L tests -type f -iname '*.py' | grep -v __pycache__)
@@ -419,7 +421,7 @@ endif
 # Intall a Jupyter kernel
 $(JUPYTER_DATA_DIR)/kernels/$(KERNEL): $(REQUIREMENTS)
 	@$(VALIDATE_VENV)
-	python -O -m ipykernel install --user --name $(KERNEL)
+	python $(PYTHON_PARAMS) -O -m ipykernel install --user --name $(KERNEL)
 	echo -e "$(cyan)Kernel $(KERNEL) installed$(normal)"
 
 # Remove the Jupyter kernel
@@ -485,7 +487,7 @@ notebooks/phases: $(sort $(subst notebooks/,notebooks/.make-,$(wildcard notebook
 
 ## Invoke all notebooks in lexical order from notebooks/<% dir>
 nb-run-%: $(JUPYTER_DATA_DIR)/kernels/$(KERNEL)
-	VENV=$(VENV) $(MAKE) notebooks/.make-$*
+	VENV=$(VENV) $(MAKE) --no-print-directory notebooks/.make-$*
 
 
 # ---------------------------------------------------------------------------------------
@@ -507,7 +509,7 @@ scripts/phases: $(sort $(subst scripts/,scripts/.make-,$(wildcard scripts/*)))
 
 ## Invoke all script in lexical order from scripts/<% dir>
 run-%:
-	$(MAKE) scripts/.make-$*
+	$(MAKE) --no-print-directory scripts/.make-$*
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour valider le code avec flake8 et pylint
@@ -644,7 +646,7 @@ docs: build/html
 .PHONY: sdist
 dist/$(PRJ_PACKAGE)-*.tar.gz: $(REQUIREMENTS)
 	@$(VALIDATE_VENV)
-	python setup.py sdist
+	python $(PYTHON_PARAMS) setup.py sdist
 
 # Create a source distribution
 sdist: dist/$(PRJ_PACKAGE)-*.tar.gz
@@ -657,7 +659,7 @@ sdist: dist/$(PRJ_PACKAGE)-*.tar.gz
 .PHONY: bdist
 dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl: $(REQUIREMENTS) $(PYTHON_SRC)
 	@$(VALIDATE_VENV)
-	python setup.py bdist_wheel
+	python $(PYTHON_PARAMS) setup.py bdist_wheel
 
 # Create a binary wheel distribution
 bdist: dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl
@@ -855,45 +857,70 @@ endif
 .make-_unit-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC)
 	@$(VALIDATE_VENV)
 	@echo -e "$(cyan)Run unit tests...$(normal)"
-	python -W ignore::DeprecationWarning -m pytest  -s tests $(PYTEST_ARGS) -m "not functional"
+	python $(PYTHON_PARAMS)  -m pytest  -s tests $(PYTEST_ARGS) -m "not functional"
 	@date >.make-_unit-test-$*
 
 # Run unit test with a specific *mode*
 .PHONY: unit-test-*
 unit-test-%:
 	@echo -e "$(cyan)set VDF_MODE=$*$(normal)"
-	VDF_MODE=$* $(MAKE) .make-_unit-test-$*
+	VDF_MODE=$* $(MAKE) --no-print-directory .make-_unit-test-$*
 
-.PHONY: unit-test-all
-# Run unit test for all *mode*
-unit-test: unit-test-pandas unit-test-cudf unit-test-dask unit-test-dask_cudf
+.PHONY: unit-test
+.make-unit-test: unit-test-pandas unit-test-cudf unit-test-dask unit-test-dask_cudf
+	@date >.make-unit-test
+
+## Run unit test for all *mode*
+unit-test: .make-unit-test
+
+
+.PHONY: notebooks-test
+.make-_notebooks-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC) notebooks/demo.ipynb
+	@$(VALIDATE_VENV)
+	@echo -e "$(cyan)Run notebook tests for mode=$(VDF_MODE)...$(normal)"
+	python $(PYTHON_PARAMS) -m papermill \
+		-k $(KERNEL) \
+		--log-level ERROR \
+		--no-report-mode \
+		notebooks/demo.ipynb \
+		-p mode $(VDF_MODE) /dev/null
+	@date >.make-_notebooks-test-$*
+
+## Run notebooks test with a specific *mode*
+.PHONY: notebooks-test-*
+notebooks-test-%:
+	@VDF_MODE=$* $(MAKE) --no-print-directory .make-_notebooks-test-$*
+
+.PHONY: notebooks-test-all
+.make-notebooks-test: notebooks-test-pandas notebooks-test-cudf notebooks-test-dask notebooks-test-dask_cudf
+	@date >.make-notebooks-test
+
+## Run notebook test for all *mode*
+notebooks-test: .make-notebooks-test
 
 .make-functional-test: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC)
 	@$(VALIDATE_VENV)
 	@echo -e "$(cyan)Run functional tests...$(normal)"
-	python -W ignore::DeprecationWarning -m pytest  -s tests $(PYTEST_ARGS) -m "functional"
+	python $(PYTHON_PARAMS)  -m pytest  -s tests $(PYTEST_ARGS) -m "functional"
 	@date >.make-functional-test
 # Run only functional tests
 functional-test: .make-functional-test
 
 .make-test-$(VDF_MODE): $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC)
-	@echo -e "$(cyan)Run all tests...$(normal)"
-	python -W ignore::DeprecationWarning -m pytest $(PYTEST_ARGS) -s tests
+	@echo -e "$(cyan)Run all tests for $(VDF_MODE)...$(normal)"
+	python $(PYTHON_PARAMS)  -m pytest $(PYTEST_ARGS) -s tests
 	#python setup.py test
 	@date >.make-test-$(VDF_MODE)
 	@date >.make-unit-test
 	@date >.make-functional-test
-_test: .make-test-$(VDF_MODE)
 
 .PHONY: test-*
 ## Run all tests for a specific *mode* (make test-cudf)
 test-%:
-	@rm -f .make-test .make-unit-test .make-functional-test
-	echo -e "$(cyan)set VDF_MODE=$*$(normal)"
-	VDF_MODE=$* $(MAKE) _test
+	@VDF_MODE=$* $(MAKE) --no-print-directory .make-test-$*
 
-.make-test: test-pandas test-cudf test-dask test-dask_cudf
-	@touch .make-test
+.make-test: test-pandas test-cudf test-dask test-dask_cudf notebooks-test
+	@date >.make-test
 
 .PHONY: test
 ## Run all tests (unit and functional) for all *mode*
@@ -914,7 +941,7 @@ install: $(CONDA_PREFIX)/bin/$(PRJ)
 
 ## Install the tools in conda env with 'develop' link
 develop:
-	python setup.py develop
+	python $(PYTHON_PARAMS) setup.py develop
 
 ## Uninstall the tools from the conda env
 uninstall: $(CONDA_PREFIX)/bin/$(PRJ)
@@ -929,7 +956,7 @@ dist/$(PRJ)$(EXE): .make-validate
 	touch dist/$(PRJ)
 ifeq ($(BACKOS),Windows)
 # Must have conda installed on windows with tag_images_for_google_drive env
-	/mnt/c/WINDOWS/system32/cmd.exe /C 'conda activate $(PRJ) && python setup.py develop && pyinstaller --onefile tag_images_for_google_drive/tag_images_for_google_drive.py'
+	/mnt/c/WINDOWS/system32/cmd.exe /C 'conda activate $(PRJ) && python $(PYTHON_PARAMS) setup.py develop && pyinstaller --onefile tag_images_for_google_drive/tag_images_for_google_drive.py'
 	touch dist/$(PRJ).exe
 	echo -e "$(cyan)Executable is here 'dist/$(PRJ).exe'$(normal)"
 endif
@@ -1004,7 +1031,7 @@ docker-build: .make-docker-build
 # Reset and rebuild the container
 docker-rebuild:
 	@rm -f Dockerfile.standalone .make-docker-build
-	$(MAKE) docker-stop docker-start
+	$(MAKE) --no-print-directory docker-stop docker-start
 
 # Create a dedicated volume
 docker-volume:
@@ -1013,7 +1040,7 @@ docker-volume:
 	echo -e "$(cyan)Docker volume '$(PRJ)' created$(normal)"
 
 .cid_docker_daemon: .make-docker-build
-	$(SUDO) docker volume inspect "$(PRJ)" >/dev/null 2>&1 || $(MAKE) docker-volume
+	$(SUDO) docker volume inspect "$(PRJ)" >/dev/null 2>&1 || $(MAKE) --no-print-directory docker-volume
 	# Remove --detach if it's not a daemon
 	$(SUDO) docker run \
 		--detach \

@@ -85,7 +85,8 @@ The real compatibilty between the differents simulation of Pandas, depends on th
 You can use the `VDF_MODE` variable, to update some part of code, between the selected backend.
 
 It's not always easy to write a code *compatible* with all scenario, but it's possible.
-After this effort, it's possible to compare the performance about the differents technologies.
+After this effort, it's possible to compare the performance about the differents technologies,
+or propose a component, compatible with differents contexts.
 
 ## API
 
@@ -99,6 +100,7 @@ After this effort, it's possible to compare the performance about the differents
 | VDataFrame.to_pandas()                    | Convert to pandas dataframe                    |
 | VDataFrame.to_numpy()                     | Convert to numpy array                         |
 | VDataFrame.compute()                      | Compute the virtual dataframe                  |
+| VDataFrame.to_csv()                       | Accept glob filename                           |
 
 
 ## Compatibility
@@ -109,7 +111,7 @@ This project is just a wrapper. So, it inherits limitations and bugs from other 
 | pandas                                                                            | All data must be in DRAM                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | [cudf](https://docs.rapids.ai/api/cudf/nightly/user_guide/pandas-comparison.html) | All data must be in VRAM<br />All data types in cuDF are nullable<br />Iterating over a cuDF Series, DataFrame or Index is not supported.<br />join (or merge) and groupby operations in cuDF do not guarantee output ordering.<br />the order of operations is not always deterministic<br />cuDF does not support duplicate column names<br />cuDF also supports .apply()it relies on Numba to JIT compile the UDF and execute it on the GPU |
 | [dask](https://distributed.dask.org/en/stable/limitations.html)                   | transpose() and MultiIndex are not implemented<br />Column assignment doesn't support type list                                                                                                                                                                                                                                                                                                                                                |
-| dask-cudf                                                                         | See cudf and dask
+| dask-cudf                                                                         | See cudf and dask.<br />Categories with strings not implemented
 
 To be compatible with all framework, you must only use the common features.
 
