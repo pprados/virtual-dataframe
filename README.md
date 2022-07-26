@@ -80,10 +80,38 @@ With this framework, you can update your environment, to debuging your code.
 | VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=locahost | Dask with local cuda cluster and cuDF |
 | VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=...           | Dask with remote cluster and Pandas   |
 | VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=...      | Dask with remote cluster and cuDF     |
-|--------------------------------------------------------------|---------------------------------------|
 
 The real compatibilty between the differents simulation of Pandas, depends on the implement of the cudf or dask.
 You can use the `VDF_MODE` variable, to update some part of code, between the selected backend.
+
+It's not always easy to write a code *compatible* with all scenario, but it's possible.
+After this effort, it's possible to compare the performance about the differents technologies.
+
+## API
+
+| api                                       | comments                                       |
+|-------------------------------------------|------------------------------------------------|
+| vdf.from_pandas(pdf, npartitions=...,...) | Create Virtual Dataframe from Pandas DataFrame |
+| vdf.from_virtual(vdf)                     | Create FIXME                                   |
+| vdf.concat(...)                           | Merge VDataFrame                               |
+| vdf.read_csv(...)                         | Read VDataFrame from CSVs files                |
+| @delayed                                  | Delayed function                               |
+| VDataFrame.to_pandas()                    | Convert to pandas dataframe                    |
+| VDataFrame.to_numpy()                     | Convert to numpy array                         |
+| VDataFrame.compute()                      | Compute the virtual dataframe                  |
+
+
+## Compatibility
+This project is just a wrapper. So, it inherits limitations and bugs from other projects. Sorry for that.
+
+| framework                                                                         | limitation                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+|-----------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| pandas                                                                            | All data must be in DRAM                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| [cudf](https://docs.rapids.ai/api/cudf/nightly/user_guide/pandas-comparison.html) | All data must be in VRAM<br />All data types in cuDF are nullable<br />Iterating over a cuDF Series, DataFrame or Index is not supported.<br />join (or merge) and groupby operations in cuDF do not guarantee output ordering.<br />the order of operations is not always deterministic<br />cuDF does not support duplicate column names<br />cuDF also supports .apply()it relies on Numba to JIT compile the UDF and execute it on the GPU |
+| [dask](https://distributed.dask.org/en/stable/limitations.html)                   | transpose() and MultiIndex are not implemented<br />Column assignment doesn't support type list                                                                                                                                                                                                                                                                                                                                                |
+| dask-cudf                                                                         | See cudf and dask
+
+To be compatible with all framework, you must only use the common features.
 
 ## The latest version
 
@@ -128,28 +156,22 @@ $ make validate
     ├── Makefile                    <- Makefile with commands like `make data` or `make train`
     ├── README.md                   <- The top-level README for developers using this project.
     ├── data
-    │   ├── external          <- Data from third party sources.
-    │   ├── interim           <- Intermediate data that has been transformed.
-    │   ├── processed         <- The final, canonical data sets for modeling.
-    │   └── raw               <- The original, immutable data dump.
-    │
     ├── docs                        <- A default Sphinx project; see sphinx-doc.org for details
     │
     ├── notebooks                   <- Jupyter notebooks. Naming convention is a number (for ordering),
     │                                  the creator's initials, and a short `-` delimited description, e.g.
     │                                  `1.0-jqp-initial-data-exploration`.
     │
-    ├── references                  <- Data dictionaries, manuals, and all other explanatory materials.
-    │
     ├── reports                     <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures           <- Generated graphics and figures to be used in reporting
+    │   └── figures                 <- Generated graphics and figures to be used in reporting
     │
     ├── setup.py                    <- makes project pip installable (pip install -e .[tests])
     │                                  so sources can be imported and dependencies installed
     ├── virtual_dataframe           <- Source code for use in this project
-    │   ├── __init__.py       <- Makes src a Python module
-    │   ├── tools/__init__.py <- Python module to expose internal API
-    │   └── tools/tools.py    <- Python module for functions, object, etc
+    │   ├── __init__.py             <- Makes src a Python module
+    │   ├── *.py                    <- Framework codes
+    │   ├── tools/__init__.py       <- Python module to expose internal API
+    │   └── tools/tools.py          <- Python module for functions, object, etc
     │
     └── tests                       <- Unit and integrations tests ((Mark directory as a sources root).
 

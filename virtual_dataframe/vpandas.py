@@ -73,6 +73,7 @@ if VDF_MODE == Mode.dask_cudf:
     concat: Any = dask.dataframe.multi.concat
 
     from_pandas:Any = dask.dataframe.from_pandas
+    from_virtual:Any = _remove_dask_parameters(dask_cudf.from_cudf)
 
     read_csv:Any = dask.dataframe.read_csv
 
@@ -96,6 +97,9 @@ if VDF_MODE == Mode.dask:
     _VDataFrame.to_pandas = lambda self: self.compute()
     _VSeries.to_pandas = lambda self: self.compute()
 
+    _VDataFrame.to_numpy = lambda self: self.compute().to_numpy()
+    _VSeries.to_numpy = lambda self: self.compute().to_numpy()
+
     delayed: Any = dask.delayed
 
     compute: Any = dask.compute
@@ -103,6 +107,7 @@ if VDF_MODE == Mode.dask:
     concat: Any = dask.dataframe.multi.concat
 
     from_pandas: Any = dask.dataframe.from_pandas
+    from_virtual:Any = dask.dataframe.from_pandas
 
     read_csv:Any = dask.dataframe.read_csv
 
@@ -126,15 +131,15 @@ if VDF_MODE == Mode.cudf:
     concat: Any = cudf.concat
 
     from_pandas: Any = _remove_dask_parameters(cudf.from_pandas)
+    from_virtual:Any = _remove_dask_parameters(lambda self: self)
 
     read_csv:Any = cudf.read_csv
-
-    MultiIndex = cudf.MultiIndex
 
     # Add fake compute() in cuDF
     _VDataFrame.compute = lambda self, **kwargs: self
     _VSeries.compute = lambda self, **kwargs: self
 
+    _VDataFrame.categorize = lambda self: self
 
     # noinspection PyUnusedLocal
     def compute(*args,
@@ -176,10 +181,8 @@ if VDF_MODE == Mode.pandas:
 
     read_csv:Any = pandas.read_csv
 
-    MultiIndex = pandas.MultiIndex
-
-    #npartitions: int | None = None, chunksize: int | None = None, sort: bool = True, name: str | None = None
     from_pandas:Any = lambda df,npartitions=1,chuncksize=None,sort=True,name=None: df
+    from_virtual:Any = lambda df,npartitions=1,chuncksize=None,sort=True,name=None: df
 
     # Add fake compute() in pandas
     _VDataFrame.compute = lambda self, **kwargs: self
@@ -189,6 +192,7 @@ if VDF_MODE == Mode.pandas:
     _VDataFrame.to_pandas = lambda self: self
     _VSeries.to_pandas = lambda self: self
 
+    _VDataFrame.categorize = lambda self: self
 
     # noinspection PyUnusedLocal
     def compute(*args,  # noqa: F811

@@ -151,19 +151,6 @@ JUPYTER_DATA_DIR:=$(shell jupyter --data-dir 2>/dev/null || echo "~/.local/share
 EXTRA_INDEX:=
 
 # ---------------------------------------------------------------------------------------
-# SNIPPET pour gérer permettre d'invoquer une cible make avec des paramètres.
-# Pour cela, toutes les cibles inconnues, sont considérées comme des paramètres
-# et se retrouvent dans la variables ARGS. Pour que ces cibles ne génères pas d'erreurs
-# on ajoute une règle pour ignorer toutes les cibles inconnes.
-# Cela est en commentaire et doit être activé spécifiquement.
-# Calculate the make extended parameter
-# Keep only the unknown target
-#ARGS = `ARGS="$(filter-out $@,$(MAKECMDGOALS))" && echo $${ARGS:-${1}}`
-# Hack to ignore unknown target. May be used to calculate parameters
-#%:
-#	@:
-
-# ---------------------------------------------------------------------------------------
 # SNIPPET pour gérer automatiquement l'aide du Makefile.
 # Il faut utiliser des commentaires commençant par '##' précédant la ligne des recettes,
 # pour une production automatique de l'aide.

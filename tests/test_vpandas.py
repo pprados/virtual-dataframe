@@ -111,12 +111,19 @@ def test_delayed():
         return i
     assert vdf.compute(f(42)) == 42
 
+@pytest.mark.skip(reason="not implemented yet")
+def test_from_virtual():
+    pass
+
+@pytest.mark.skip(reason="not implemented yet")
 def test_concat():
     pass
 
+@pytest.mark.skip(reason="not implemented yet")
 def test_read_csv():
     pass
 
+@pytest.mark.skip(reason="not implemented yet")
 def test_MultiIndex():
     pass
 
