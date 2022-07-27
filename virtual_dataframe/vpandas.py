@@ -3,6 +3,7 @@ Virtual Dataframe and Series.
 """
 # flake8: noqa
 import glob
+import sys
 from functools import wraps
 from typing import Any, List, Tuple, Optional, Union
 
@@ -169,13 +170,18 @@ if VDF_MODE == Mode.dask_cudf:
 
     read_csv: Any = dask.dataframe.read_csv
 
-    _VDataFrame: Any = dask.dataframe.DataFrame
-    _VSeries: Any = dask.dataframe.Series
+    _VDataFrame: Any = dask_cudf.DataFrame
+    _VSeries: Any = dask_cudf.Series
 
-    _VDataFrame.to_pandas = lambda self: self.compute()
+    pandas.DataFrame.to_pandas = lambda self: self
+    pandas.DataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
+    dask.dataframe.DataFrame.to_pandas = lambda self: self.compute()
+    dask.dataframe.DataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
+    dask.dataframe.Series.to_pandas = lambda self: self.compute()
+    dask.dataframe.Series.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
+
+    _VDataFrame.to_pandas = lambda self: self.compute().to_pandas()
     _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
-    _VSeries.to_pandas = lambda self: self.compute()
-    _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
 
     _VDataFrame.to_numpy = lambda self: self.compute().to_numpy()
     _VDataFrame.to_numpy.__doc__ = _doc_VDataFrame_to_numpy
@@ -193,6 +199,8 @@ if VDF_MODE == Mode.dask:
     _VDataFrame: Any = dask.dataframe.DataFrame
     _VSeries: Any = dask.dataframe.Series
 
+    _from_back: Any = dask.dataframe.from_pandas
+
     delayed: Any = dask.delayed
 
     compute: Any = dask.compute
@@ -203,8 +211,6 @@ if VDF_MODE == Mode.dask:
     from_virtual: Any = dask.dataframe.from_pandas
 
     read_csv: Any = dask.dataframe.read_csv
-
-    _from_back: Any = dask.dataframe.from_pandas
 
     # pandas.core.frame.DataFrame.to_pandas = lambda self: self
     _BackDataFrame.to_pandas = lambda self: self
@@ -233,7 +239,15 @@ if VDF_MODE == Mode.cudf:
     _VDataFrame: Any = cudf.DataFrame
     _VSeries: Any = cudf.Series
 
-    '''Fake @dask.delayed'''
+    def _from_back(
+            data: Union[_BackDataFrame, _BackSeries],
+            npartitions: Optional[int] = None,
+            chunksize: Optional[int] = None,
+            sort: bool = True,
+            name: Optional[str] = None,
+    ) -> _VDataFrame:
+        return data
+
     delayed: Any = _delayed
     delayed.__doc__ = _doc_delayed
 
@@ -255,13 +269,23 @@ if VDF_MODE == Mode.cudf:
     from_virtual: Any = _remove_dask_parameters(lambda self: self)
     from_virtual.__doc__ = _doc_from_virtual
 
-    # Add fake compute() in cuDF
+    # cudf.DataFrame.to_pandas = lambda self: self.compute()
+    # cudf.DataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
+    # cudf.Series.to_pandas = lambda self: self.compute()
+    # cudf.Series.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
+    pandas.Series.to_pandas = lambda self: self
+    pandas.Series.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
+
     _VDataFrame.compute = lambda self, **kwargs: self
     _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
     _VSeries.compute = lambda self, **kwargs: self
     _VSeries.compute.__doc__ = _doc_VDataFrame_compute
 
-    _old_DataFrame_to_csv = _VDataFrame.to_csv
+    _old_DataFrame_to_csv = None
+    if cudf.DataFrame.to_csv.__module__ != __name__:
+        _old_DataFrame_to_csv = cudf.DataFrame.to_csv
+    else:
+        assert(False)  # FIXME
 
 
     def _DataFrame_to_csv(self, filepath_or_buffer, **kwargs):
@@ -270,14 +294,14 @@ if VDF_MODE == Mode.cudf:
         return _old_DataFrame_to_csv(self, filepath_or_buffer, **kwargs)
 
 
+    _VDataFrame.to_csv = _remove_to_csv(_DataFrame_to_csv)
+    _VDataFrame.to_csv.__doc__ = _doc_VDataFrame_to_csv
+
     # _old_Series_to_csv = _VSeries.to_csv
     # def _Series_to_csv(self, filepath_or_buffer, **kwargs):
     #     if "*" in str(filepath_or_buffer):
     #         filepath_or_buffer = filepath_or_buffer.replace("*", "")
     #     return _old_Series_to_csv(self, filepath_or_buffer, **kwargs)
-
-    _VDataFrame.to_csv = _remove_to_csv(_DataFrame_to_csv)
-    _VDataFrame.to_csv.__doc__ = _doc_VDataFrame_to_csv
     # _VSeries.to_csv = _remove_to_csv(_Series_to_csv)
     # _VSeries.to_csv.__doc__ = _doc_VSeries_to_csv
 
@@ -292,21 +316,12 @@ if VDF_MODE == Mode.cudf:
                 scheduler: bool = None,
                 get=None,
                 **kwargs
-                ) -> List:
-        return list(args)
+                ) -> Tuple:
+        return tuple(args)
 
 
     compute.__doc__ = _doc_compute
 
-
-    def _from_back(
-            data: Union[_BackDataFrame, _BackSeries],
-            npartitions: Optional[int] = None,
-            chunksize: Optional[int] = None,
-            sort: bool = True,
-            name: Optional[str] = None,
-    ) -> _VDataFrame:
-        return data
 
 # %%
 if VDF_MODE == Mode.pandas:
@@ -321,12 +336,6 @@ if VDF_MODE == Mode.pandas:
     _VDataFrame: Any = pandas.DataFrame
     _VSeries: Any = pandas.Series
 
-
-    # def delayed(name: Optional[str] = None,
-    #             pure: Optional[bool] = None,
-    #             nout: Optional[int] = None,
-    #             traverse: Optional[bool] = True) -> Any:
-    #     _delayed(name, pure, nout, traverse)
 
     # noinspection PyUnusedLocal
     def _from_back(  # noqa: F811
@@ -384,7 +393,7 @@ if VDF_MODE == Mode.pandas:
     _VSeries.to_pandas = lambda self: self
     _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
 
-    _old_DataFrame_to_csv = _VDataFrame.to_csv
+    _old_DataFrame_to_csv = pandas.DataFrame.to_csv
 
 
     def _DataFrame_to_csv(self, filepath_or_buffer, **kwargs):
@@ -393,19 +402,21 @@ if VDF_MODE == Mode.pandas:
         return _old_DataFrame_to_csv(self, filepath_or_buffer, **kwargs)
 
 
-    _old_Series_to_csv = _VSeries.to_csv
-
-
-    def _Series_to_csv(self, filepath_or_buffer, **kwargs):
-        if "*" in str(filepath_or_buffer):
-            filepath_or_buffer = filepath_or_buffer.replace("*", "")
-        return _old_Series_to_csv(self, filepath_or_buffer, **kwargs)
 
 
     _VDataFrame.to_csv = _remove_to_csv(_DataFrame_to_csv)
     _VDataFrame.to_csv.__doc__ = _doc_VDataFrame_to_csv
+
+    # _old_Series_to_csv = _VSeries.to_csv
+    #
+    #
+    # def _Series_to_csv(self, filepath_or_buffer, **kwargs):
+    #     if "*" in str(filepath_or_buffer):
+    #         filepath_or_buffer = filepath_or_buffer.replace("*", "")
+    #     return _old_Series_to_csv(self, filepath_or_buffer, **kwargs)
     # _VSeries.to_csv = _remove_to_csv(_Series_to_csv)
     # _VSeries.to_csv.__doc__ = _doc_VSeries_to_csv
+
     _VDataFrame.categorize = lambda self: self
     _VDataFrame.categorize.__doc__ = _doc_categorize
 

@@ -857,7 +857,7 @@ endif
 .make-_unit-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC)
 	@$(VALIDATE_VENV)
 	@echo -e "$(cyan)Run unit tests...$(normal)"
-	python $(PYTHON_PARAMS)  -m pytest  -s tests $(PYTEST_ARGS) -m "not functional"
+	python $(PYTHON_PARAMS)  -m pytest --rootdir=. -s tests $(PYTEST_ARGS) -m "not functional"
 	@date >.make-_unit-test-$*
 
 # Run unit test with a specific *mode*
@@ -901,14 +901,14 @@ notebooks-test: .make-notebooks-test
 .make-functional-test: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC)
 	@$(VALIDATE_VENV)
 	@echo -e "$(cyan)Run functional tests...$(normal)"
-	python $(PYTHON_PARAMS)  -m pytest  -s tests $(PYTEST_ARGS) -m "functional"
+	python $(PYTHON_PARAMS)  -m pytest --rootdir=. -s tests $(PYTEST_ARGS) -m "functional"
 	@date >.make-functional-test
 # Run only functional tests
 functional-test: .make-functional-test
 
 .make-test-$(VDF_MODE): $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC)
 	@echo -e "$(cyan)Run all tests for $(VDF_MODE)...$(normal)"
-	python $(PYTHON_PARAMS)  -m pytest $(PYTEST_ARGS) -s tests
+	python $(PYTHON_PARAMS)  -m pytest --rootdir=. $(PYTEST_ARGS) -s tests
 	#python setup.py test
 	@date >.make-test-$(VDF_MODE)
 	@date >.make-unit-test
