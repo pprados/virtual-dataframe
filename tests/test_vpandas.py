@@ -4,7 +4,6 @@ import tempfile
 import pandas
 
 import virtual_dataframe as vdf
-import virtual_dataframe.vpandas as vpd
 
 
 # %%
@@ -45,13 +44,13 @@ def test_from_virtual():
 # %%
 def test_DataFrame_to_from_pandas():
     pdf = pandas.DataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, None, 0.3]})
-    df = vpd.from_pandas(pdf, npartitions=2)
+    df = vdf.from_pandas(pdf, npartitions=2)
     assert df.to_pandas().equals(pandas.DataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, None, 0.3]}))
 
 
 def test_Series_to_from_pandas():
     ps = pandas.Series([1, 2, 3, None, 4])
-    s = vpd.from_pandas(ps, npartitions=2)
+    s = vdf.from_pandas(ps, npartitions=2)
     assert s.to_pandas().equals(pandas.Series([1, 2, 3, None, 4]))
 
 

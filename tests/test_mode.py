@@ -1,7 +1,7 @@
 import importlib
 import os
 import sys
-from typing import Optional
+from typing import Dict
 
 import cudf
 import dask
@@ -10,20 +10,30 @@ import pytest as pytest
 
 import pandera.typing.pandas
 import virtual_dataframe.vpandas as vpd
+from .conftest import save_context, restore_context
 
-_old_vdf_mode: Optional[str] = None
+
+_old_environ: Dict[str, str] = None
 
 
-# def setup_module(module):
-#     global _old_vdf_mode
-#     _old_vdf_mode = os.environ.get("VDF_MODE", "")
+# def save_context():
+#     global _old_environ
+#     _old_environ = dict(os.environ)
 #
 #
-# def teardown_module(module):
-#     global _old_vdf_mode
-#     os.environ["VDF_MODE"] = _old_vdf_mode
+# def restore_context():
+#     global _old_environ
+#     os.environ.clear()
+#     for k, v in _old_environ.items():
+#         os.environ[k] = v
 #     del sys.modules["virtual_dataframe.env"]
-#     importlib.reload(vpd)
+#     del sys.modules["virtual_dataframe.vpandas"]
+
+def setup_module(module):
+    save_context()
+
+def teardown_module(module):
+    restore_context()
 
 
 class SimpleDF_schema(pandera.SchemaModel):
@@ -67,7 +77,6 @@ def _test_scenario_dataframe():
 
 
 @pytest.mark.xdist_group(name="os.environ")
-@pytest.mark.skip(reason="Border effet")
 def test_DataFrame_MODE_pandas():
     os.environ["VDF_MODE"] = "pandas"
     del sys.modules["virtual_dataframe.env"]
@@ -80,7 +89,6 @@ def test_DataFrame_MODE_pandas():
 
 
 @pytest.mark.xdist_group(name="os.environ")
-@pytest.mark.skip(reason="Border effet")
 def test_DataFrame_MODE_dask():
     os.environ["VDF_MODE"] = "dask"
     del sys.modules["virtual_dataframe.env"]
@@ -93,7 +101,6 @@ def test_DataFrame_MODE_dask():
 
 
 @pytest.mark.xdist_group(name="os.environ")
-@pytest.mark.skip(reason="Border effet")
 def test_DataFrame_MODE_cudf():
     os.environ["VDF_MODE"] = "cudf"
     del sys.modules["virtual_dataframe.env"]
@@ -106,7 +113,6 @@ def test_DataFrame_MODE_cudf():
 
 
 @pytest.mark.xdist_group(name="os.environ")
-@pytest.mark.skip(reason="Border effet")
 def test_DataFrame_MODE_dask_cudf():
     os.environ["VDF_MODE"] = "dask_cudf"
     del sys.modules["virtual_dataframe.env"]
