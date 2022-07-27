@@ -4,7 +4,6 @@ import click
 import dotenv
 
 from virtual_dataframe.tools import init_logger, logging
-from typing import Any
 
 LOGGER: logging.Logger = logging.getLogger(__name__)
 

@@ -105,16 +105,13 @@ def test_DataFrame_MODE_dask_cudf():
     assert isinstance(input_df, dask.dataframe.DataFrame)
     assert isinstance(rc, cudf.DataFrame)
 
+# %%
 @pytest.mark.skip(reason="not implemented yet")
 def test_delayed():
     @vdf.delayed
     def f(i):
         return i
     assert vdf.compute(f(42)) == 42
-
-@pytest.mark.skip(reason="not implemented yet")
-def test_from_virtual():
-    pass
 
 @pytest.mark.skip(reason="not implemented yet")
 def test_concat():
@@ -125,9 +122,14 @@ def test_read_csv():
     pass
 
 @pytest.mark.skip(reason="not implemented yet")
-def test_MultiIndex():
+def test_from_pandas():
     pass
 
+@pytest.mark.skip(reason="not implemented yet")
+def test_from_virtual():
+    pass
+
+# %%
 def test_DataFrame_to_from_pandas():
     pdf = pandas.DataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, None, 0.3]})
     df = vpd.from_pandas(pdf, npartitions=2)
@@ -140,6 +142,17 @@ def test_Series_to_from_pandas():
 
 def test_DataFrame_compute():
     vpd.VDataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, None, 0.3]}).compute()
+    # TODO: assert
 
 def test_Series_compute():
     vpd.VSeries([1, 2, 3, None, 4]).compute()
+    # TODO: assert
+
+@pytest.mark.skip(reason="not implemented yet")
+def test_DataFrame_to_csv():
+    pass
+
+@pytest.mark.skip(reason="not implemented yet")
+def test_Series_to_csv():
+    pass
+

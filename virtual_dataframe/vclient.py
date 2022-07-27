@@ -17,8 +17,8 @@ With some environment variable, the program use different kind of scheduler.
 | dask      | No    | localhost                   | LocalCluster     |
 +-----------+-------+-----------------------------+------------------+
 | dask-cudf | No    | localhost                   | LocalCUDACluster |
-+----------+-------+-----------------------------+------------------+
-| dask-cudf | No    | <host>                      | Domino cluster   |
++-----------+-------+-----------------------------+------------------+
+| dask-cudf | No    | <host>                      | Dask cluster     |
 +-----------+-------+-----------------------------+------------------+
 
 

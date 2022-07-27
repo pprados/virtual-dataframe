@@ -919,7 +919,7 @@ functional-test: .make-functional-test
 test-%:
 	@VDF_MODE=$* $(MAKE) --no-print-directory .make-test-$*
 
-.make-test: test-pandas test-cudf test-dask test-dask_cudf notebooks-test
+.make-test: test-pandas test-cudf test-dask test-dask_cudf .make-notebooks-test .make-functional-test
 	@date >.make-test
 
 .PHONY: test
@@ -930,7 +930,7 @@ test: .make-test
 # SNIPPET pour vérifier les TU et le recalcul de tout les notebooks et scripts.
 # Cette règle est invoqué avant un commit sur la branche master de git.
 .PHONY: validate
-.make-validate: .make-test typing $(DATA)/raw scripts/* notebooks/* build/html build/linkcheck
+.make-validate: .make-test typing $(DATA)/raw scripts/* notebooks/* build/html # build/linkcheck
 	@date >.make-validate
 ## Validate the version before release
 validate: .make-validate

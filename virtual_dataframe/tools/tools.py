@@ -6,7 +6,7 @@ import glob
 import logging
 import os
 from pathlib import Path
-from typing import Type, Optional, List, Any
+from typing import Optional, List, Any
 
 import click
 
