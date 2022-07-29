@@ -146,6 +146,7 @@ if VDF_MODE in (Mode.pandas, Mode.cudf):
 if VDF_MODE == Mode.dask_cudf:
     import pandas
     import dask
+    import dask.dataframe
     import dask.distributed
     try:
         import dask_cudf
@@ -192,6 +193,7 @@ if VDF_MODE == Mode.dask_cudf:
 if VDF_MODE == Mode.dask:
     import pandas
     import dask
+    import dask.dataframe
 
     _BackDataFrame: Any = pandas.DataFrame
     _BackSeries: Any = pandas.Series

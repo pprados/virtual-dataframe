@@ -62,7 +62,7 @@ class VClient():
     def __new__(cls, **kwargs) -> Any:
         client = _FakeClient()
         if VDF_MODE in (Mode.dask, Mode.dask_cudf):
-            import dask
+            import dask.distributed
             if DEBUG:
                 dask.config.set(scheduler='synchronous')
                 LOGGER.warning("Use synchronous scheduler for debuging")
