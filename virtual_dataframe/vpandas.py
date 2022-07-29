@@ -3,6 +3,7 @@ Virtual Dataframe and Series.
 """
 # flake8: noqa
 import glob
+import sys
 from functools import wraps
 from typing import Any, List, Tuple, Optional, Union
 
@@ -146,9 +147,13 @@ if VDF_MODE == Mode.dask_cudf:
     import pandas
     import dask
     import dask.distributed
-    import dask_cudf
-    import cudf  # See https://docs.rapids.ai/api/dask-cuda/nightly/install.html
-
+    try:
+        import dask_cudf
+        import cudf  # See https://docs.rapids.ai/api/dask-cuda/nightly/install.html
+    except ModuleNotFoundError:
+        print("Please install cudf and dask_cudf via the rapidsai conda channel. "
+              "See https://rapids.ai/start.html for instructions.")
+        sys.exit(-1)
     _BackDataFrame: Any = cudf.DataFrame
     _BackSeries: Any = cudf.Series
 
@@ -405,7 +410,7 @@ class VDataFrame(_VDataFrame):
                 sort: bool = True,
                 name: Optional[str] = None,
                 ) -> _VDataFrame:
-        return _from_back(  # FIXME _remove_dask_parameters ?
+        return _from_back(
             _BackDataFrame(data=data, index=index, columns=columns, dtype=dtype),
             npartitions=npartitions,
             chunksize=chunksize,

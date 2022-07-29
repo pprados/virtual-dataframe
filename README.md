@@ -70,18 +70,18 @@ with (VClient()):
 
 With this framework, you can update your environment, to debuging your code.
 
-| env                                                          | Environement                          |
-|--------------------------------------------------------------|---------------------------------------|
-| VDF_MODE=pandas                                              | Only Python with classical pandas     |
-| VDF_MODE=cudf                                                | Python with cuDF                      |
-| VDF_MODE=dask                                                | Dask with multiple process and pandas |
-| VDF_MODE=dask-cudf                                           | Dask with multiple process and cuDF   |
-| VDF_MODE=dask<br />DEBUG=True                                | Dask with single thread and pandas    |
-| VDF_MODE=dask-cudf<br />DEBUG=True                           | Dask with single thread and cuDF      |
-| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=locahost      | Dask with local cluster and pandas    |
-| VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=locahost | Dask with local cuda cluster and cuDF |
-| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=...           | Dask with remote cluster and Pandas   |
-| VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=...      | Dask with remote cluster and cuDF     |
+| env                                                                                            | Environement                          |
+|------------------------------------------------------------------------------------------------|---------------------------------------|
+| VDF_MODE=pandas                                                                                | Only Python with classical pandas     |
+| VDF_MODE=cudf                                                                                  | Python with cuDF                      |
+| VDF_MODE=dask                                                                                  | Dask with multiple process and pandas |
+| VDF_MODE=dask-cudf                                                                             | Dask with multiple process and cuDF   |
+| VDF_MODE=dask<br />DEBUG=True                                                                  | Dask with single thread and pandas    |
+| VDF_MODE=dask-cudf<br />DEBUG=True                                                             | Dask with single thread and cuDF      |
+| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                        | Dask with local cluster and pandas    |
+| VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                   | Dask with local cuda cluster and cuDF |
+| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=...        | Dask with remote cluster and Pandas   |
+| VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=...   | Dask with remote cluster and cuDF     |
 
 The real compatibilty between the differents simulation of Pandas, depends on the implement of the cudf or dask.
 You can use the `VDF_MODE` variable, to update some part of code, between the selected backend.
@@ -90,19 +90,39 @@ It's not always easy to write a code *compatible* with all scenario, but it's po
 After this effort, it's possible to compare the performance about the differents technologies,
 or propose a component, compatible with differents contexts.
 
+## usage
+```shell
+$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
+		dask-cuda \
+		dask-cudf \
+		cudf==22.06 \
+		cudatoolkit==11.5
+```
+conda install -q -y $(CONDA_ARGS) \
+		dask-cuda \
+		dask-cudf \
+		cudf==$(CUDF_VERSION) \
+		cudatoolkit=$(CUDA_VER)
 ## API
 
-| api                                     | comments                                       |
-|-----------------------------------------|------------------------------------------------|
-| vdf.from_pandas(pdf, npartitions=...)   | Create Virtual Dataframe from Pandas DataFrame |
-| vdf.from_virtual(vdf, npartitions=...)  | Create FIXME                                   |
-| vdf.concat(...)                         | Merge VDataFrame                               |
-| vdf.read_csv(...)                       | Read VDataFrame from CSVs *glob* files         |
-| @delayed                                | Delayed function                               |
-| VDataFrame.to_pandas()                  | Convert to pandas dataframe                    |
-| VDataFrame.to_numpy()                   | Convert to numpy array                         |
-| VDataFrame.compute()                    | Compute the virtual dataframe                  |
-| VDataFrame.to_csv()                     | Save to *glob* files                           |
+| api                                    | comments                                       |
+|----------------------------------------|------------------------------------------------|
+| @delayed                               | Delayed function                               |
+| vdf.concat(...)                        | Merge VDataFrame                               |
+| vdf.read_csv(...)                      | Read VDataFrame from CSVs *glob* files         |
+| vdf.from_pandas(pdf, npartitions=...)  | Create Virtual Dataframe from Pandas DataFrame |
+| vdf.from_virtual(vdf, npartitions=...) | Create FIXME                                   |
+| vdf.compute([...])                     | Compute multiple @delayed functions            |
+| VDataFrame(data, npartitions=...)      | Create DataFrame in memory                     |
+| VSeries(data, npartitions=...)         | Create Series in memory                        |
+| VDataFrame.compute()                   | Compute the virtual dataframe                  |
+| VDataFrame.to_pandas()                 | Convert to pandas dataframe                    |
+| VDataFrame.to_csv()                    | Save to *glob* files                           |
+| VDataFrame.to_numpy()                  | Convert to numpy array                         |
+| VDataFrame.categorize()                | Detect all categories                          |
+| VSeries.compute()                      | Compute the virtual series                     |
+| VSeries.to_pandas()                    | Convert to pandas dataframe                     |
+| VSeries.to_numpy()                     | Convert to numpy array                     |
 
 You can read a sample notebook [here](https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo.ipynb).
 
@@ -118,6 +138,42 @@ This project is just a wrapper. So, it inherits limitations and bugs from other 
 
 To be compatible with all framework, you must only use the common features.
 
+
+## FAQ
+
+### The code run with dask, but not with pandas or cudf ?
+You must use only the similare functionality, and only a subpart of Pandas.
+
+### `.compute()` is not defined with pandas, cudf ?
+If you @delayed function return something, other than a VDataFrame or VSerie, the objet has not
+the method `.compute()`. You can solve this, with:
+```
+@delayed
+def f()-> int:
+    return 42
+
+compute([f()])[0]  # Run on all environments
+```
+
+## Pip install
+Before using virtual_dataframe with GPU, use conda environment, and install some packages:
+```shell
+$ conda install -c rapidsai -c nvidia -c conda-forge cudf cudatoolkit dask-cuda dask-cudf
+```
+
+To install all feature of virtual_dataframe:
+```shell
+$ pip install virtual_dataframe[all]
+```
+
+To select only a part of dependencies, use pip with specific extension.
+```shell
+
+$ pip install virtual_dataframe[pandas]
+$ pip install virtual_dataframe[cudf]
+$ pip install virtual_dataframe[dask]
+$ pip install virtual_dataframe[dask-cudf]
+```
 ## The latest version
 
 Clone the git repository

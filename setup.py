@@ -3,7 +3,7 @@
 import os
 import re
 import subprocess
-from typing import List
+from typing import List, Set
 
 from setuptools import setup, find_packages
 
@@ -12,29 +12,43 @@ PYTHON_VERSION = "3.9"
 # USE_GPU="-gpu" ou "" si le PC possède une carte NVidia
 # ou suivant la valeur de la variable d'environnement GPU (export GPU=yes)
 USE_GPU: str = "-gpu" if (os.environ['GPU'].lower() in 'yes'
-                     if "GPU" in os.environ
-                     else os.path.isdir("/proc/driver/nvidia")
-                          or "CUDA_PATH" in os.environ) else ""
-
-
+                          if "GPU" in os.environ
+                          else os.path.isdir("/proc/driver/nvidia")
+                               or "CUDA_PATH" in os.environ) else ""
 
 # Run package dependencies
 requirements: List[str] = [
-    'click', 'click-pathlib',
     'python-dotenv',
-    'PyInstaller',
-
-    'numba',
+    'pandas',  # numpy implicite
     'GPUtil',
-    'pandas',               # numpy implicite
-    'pandas-stubs',         # Pour le typage *panda like*
-    'pandera @ git+https://github.com/pprados/pandera@cudf#egg=pandera',  # With patch PPR.  'pandera[dask,mypy]',
-    'dask-cuda',
-    'dask[distributed]',    # 'dask[distributed]==2021.6.2',  # TODO Version for DOMINO 4.6
-    # 'rapids==22.6',       # Only with conda, see https://rapids.ai/start.html#conda
-    # 'cudatoolkit==11.2',  # Only with conda, and must be updated with the current cuda version
-    # 'cudf==22.6',         # Only with conda
+    # With patch to accept cudf.
+    'pandera@git+https://github.com/pprados/pandera@cudf#egg=pandera',
 ]
+
+pandas_requirements: List[str] = \
+    [
+        'pandas'
+    ]
+cudf_requirements: List[str] = \
+    [
+        # 'cudf',               # Only with conda, see https://rapids.ai/start.html#conda
+        # 'numba',
+        # 'rapids==22.6',       # Only with conda, see https://rapids.ai/start.html#conda
+        # 'cudatoolkit==11.2',  # Only with conda, and must be updated with the current cuda version
+        # 'cudf==22.6',         # Only with conda
+    ]
+dask_requirements: List[str] = \
+    [
+        'dask[distributed]',  # 'dask[distributed]==2021.6.2',  # Version 2021.6.2 for DOMINO 4.6
+    ]
+dask_cudf_requirements: Set[str] = (
+        cudf_requirements + dask_requirements + \
+        [
+            # 'dask-cudf',    # Only with conda
+            # 'dask-cuda',    # Only with conda
+        ])
+
+all_requirements: Set[str] = set(pandas_requirements + cudf_requirements + dask_requirements + dask_cudf_requirements)
 
 setup_requirements: List[str] = ["pytest-runner", "setuptools_scm"]
 
@@ -54,15 +68,14 @@ test_requirements: List[str] = [
 # FIXME Ajoutez les dépendances nécessaire au build et au tests à ajuster suivant le projet
 dev_requirements: List[str] = [
     'pip',
-    # PPR necessaire a mlflow ? 'conda',
     'twine',  # To publish package in Pypi
     'sphinx', 'sphinx-execute-code', 'sphinx_rtd_theme', 'recommonmark', 'nbsphinx',  # To generate doc
     'flake8', 'pylint',  # For lint
     'daff',
-    'pytype','mypy',
-    'jupyter',  # Use Jupyter
-    'jupyterlab',  # and Use Jupyter Lab
+    'pytype', 'mypy',
+    'jupyterlab',
     'voila',
+    'pandas-stubs',
     # For Dask
     'graphviz',
     'bokeh>=2.1.1',
@@ -92,6 +105,7 @@ def _git_url() -> str:
 def _git_http_url() -> str:
     return re.sub(r".*@(.*):(.*).git", r"http://\1/\2", _git_url())
 
+
 setup(
     name='virtual_dataframe',
     author="Philippe Prados",
@@ -110,7 +124,7 @@ setup(
         'Intended Audience :: Developers',
         'License :: Other/Proprietary License',
         'Natural Language :: English',
-        'Programming Language :: Python :: '+ PYTHON_VERSION,
+        'Programming Language :: Python :: ' + PYTHON_VERSION,
         'Operating System :: OS Independent',
         # FIXME 'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ],
@@ -121,16 +135,15 @@ setup(
     extras_require={
         'dev': dev_requirements,
         'test': test_requirements,
-        },
+        'pandas': pandas_requirements,
+        'cudf': cudf_requirements,
+        'dask': dask_requirements,
+        'dask_cudf': dask_cudf_requirements,
+        'dask-cudf': dask_cudf_requirements,
+        'all': all_requirements
+    },
     packages=find_packages(),
-    # TODO Declare the typing is correct ? (See PEP 561)
-    # package_data={"virtual_dataframe": ["py.typed"]},
+    package_data={"virtual_dataframe": ["py.typed"]},
     use_scm_version=True,  # Manage versions from Git tags
     install_requires=requirements,
-# TODO: select the main function
-#    entry_points = {
-#            "console_scripts": [
-#                'virtual-dataframe = virtual_dataframe.virtual_dataframe:main'
-#            ]
-#        },
 )

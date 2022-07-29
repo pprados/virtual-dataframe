@@ -3,31 +3,21 @@ import os
 import sys
 from typing import Dict
 
-import cudf
-import dask
+import GPUtil as GPUtil
+
+
+
 import pandas
 import pytest as pytest
 
 import pandera.typing.pandas
 import virtual_dataframe.vpandas as vpd
+from virtual_dataframe.env import USE_GPU
 from .conftest import save_context, restore_context
 
 
 _old_environ: Dict[str, str] = None
 
-
-# def save_context():
-#     global _old_environ
-#     _old_environ = dict(os.environ)
-#
-#
-# def restore_context():
-#     global _old_environ
-#     os.environ.clear()
-#     for k, v in _old_environ.items():
-#         os.environ[k] = v
-#     del sys.modules["virtual_dataframe.env"]
-#     del sys.modules["virtual_dataframe.vpandas"]
 
 def setup_module(module):
     save_context()
@@ -93,6 +83,7 @@ def test_DataFrame_MODE_dask():
     os.environ["VDF_MODE"] = "dask"
     del sys.modules["virtual_dataframe.env"]
     importlib.reload(vpd)
+    import dask
 
     input_df, rc = _test_scenario_dataframe()
     assert rc.to_pandas().equals(SimpleDF({"data": [1, 2]}))
@@ -102,6 +93,9 @@ def test_DataFrame_MODE_dask():
 
 @pytest.mark.xdist_group(name="os.environ")
 def test_DataFrame_MODE_cudf():
+    if not USE_GPU:
+        pytest.skip("GPU Not found")
+    import cudf
     os.environ["VDF_MODE"] = "cudf"
     del sys.modules["virtual_dataframe.env"]
     importlib.reload(vpd)
@@ -114,6 +108,10 @@ def test_DataFrame_MODE_cudf():
 
 @pytest.mark.xdist_group(name="os.environ")
 def test_DataFrame_MODE_dask_cudf():
+    if not USE_GPU:
+        pytest.skip("GPU Not found")
+    import cudf
+    import dask
     os.environ["VDF_MODE"] = "dask_cudf"
     del sys.modules["virtual_dataframe.env"]
     importlib.reload(vpd)

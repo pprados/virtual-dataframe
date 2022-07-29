@@ -58,12 +58,12 @@ endif
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour détecter la présence d'un GPU afin de modifier le nom du projet
 # et ses dépendances si nécessaire.
-ifdef GPU
-USE_GPU:=$(shell [[ "$$GPU" == yes ]] && echo "-gpu")
-else ifneq ("$(wildcard /proc/driver/nvidia)","")
+ifndef USE_GPU
+ifneq ("$(wildcard /proc/driver/nvidia)","")
 USE_GPU:=-gpu
 else ifdef CUDA_HOME
 USE_GPU:=-gpu
+endif
 endif
 ifdef USE_GPU
 # PPR: semble fonctionner s'il n'y a pas nvcc déjà installé
@@ -127,12 +127,10 @@ PRJ_PACKAGE:=$(PRJ)
 PYTHON_VERSION:=3.9
 PYTHONWARNINGS=ignore
 PYTHON_PARAMS?=
-CUDF_VERSION=22.06
+CUDF_VER=22.06
 PYTHON_SRC=$(shell find -L "$(PRJ)" -type f -iname '*.py' | grep -v __pycache__)
 PYTHON_TST=$(shell find -L tests -type f -iname '*.py' | grep -v __pycache__)
 
-DOCKER_REPOSITORY = $(USER)
-# Data directory (can be in other place, in VM or Docker for example)
 export DATA?=data
 
 # Conda environment
@@ -399,20 +397,22 @@ $(CONDA_PYTHON):
 install-rapids:
 	@echo "$(green)  Install NVidia Rapids...$(normal)"
 	conda install -q -y $(CONDA_ARGS) \
+		cudf==$(CUDF_VER) \
+		cudatoolkit==$(CUDA_VER) \
 		dask-cuda \
 		dask-cudf \
-		cudf==$(CUDF_VERSION) \
-		cudatoolkit=$(CUDA_VER)
 
 # Rule to update the current venv, with the dependencies describe in `setup.py`
 $(PIP_PACKAGE): $(CONDA_PYTHON) setup.py | .git # Install pip dependencies
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Install setup.py dependencies ... (may take minutes)$(normal)"
-ifdef USE_GPU
+ifeq ($(USE_GPU),-gpu)
 	# FIXME: voir comment se passer de conda pour un setup "propre"
 	make install-rapids
+	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.[all,dev,test]' | grep -v 'already satisfied' || true
+else
+	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.[pandas,dask,dev,test]' | grep -v 'already satisfied' || true
 endif
-	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.[dev,test]' | grep -v 'already satisfied' || true
 	echo -e "$(cyan)setup.py dependencies updated$(normal)"
 	@touch $(PIP_PACKAGE)
 
@@ -539,17 +539,20 @@ pytype.cfg: $(CONDA_PREFIX)/bin/pytype
 
 .PHONY: typing
 .make-typing: $(REQUIREMENTS) $(CONDA_PREFIX)/bin/pytype pytype.cfg $(PYTHON_SRC)
-	$(VALIDATE_VENV)
-	@echo -e "$(cyan)Check typing...$(normal)"
+ifneq ($(USE_GPU),-gpu)
+	echo -e "$(red)Ignore typing without GPU$(normal)"
+else
+	@$(VALIDATE_VENV)
+	echo -e "$(cyan)Check typing...$(normal)"
 	# pytype
 	pytype "$(PRJ)"
 	for phase in scripts/*
 	do
-	  ( cd $$phase ; find -L . -type f -name '*.py' -exec pytype {} \; )
+	  [[ -e "$$phase" ]] && ( cd $$phase && find -L . -type f -name '*.py' -exec pytype {} \; )
 	done
 	touch ".pytype/pyi/$(PRJ)"
+endif
 	touch .make-typing
-
 	# mypy
 	# TODO: find Pandas stub
 	# MYPYPATH=./stubs/ mypy "$(PRJ)"
@@ -567,39 +570,6 @@ add-typing: typing
 	done
 
 
-
-# ---------------------------------------------------------------------------------------
-# SNIPPET pour créer un environnement 'make' dans un conteneur Docker.
-.PHONY: docker-make-image docker-make-shell docker-make-clean
-## Create a docker image to build the project with make
-docker-make-image: docker/MakeDockerfile
-	$(CHECK_DOCKER)
-	echo -e "$(green)Build docker image '$(DOCKER_REPOSITORY)/$(PRJ)-make' to build the project...$(normal)"
-	REPO=$(shell git remote get-url origin)
-	echo "REPO=$$REPO"
-	docker build \
-		--build-arg UID=$$(id -u) \
-		--build-arg REPO="$$REPO" \
-		--build-arg BRANCH=develop \
-		--tag $(DOCKER_REPOSITORY)/$(PRJ)-make \
-		-f docker/MakeDockerfile .
-	printf	"$(green)Declare\n$(cyan)alias dmake='docker run -v $$PWD:/$(PRJ) -it $(DOCKER_REPOSITORY)/$(PRJ)-make'$(normal)\n"
-	@echo -e "$(green)and $(cyan)dmake ...  # Use make in a Docker container$(normal)"
-
-## Start a shell to build the project in a docker container
-docker-make-shell:
-	@docker run --rm \
-		-v $(PWD):/$(PRJ) \
-		--group-add $$(getent group docker | cut -d: -f3) \
-		-v /var/run/docker.sock:/var/run/docker.sock \
-		-v $(PWD):/$(PRJ) \
-
-		--entrypoint $(SHELL) \
-		-it $(DOCKER_REPOSITORY)/$(PRJ)-make
-
-docker-make-clean:
-	@docker image rm $(DOCKER_REPOSITORY)/$(PRJ)-make
-	@echo -e "$(cyan)Docker image '$(DOCKER_REPOSITORY)/$(PRJ)-make' removed$(normal)"
 
 
 
@@ -749,12 +719,13 @@ $(DATA)/raw:
 # via un 'scripts/phase1/1_sample.py'.
 .PHONY: nb-convert
 # Convert all notebooks to python scripts
+# jupyter nbconvert --to python --ExecutePreprocessor.kernel_name=virtual_dataframe --template /tmp/make-XhsSM --TemplateExporter.extra_template_basedirs=/home/pprados/miniconda3/envs/virtual_dataframe/share/jupyter/nbconvert/templates --stdout "notebooks/demo.ipynb"
 _nbconvert:  $(JUPYTER_DATA_DIR)/kernels/$(KERNEL)
-	@echo -e "Convert all notebooks..."
+	echo -e "Convert all notebooks..."
 	notebook_path=notebooks
 	script_path=scripts
-	tmpfile=$$(mktemp /tmp/make-XXXXX)
-
+	tmpdir=$$(mktemp -d -t make-XXXXX)
+	tmpfile=$${tmpdir}/template
 	cat >$${tmpfile} <<TEMPLATE
 	{% extends 'python.tpl' %}
 	{% block in_prompt %}# %%{% endblock in_prompt %}
@@ -772,11 +743,13 @@ _nbconvert:  $(JUPYTER_DATA_DIR)/kernels/$(KERNEL)
 	{% endblock markdowncell %}
 	TEMPLATE
 
+	# --template=$${tmpfile} \
 	while IFS= read -r -d '' filename; do
 		target=$$(echo $$filename | sed "s/^$${notebook_path}/$${script_path}/g; s/ipynb$$/py/g ; s/[ -]/_/g" )
 		mkdir -p $$(dirname $${target})
 		jupyter nbconvert --to python --ExecutePreprocessor.kernel_name=$(KERNEL) \
-		  --template=$${tmpfile} --stdout "$${filename}" >"$${target}"
+          --TemplateExporter.extra_template_basedirs=$${tmpdir} \
+		  --stdout "$${filename}" >"$${target}"
 		chmod +x $${target}
 		@echo -e "Convert $${filename} to $${target}"
 	done < <(find -L notebooks -name '*.ipynb' -type f -not -path '*/\.*' -prune -print0)
@@ -820,7 +793,7 @@ clean-notebooks: $(REQUIREMENTS)
 clean-pip:
 	@$(VALIDATE_VENV)
 	pip freeze | grep -v "^-e" | xargs pip uninstall -y
-	@echo -e "$(cyan)Virtual env cleaned$(normal)"
+	echo -e "$(cyan)Virtual env cleaned$(normal)"
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour nettoyer complètement l'environnement Conda
@@ -842,7 +815,7 @@ clean: clean-pyc clean-build clean-notebooks
 # SNIPPET pour faire le ménage du projet
 .PHONY: clean-all
 # Clean all environments
-clean-all: remove-kernel clean remove-venv docker-make-clean
+clean-all: remove-kernel clean remove-venv
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour executer les tests unitaires et les tests fonctionnels.
@@ -866,6 +839,14 @@ unit-test-%:
 	@echo -e "$(cyan)set VDF_MODE=$*$(normal)"
 	VDF_MODE=$* $(MAKE) --no-print-directory .make-_unit-test-$*
 
+ifneq ($(USE_GPU),-gpu)
+unit-test-cudf:
+	@echo -e "$(red)Ignore VDF_MODE=cudf$(normal)"
+
+unit-test-dask_cudf:
+	@echo -e "$(red)Ignore VDF_MODE=dask_cudf$(normal)"
+endif
+
 .PHONY: unit-test
 .make-unit-test: unit-test-pandas unit-test-cudf unit-test-dask unit-test-dask_cudf
 	@date >.make-unit-test
@@ -875,7 +856,7 @@ unit-test: .make-unit-test
 
 
 .PHONY: notebooks-test
-.make-_notebooks-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC) notebooks/demo.ipynb
+_make-notebooks-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC) $(JUPYTER_DATA_DIR)/kernels/$(KERNEL) notebooks/demo.ipynb
 	@$(VALIDATE_VENV)
 	@echo -e "$(cyan)Run notebook tests for mode=$(VDF_MODE)...$(normal)"
 	python $(PYTHON_PARAMS) -m papermill \
@@ -884,12 +865,20 @@ unit-test: .make-unit-test
 		--no-report-mode \
 		notebooks/demo.ipynb \
 		-p mode $(VDF_MODE) /dev/null
-	@date >.make-_notebooks-test-$*
+	@date >.make-notebooks-test-$*
 
 ## Run notebooks test with a specific *mode*
 .PHONY: notebooks-test-*
 notebooks-test-%:
-	@VDF_MODE=$* $(MAKE) --no-print-directory .make-_notebooks-test-$*
+	@VDF_MODE=$* $(MAKE) --no-print-directory _make-notebooks-test-$*
+
+ifneq ($(USE_GPU),-gpu)
+notebooks-test-cudf:
+	@echo -e "$(red)Ignore VDF_MODE=cudf$(normal)"
+
+notebooks-test-dask_cudf:
+	@echo -e "$(red)Ignore VDF_MODE=dask_cudf$(normal)"
+endif
 
 .PHONY: notebooks-test-all
 .make-notebooks-test: notebooks-test-pandas notebooks-test-cudf notebooks-test-dask notebooks-test-dask_cudf
@@ -919,6 +908,15 @@ functional-test: .make-functional-test
 test-%:
 	@VDF_MODE=$* $(MAKE) --no-print-directory .make-test-$*
 
+ifneq ($(USE_GPU),-gpu)
+test-cudf:
+	@echo -e "$(red)Ignore VDF_MODE=cudf$(normal)"
+
+test-dask_cudf:
+	@echo -e "$(red)Ignore VDF_MODE=dask_cudf$(normal)"
+endif
+
+
 .make-test: test-pandas test-cudf test-dask test-dask_cudf .make-notebooks-test .make-functional-test
 	@date >.make-test
 
@@ -930,7 +928,7 @@ test: .make-test
 # SNIPPET pour vérifier les TU et le recalcul de tout les notebooks et scripts.
 # Cette règle est invoqué avant un commit sur la branche master de git.
 .PHONY: validate
-.make-validate: .make-test clean-notebooks typing $(DATA)/raw scripts/* notebooks/* build/html # build/linkcheck
+.make-validate: .make-test clean-notebooks $(DATA)/raw .make-typing notebooks/* build/html # build/linkcheck
 	@date >.make-validate
 ## Validate the version before release
 validate: .make-validate
@@ -948,28 +946,6 @@ uninstall: $(CONDA_PREFIX)/bin/$(PRJ)
 	rm $(CONDA_PREFIX)/bin/$(PRJ)
 
 
-# Recette permettant un `make installer` pour générer un programme autonome comprennant le code et
-# un interpreteur Python. Ainsi, il suffit de le copier et de l'exécuter sans pré-requis
-# FIXME: Installer for Alpine ?
-dist/$(PRJ)$(EXE): .make-validate
-	@PYTHONOPTIMIZE=2 && pyinstaller $(PYINSTALLER_OPT) --onefile $(PRJ)/$(PRJ).py
-	touch dist/$(PRJ)
-ifeq ($(BACKOS),Windows)
-# Must have conda installed on windows with tag_images_for_google_drive env
-	/mnt/c/WINDOWS/system32/cmd.exe /C 'conda activate $(PRJ) && python $(PYTHON_PARAMS) setup.py develop && pyinstaller --onefile tag_images_for_google_drive/tag_images_for_google_drive.py'
-	touch dist/$(PRJ).exe
-	echo -e "$(cyan)Executable is here 'dist/$(PRJ).exe'$(normal)"
-endif
-ifeq ($(OS),Darwin)
-	ln -f "dist/$(PRJ)" "dist/$(PRJ).macos"
-	echo -e "$(cyan)Executable is here 'dist/$(PRJ).macos'$(normal)"
-else
-	echo -e "$(cyan)Executable is here 'dist/$(PRJ)'$(normal)"
-endif
-
-## Build standalone executable for this OS
-installer: dist/$(PRJ)
-
 ## Publish the distribution in a local repository
 local-repository:
 	@pip install pypiserver || true
@@ -978,105 +954,3 @@ local-repository:
 	echo -e "$(green)export PIP_EXTRA_INDEX_URL=http://localhost:8888/simple$(normal)"
 	echo -e "or use $(green)pip install --index-url http://localhost:8888/simple/$(normal)"
 	pypi-server -p 8888 .repository/
-
-
-# Recette pour créer un Dockerfile.standalone avec la version du projet.
-# Modifiez le code du directement ici.
-Dockerfile.standalone: setup.py
-	@# Build docker file with setup parameters
-	VERSION="$$(./setup.py --version)"
-	DESCRIPTION="$$(./setup.py --description)"
-	LICENSE="$$(./setup.py --license)"
-	AUTHOR="$$(./setup.py --author)"
-	AUTHOR_EMAIL="$$(./setup.py --author-email)"
-	KEYWORDS="$$(./setup.py --keywords)"
-	D='$$'
-
-	cat >Dockerfile.standalone <<EOF
-	# DO NOT ADD THIS FILE TO VERSION CONTROL!
-	ARG OS_VERSION=latest
-	FROM alpine:$${D}{OS_VERSION}
-
-	LABEL version="$${VERSION}"
-	LABEL description="$${DESCRIPTION}"
-	LABEL license="$${LICENSE}"
-	LABEL keywords="$${KEYWORDS}"
-	LABEL maintainer="$${AUTHOR}"
-
-	ENV LANG=C.UTF-8
-	ENV LC_ALL=C.UTF-8
-	WORKDIR /data
-	COPY dist/$(PRJ) /usr/local/bin
-	ENTRYPOINT [ "/usr/local/bin/$(PRJ)" ]
-	# TODO: update parameters
-	CMD [ "--help" ]
-	EOF
-
-.make-docker-build: Dockerfile.standalone dist/$(PRJ)$(EXE)
-	@# Detect release version
-	if [[ "$${VERSION}" =~ "^[0-9](\.[0-9])+$$" ]];
-	then
-		TAG_VERSION=-t "$(DOCKER_REPOSITORY)/$(PRJ):$${VERSION}"
-	fi
-	$(SUDO) docker build \
-		-f Dockerfile.standalone \
-		--build-arg OS_VERSION="latest" \
-		$${TAG_VERSION} \
-		-t "$(DOCKER_REPOSITORY)/$(PRJ):latest" .
-	date >.make-docker-build
-
-## Build the docker <PRJ>:latest
-docker-build: .make-docker-build
-
-# Reset and rebuild the container
-docker-rebuild:
-	@rm -f Dockerfile.standalone .make-docker-build
-	$(MAKE) --no-print-directory docker-stop docker-start
-
-# Create a dedicated volume
-docker-volume:
-	@$(SUDO) docker volume inspect "$(PRJ)" >/dev/null 2>&1 || \
-	$(SUDO) docker volume create --name "$(PRJ)"
-	echo -e "$(cyan)Docker volume '$(PRJ)' created$(normal)"
-
-.cid_docker_daemon: .make-docker-build
-	$(SUDO) docker volume inspect "$(PRJ)" >/dev/null 2>&1 || $(MAKE) --no-print-directory docker-volume
-	# Remove --detach if it's not a daemon
-	$(SUDO) docker run \
-		--detach \
-		--cidfile ".cid_docker_daemon" \
-		-v $(PRJ):/data \
-		-it "$(DOCKER_REPOSITORY)/$(PRJ):latest"
-	echo -e "$(cyan)Docker daemon started$(normal)"
-
-# Start and attach the container
-docker-run: .cid_docker_daemon docker-attach
-
-## Start a daemon container with the docker image
-docker-start: .cid_docker_daemon
-
-## Attach to the docker
-docker-attach: .cid_docker_daemon
-	@CID=$$(cat .cid_docker_daemon)
-	$(SUDO) docker attach "$${CID}"
-
-## Connect a bash in the container
-docker-bash: .cid_docker_daemon
-	@CID=$$(cat .cid_docker_daemon)
-	$(SUDO) docker exec -i -t "$${CID}" /bin/bash
-
-## Stop the container daemon
-docker-stop:
-	@if [[ -e ".cid_docker_daemon" ]] ; then
-		CID=$$(cat .cid_docker_daemon)
-		$(SUDO) docker stop "$${CID}" || true
-		rm -f .cid_docker_daemon
-		echo -e "$(cyan)Docker daemon stopped$(normal)"
-	fi
-
-docker-logs: .cid_docker_daemon
-	@$(SUDO) docker container logs -f "$(PRJ)"
-
-docker-top: .cid_docker_daemon
-	@$(SUDO) docker container top "$(PRJ)"
-

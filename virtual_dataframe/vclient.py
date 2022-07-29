@@ -33,9 +33,8 @@ with (VClient())
 # @see https://blog.dask.org/2020/07/23/current-state-of-distributed-dask-clusters
 import logging
 import os
+import sys
 from typing import Any
-
-from dask.dataframe.core import no_default
 
 from .env import USE_CLUSTER, DEBUG, VDF_MODE, Mode
 
@@ -46,7 +45,7 @@ class _FakeClient():
     def cancel(self, futures, asynchronous=None, force=False) -> None:
         pass
 
-    def close(self, timeout=no_default) -> None:
+    def close(self, timeout='__no_default__') -> None:
         pass
 
     def __enter__(self) -> None:
@@ -94,7 +93,13 @@ class VClient():
 
                 if VDF_MODE == Mode.dask_cudf:  # Use in local or other environements
 
-                    from dask_cuda import LocalCUDACluster
+                    try:
+                        from dask_cuda import LocalCUDACluster
+                    except ModuleNotFoundError:
+                        print(
+                            "Please install dask-cuda via the rapidsai conda channel. "
+                            "See https://rapids.ai/start.html for instructions.")
+                        sys.exit(-1)
 
                     client = dask.distributed.Client(LocalCUDACluster(), **kwargs)
                     LOGGER.warning("Use LocalCudaCluster scheduler")
