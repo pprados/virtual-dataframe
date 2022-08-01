@@ -55,7 +55,10 @@ class _FakeClient():
         pass
 
     def __str__(self) -> str:
-        return "<Client: in-process>"
+        return "<Client: in-process scheduler>"
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
 class VClient():
@@ -118,6 +121,4 @@ class VClient():
                 # dask.config.set(scheduler='processes')
                 # client = dask.distributed.Client(processes=True)
                 LOGGER.warning("Use processes scheduler")
-        else:
-            LOGGER.warning("No scheduler")
         return client

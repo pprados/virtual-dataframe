@@ -111,17 +111,17 @@ def test_DataFrame_map_partitions():
             'c': [0, 20, 60, 120]
         }
     )
-    #_VDataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, **args, **kwargs)
-    result = df.map_partitions(lambda df,v: df.assign(c=df.a * df.b * v),v=10)
+    # _VDataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, **args, **kwargs)
+    result = df.map_partitions(lambda df, v: df.assign(c=df.a * df.b * v), v=10)
     assert result.to_pandas().equals(expected)
 
 
 def test_Series_map_partitions():
     s = vdf.VSeries([0, 1, 2, 3],
-                     npartitions=2
-                     )
+                    npartitions=2
+                    )
     expected = pandas.Series([0, 2, 4, 6])
-    result = s.map_partitions(lambda s: s *2).compute().to_pandas()
+    result = s.map_partitions(lambda s: s * 2).compute().to_pandas()
     assert result.equals(expected)
 
 
@@ -140,7 +140,6 @@ def test_apply_rows():
         for i, (a, b, c) in enumerate(zip(a_s, b_s, c_s)):
             out[i] = (a + b + c) * val
 
-
     expected = pandas.DataFrame(
         {'a': [0, 1, 2, 3],
          'b': [1, 2, 3, 4],
@@ -151,6 +150,10 @@ def test_apply_rows():
         my_kernel,
         incols={'a': 'a_s', 'b': 'b_s', 'c': 'c_s'},
         outcols={'out': np.int64},  # Va créer une place pour chaque row, pour le résultat
-        kwargs={"val": 3}
+        kwargs={
+            "val": 3
+        },
+        cache_key=True,
+        # pessimistic_nulls= True,  # FIXME: dask_cudf n'implemente pas ceci
     ).compute()
     assert r.to_pandas().equals(expected)

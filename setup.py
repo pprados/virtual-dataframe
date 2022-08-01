@@ -74,6 +74,7 @@ dev_requirements: List[str] = [
     'daff',
     'pytype', 'mypy',
     'jupyterlab',
+    'dask-labextension',
     'voila',
     'pandas-stubs',
     # For Dask

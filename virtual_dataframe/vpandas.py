@@ -39,6 +39,7 @@ Construct a VDataFrame from a Pandas DataFrame
 _doc_apply_rows = '''
 apply_rows(func, incols, outcols, kwargs, pessimistic_nulls=True, cache_key=None) method of cudf.core.dataframe.DataFrame instance
     Apply a row-wise user defined function.
+    See https://docs.rapids.ai/api/cudf/stable/user_guide/guide-to-udfs.html#lower-level-control-with-custom-numba-kernels
 
     Parameters
     ----------
@@ -287,17 +288,20 @@ if VDF_MODE == Mode.dask:
             self[col] = data
         return self
 
+
     def _apply_rows(self,
                     fn,
                     incols,
                     outcols,
                     kwargs,
-                    pessimistic_nulls=True,
-                    cache_key=None,
+                    pessimistic_nulls=True,  # FIXME: use it
+                    cache_key=None,  # FIXME: use it
                     ):
         return self.map_partitions(_partition_apply_rows, fn, incols, outcols, kwargs)
 
 
+    # TODO: apply_grouped. https://docs.rapids.ai/api/cudf/stable/user_guide/guide-to-udfs.html
+    # TODO: apply_chunck.
     _from_back: Any = dask.dataframe.from_pandas
 
     delayed: Any = dask.delayed
@@ -388,9 +392,6 @@ if VDF_MODE == Mode.cudf:
     from_virtual: Any = _remove_dask_parameters(lambda self: self)
     from_virtual.__doc__ = _doc_from_virtual
 
-    pandas.Series.map_partitions = lambda self, func, *args, **kwargs: self.map(func, *args, *kwargs)
-    pandas.Series.map_partitions.__doc__ = pandas.Series.map.__doc__
-
     pandas.Series.to_pandas = lambda self: self
     pandas.Series.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
 
@@ -447,19 +448,20 @@ if VDF_MODE == Mode.pandas:
             return pandas.read_csv(filepath_or_buffer, **kwargs)
 
 
+    # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
     def _apply_rows(
             self,
-            fn,
+            func,
             incols,
             outcols,
             kwargs,
-            pessimistic_nulls=True,
-            cache_key=None,
+            pessimistic_nulls=True,  # FIXME: use it
+            cache_key=None,  # FIXME: use it
     ):
         size = len(self)
         params = {param: self[col].to_numpy() for col, param in incols.items()}
         outputs = {param: numpy.empty(size, dtype=dtype) for param, dtype in outcols.items()}
-        fn(**params, **outputs, **kwargs)  # TODO: compiler la fn
+        func(**params, **outputs, **kwargs)  # TODO: compiler la fn
         for col, data in outputs.items():
             self[col] = data
         return self
@@ -482,18 +484,14 @@ if VDF_MODE == Mode.pandas:
         return self._old_to_csv(filepath_or_buffer, **kwargs)
 
 
-
     delayed: Any = _delayed
     delayed.__doc__ = _doc_delayed
 
     concat: Any = pandas.concat
 
-
     compute.__doc__ = _doc_compute
 
-
     read_csv.__doc__ = pandas.read_csv.__doc__
-
 
     from_pandas: Any = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
     from_pandas.__doc__ = _doc_from_pandas
@@ -518,7 +516,6 @@ if VDF_MODE == Mode.pandas:
     _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
     _VSeries.to_pandas = lambda self: self
     _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
-
 
     if "_old_to_csv" not in _VDataFrame.__dict__:
         _VDataFrame._old_to_csv = _VDataFrame.to_csv

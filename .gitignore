@@ -126,3 +126,4 @@ Dockerfile.standalone
 # Jupyter Notebook
 .ipynb_checkpoints
 
+/stubs/

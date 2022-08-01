@@ -134,12 +134,26 @@ You can read a sample notebook [here](https://github.com/pprados/virtual-datafra
 ## Compatibility
 This project is just a wrapper. So, it inherits limitations and bugs from other projects. Sorry for that.
 
-| framework                                                                         | limitation                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-|-----------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| pandas                                                                            | All data must be in DRAM                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| [cudf](https://docs.rapids.ai/api/cudf/nightly/user_guide/pandas-comparison.html) | All data must be in VRAM<br />All data types in cuDF are nullable<br />Iterating over a cuDF Series, DataFrame or Index is not supported.<br />Join (or merge) and groupby operations in cuDF do not guarantee output ordering.<br />The order of operations is not always deterministic<br />Cudf does not support duplicate column names<br />Cudf also supports .apply() it relies on Numba to JIT compile the UDF and execute it on the GPU |
-| [dask](https://distributed.dask.org/en/stable/limitations.html)                   | transpose() and MultiIndex are not implemented<br />Column assignment doesn't support type list                                                                                                                                                                                                                                                                                                                                                 |
-| dask-cudf                                                                         | See cudf and dask.<br />Categories with strings not implemented
+
+| Limitations                                                                                     |
+|-------------------------------------------------------------------------------------------------|
+| <br />**pandas**                                                                                |
+| All data must be in DRAM                                                                        |
+| <br />**[cudf](https://docs.rapids.ai/api/cudf/nightly/user_guide/pandas-comparison.html)**     |
+| All data must be in VRAM                                                                        |
+| All data types in cuDF are nullable                                                             |
+| Iterating over a cuDF Series, DataFrame or Index is not supported.                              |
+| Join (or merge) and groupby operations in cuDF do not guarantee output ordering.                |
+| The order of operations is not always deterministic                                             |
+| Cudf does not support duplicate column names                                                    |
+| Cudf also supports .apply() it relies on Numba to JIT compile the UDF and execute it on the GPU |
+| .apply(result_type=...) not supported                                                           |
+| <br />**[dask](https://distributed.dask.org/en/stable/limitations.html)**                       |
+|  transpose() and MultiIndex are not implemented                                                 |
+| Column assignment doesn't support type list                                                     |
+| <br />**dask-cudf**                                                                             |
+| See cudf and dask.                                                                              |
+| Categories with strings not implemented                                                         |
 
 To be compatible with all framework, you must only use the common features.
 

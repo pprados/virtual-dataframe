@@ -142,7 +142,13 @@ export VIRTUAL_ENV=$(CONDA_PREFIX)
 
 PIP_PACKAGE:=$(CONDA_PACKAGE)/$(PRJ_PACKAGE).egg-link
 PIP_ARGS?=
+
+# List your labextensions separated with space
+JUPYTER_LABEXTENSIONS:=dask-labextension
+
 JUPYTER_DATA_DIR:=$(shell jupyter --data-dir 2>/dev/null || echo "~/.local/share/jupyter")
+JUPYTER_LABEXTENSIONS_DIR:=$(CONDA_PREFIX)/share/jupyter/labextensions
+_JUPYTER_LABEXTENSIONS:=$(foreach ext,$(JUPYTER_LABEXTENSIONS),$(JUPYTER_LABEXTENSIONS_DIR)/$(ext))
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour ajouter des repositories complémentaires à PIP.
@@ -401,6 +407,7 @@ install-rapids:
 		cudatoolkit==$(CUDA_VER) \
 		dask-cuda \
 		dask-cudf \
+		dask-labextension
 
 # Rule to update the current venv, with the dependencies describe in `setup.py`
 $(PIP_PACKAGE): $(CONDA_PYTHON) setup.py | .git # Install pip dependencies
@@ -431,7 +438,13 @@ remove-kernel: $(REQUIREMENTS)
 	echo -e "$(yellow)Warning: Kernel $(KERNEL) uninstalled$(normal)"
 
 
-
+# ---------------------------------------------------------------------------------------
+# SNIPPET pour gener les extensions jupyter
+#$(JUPYTER_LABEXTENSIONS)/dask-labextension:
+#	jupyter labextension install dask-labextension
+$(JUPYTER_LABEXTENSIONS_DIR)/%:
+	@echo -e "$(green)Install jupyter labextension $* $(normal)"
+	jupyter labextension install $*
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour préparer l'environnement d'un projet juste après un `git clone`
@@ -699,7 +712,7 @@ endif
 # Utilisez `make notebook` à la place de `jupyter notebook`.
 .PHONY: notebook
 ## Start jupyter notebooks
-notebook: $(REQUIREMENTS) $(JUPYTER_DATA_DIR)/kernels/$(KERNEL)
+notebook: $(REQUIREMENTS) $(JUPYTER_DATA_DIR)/kernels/$(KERNEL) $(_JUPYTER_LABEXTENSIONS)
 	@$(VALIDATE_VENV)
 	DATA=$$DATA jupyter lab \
 		--notebook-dir=notebooks \
