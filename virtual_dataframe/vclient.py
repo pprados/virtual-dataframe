@@ -64,7 +64,7 @@ class VClient():
         if VDF_MODE in (Mode.dask, Mode.dask_cudf):
             import dask.distributed
             if DEBUG:
-                dask.config.set(scheduler='synchronous')
+                dask.config.set(scheduler='synchronous')  # type: ignore
                 LOGGER.warning("Use synchronous scheduler for debuging")
             # Connect to Domino cluster
             elif "DASK_SCHEDULER_SERVICE_HOST" in os.environ and \

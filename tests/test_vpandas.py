@@ -1,7 +1,11 @@
+import math
 import shutil
 import tempfile
 
+import numpy
+import numpy as np
 import pandas
+import pytest
 
 import virtual_dataframe as vdf
 
@@ -90,3 +94,63 @@ def test_Series_to_from_numpy():
     n = s.to_numpy()
     s2 = vdf.VSeries(n, npartitions=2)
     assert s.compute().equals(s2.compute())
+
+
+def test_DataFrame_map_partitions():
+    df = vdf.VDataFrame(
+        {
+            'a': [0, 1, 2, 3],
+            'b': [1, 2, 3, 4],
+        },
+        npartitions=2
+    )
+    expected = pandas.DataFrame(
+        {
+            'a': [0, 1, 2, 3],
+            'b': [1, 2, 3, 4],
+            'c': [0, 20, 60, 120]
+        }
+    )
+    #_VDataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, **args, **kwargs)
+    result = df.map_partitions(lambda df,v: df.assign(c=df.a * df.b * v),v=10)
+    assert result.to_pandas().equals(expected)
+
+
+def test_Series_map_partitions():
+    s = vdf.VSeries([0, 1, 2, 3],
+                     npartitions=2
+                     )
+    expected = pandas.Series([0, 2, 4, 6])
+    result = s.map_partitions(lambda s: s *2).compute().to_pandas()
+    assert result.equals(expected)
+
+
+def test_apply_rows():
+    df = vdf.VDataFrame(
+        {'a': [0, 1, 2, 3],
+         'b': [1, 2, 3, 4],
+         'c': [10, 20, 30, 40]
+         },
+        npartitions=2
+    )
+
+    def my_kernel(a_s, b_s, c_s, val, out):  # Compilé pour Kernel GPU
+        if a_s[0] == 2:
+            print("toto")
+        for i, (a, b, c) in enumerate(zip(a_s, b_s, c_s)):
+            out[i] = (a + b + c) * val
+
+
+    expected = pandas.DataFrame(
+        {'a': [0, 1, 2, 3],
+         'b': [1, 2, 3, 4],
+         'c': [10, 20, 30, 40],
+         'out': [33, 69, 105, 141]
+         })
+    r = df.apply_rows(
+        my_kernel,
+        incols={'a': 'a_s', 'b': 'b_s', 'c': 'c_s'},
+        outcols={'out': np.int64},  # Va créer une place pour chaque row, pour le résultat
+        kwargs={"val": 3}
+    ).compute()
+    assert r.to_pandas().equals(expected)

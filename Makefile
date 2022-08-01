@@ -917,7 +917,7 @@ test-dask_cudf:
 endif
 
 
-.make-test: test-pandas test-cudf test-dask test-dask_cudf .make-notebooks-test .make-functional-test
+.make-test: test-pandas test-cudf test-dask test-dask_cudf .make-notebooks-test # FIXME .make-functional-test
 	@date >.make-test
 
 .PHONY: test

@@ -36,7 +36,74 @@ Construct a VDataFrame from a Pandas DataFrame
                 A dask DataFrame/Series
 '''
 
+_doc_apply_rows = '''
+apply_rows(func, incols, outcols, kwargs, pessimistic_nulls=True, cache_key=None) method of cudf.core.dataframe.DataFrame instance
+    Apply a row-wise user defined function.
 
+    Parameters
+    ----------
+    df : DataFrame
+        The source dataframe.
+    func : function
+        The transformation function that will be executed on the CUDA GPU.
+    incols: list or dict
+        A list of names of input columns that match the function arguments.
+        Or, a dictionary mapping input column names to their corresponding
+        function arguments such as {'col1': 'arg1'}.
+    outcols: dict
+        A dictionary of output column names and their dtype.
+    kwargs: dict
+        name-value of extra arguments.  These values are passed
+        directly into the function.
+    pessimistic_nulls : bool
+        Whether or not apply_rows output should be null when any corresponding
+        input is null. If False, all outputs will be non-null, but will be the
+        result of applying func against the underlying column data, which
+        may be garbage.
+
+
+    Examples
+    --------
+    The user function should loop over the columns and set the output for
+    each row. Loop execution order is arbitrary, so each iteration of
+    the loop **MUST** be independent of each other.
+
+    When ``func`` is invoked, the array args corresponding to the
+    input/output are strided so as to improve GPU parallelism.
+    The loop in the function resembles serial code, but executes
+    concurrently in multiple threads.
+
+    >>> import cudf
+    >>> import numpy as np
+    >>> df = cudf.DataFrame()
+    >>> nelem = 3
+    >>> df['in1'] = np.arange(nelem)
+    >>> df['in2'] = np.arange(nelem)
+    >>> df['in3'] = np.arange(nelem)
+
+    Define input columns for the kernel
+
+    >>> in1 = df['in1']
+    >>> in2 = df['in2']
+    >>> in3 = df['in3']
+    >>> def kernel(in1, in2, in3, out1, out2, kwarg1, kwarg2):
+    ...     for i, (x, y, z) in enumerate(zip(in1, in2, in3)):
+    ...         out1[i] = kwarg2 * x - kwarg1 * y
+    ...         out2[i] = y - kwarg1 * z
+
+    Call ``.apply_rows`` with the name of the input columns, the name and
+    dtype of the output columns, and, optionally, a dict of extra
+    arguments.
+
+    >>> df.apply_rows(kernel,
+    ...               incols=['in1', 'in2', 'in3'],
+    ...               outcols=dict(out1=np.float64, out2=np.float64),
+    ...               kwargs=dict(kwarg1=3, kwarg2=4))
+       in1  in2  in3 out1 out2
+    0    0    0    0  0.0  0.0
+    1    1    1    1  1.0 -2.0
+    2    2    2    2  2.0 -4.0
+'''
 _doc_from_virtual = '''Convert VDataFrame to VDataFrame'''
 _doc_VDataFrame_to_csv = '''Convert CSV files to VDataFrame'''
 _doc_VSeries_to_csv = '''Convert CSV files to VSeries'''
@@ -148,6 +215,7 @@ if VDF_MODE == Mode.dask_cudf:
     import dask
     import dask.dataframe
     import dask.distributed
+
     try:
         import dask_cudf
         import cudf  # See https://docs.rapids.ai/api/dask-cuda/nightly/install.html
@@ -192,6 +260,7 @@ if VDF_MODE == Mode.dask_cudf:
 # %%
 if VDF_MODE == Mode.dask:
     import pandas
+    import numpy
     import dask
     import dask.dataframe
 
@@ -200,6 +269,34 @@ if VDF_MODE == Mode.dask:
 
     _VDataFrame: Any = dask.dataframe.DataFrame
     _VSeries: Any = dask.dataframe.Series
+
+
+    def _partition_apply_rows(
+            self,
+            fn,
+            incols,
+            outcols,
+            kwargs,
+    ):
+        # The first invocation is with fake datas
+        size = len(self)
+        params = {param: self[col].to_numpy() for col, param in incols.items()}
+        outputs = {param: numpy.empty(size, dtype) for param, dtype in outcols.items()}
+        fn(**params, **outputs, **kwargs)  # TODO: compiler la fn
+        for col, data in outputs.items():
+            self[col] = data
+        return self
+
+    def _apply_rows(self,
+                    fn,
+                    incols,
+                    outcols,
+                    kwargs,
+                    pessimistic_nulls=True,
+                    cache_key=None,
+                    ):
+        return self.map_partitions(_partition_apply_rows, fn, incols, outcols, kwargs)
+
 
     _from_back: Any = dask.dataframe.from_pandas
 
@@ -218,6 +315,9 @@ if VDF_MODE == Mode.dask:
     _BackDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
     _BackSeries.to_pandas = lambda self: self
     _BackSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
+
+    _VDataFrame.apply_rows = _apply_rows
+    _VDataFrame.apply_rows.__doc__ = _doc_apply_rows
 
     _VDataFrame.to_pandas = lambda self: self.compute()
     _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
@@ -251,12 +351,6 @@ if VDF_MODE == Mode.cudf:
         return data
 
 
-    delayed: Any = _delayed
-    delayed.__doc__ = _doc_delayed
-
-    concat: Any = cudf.concat
-
-
     def _read_csv(filepath_or_buffer, **kwargs):
         if not isinstance(filepath_or_buffer, list):
             return cudf.concat((cudf.read_csv(f, **kwargs) for f in glob.glob(filepath_or_buffer)))
@@ -264,35 +358,10 @@ if VDF_MODE == Mode.cudf:
             return cudf.read_csv(filepath_or_buffer, **kwargs)
 
 
-    read_csv: Any = _read_csv
-    read_csv.__doc__ = cudf.read_csv.__doc__
-
-    from_pandas: Any = _remove_dask_parameters(cudf.from_pandas)
-    from_pandas.__doc__ = _doc_from_pandas
-    from_virtual: Any = _remove_dask_parameters(lambda self: self)
-    from_virtual.__doc__ = _doc_from_virtual
-
-    pandas.Series.to_pandas = lambda self: self
-    pandas.Series.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
-
-    _VDataFrame.compute = lambda self, **kwargs: self
-    _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
-    _VSeries.compute = lambda self, **kwargs: self
-    _VSeries.compute.__doc__ = _doc_VDataFrame_compute
-
     def _DataFrame_to_csv(self, filepath_or_buffer, **kwargs):
         if "*" in str(filepath_or_buffer):
             filepath_or_buffer = filepath_or_buffer.replace("*", "")
         return self._old_to_csv(filepath_or_buffer, **kwargs)
-
-
-    if "_old_to_csv" not in _VDataFrame.__dict__:
-        _VDataFrame._old_to_csv = _VDataFrame.to_csv
-    _VDataFrame.to_csv = _remove_to_csv(_DataFrame_to_csv)
-    _VDataFrame.to_csv.__doc__ = _doc_VDataFrame_to_csv
-
-    _VDataFrame.categorize = lambda self: self
-    _VDataFrame.categorize.__doc__ = _doc_categorize
 
 
     # noinspection PyUnusedLocal
@@ -306,11 +375,49 @@ if VDF_MODE == Mode.cudf:
         return tuple(args)
 
 
+    delayed: Any = _delayed
+    delayed.__doc__ = _doc_delayed
+
+    concat: Any = cudf.concat
+
+    read_csv: Any = _read_csv
+    read_csv.__doc__ = cudf.read_csv.__doc__
+
+    from_pandas: Any = _remove_dask_parameters(cudf.from_pandas)
+    from_pandas.__doc__ = _doc_from_pandas
+    from_virtual: Any = _remove_dask_parameters(lambda self: self)
+    from_virtual.__doc__ = _doc_from_virtual
+
+    pandas.Series.map_partitions = lambda self, func, *args, **kwargs: self.map(func, *args, *kwargs)
+    pandas.Series.map_partitions.__doc__ = pandas.Series.map.__doc__
+
+    pandas.Series.to_pandas = lambda self: self
+    pandas.Series.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
+
+    _VDataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, *args, **kwargs)
+    _VDataFrame.map_partitions.__doc__ = _VSeries.map.__doc__
+    _VSeries.map_partitions = lambda self, func, *args, **kwargs: self.map(func, *args, *kwargs)
+    _VSeries.map_partitions.__doc__ = _VSeries.map.__doc__
+
+    _VDataFrame.compute = lambda self, **kwargs: self
+    _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
+    _VSeries.compute = lambda self, **kwargs: self
+    _VSeries.compute.__doc__ = _doc_VDataFrame_compute
+
+    if "_old_to_csv" not in _VDataFrame.__dict__:
+        _VDataFrame._old_to_csv = _VDataFrame.to_csv
+    _VDataFrame.to_csv = _remove_to_csv(_DataFrame_to_csv)
+    _VDataFrame.to_csv.__doc__ = _doc_VDataFrame_to_csv
+
+    _VDataFrame.categorize = lambda self: self
+    _VDataFrame.categorize.__doc__ = _doc_categorize
+
     compute.__doc__ = _doc_compute
 
 # %%
 if VDF_MODE == Mode.pandas:
     import pandas
+    import numpy
 
     # _BackDataFrame = pandas.DataFrame
     # _BackSeries = pandas.Series
@@ -333,10 +440,29 @@ if VDF_MODE == Mode.pandas:
         return data
 
 
-    delayed: Any = _delayed
-    delayed.__doc__ = _doc_delayed
+    def read_csv(filepath_or_buffer, **kwargs):
+        if not isinstance(filepath_or_buffer, list):
+            return pandas.concat((pandas.read_csv(f, **kwargs) for f in glob.glob(filepath_or_buffer)))
+        else:
+            return pandas.read_csv(filepath_or_buffer, **kwargs)
 
-    concat: Any = pandas.concat
+
+    def _apply_rows(
+            self,
+            fn,
+            incols,
+            outcols,
+            kwargs,
+            pessimistic_nulls=True,
+            cache_key=None,
+    ):
+        size = len(self)
+        params = {param: self[col].to_numpy() for col, param in incols.items()}
+        outputs = {param: numpy.empty(size, dtype=dtype) for param, dtype in outcols.items()}
+        fn(**params, **outputs, **kwargs)  # TODO: compiler la fn
+        for col, data in outputs.items():
+            self[col] = data
+        return self
 
 
     # noinspection PyUnusedLocal
@@ -350,22 +476,37 @@ if VDF_MODE == Mode.pandas:
         return args
 
 
+    def _DataFrame_to_csv(self, filepath_or_buffer, **kwargs):
+        if "*" in str(filepath_or_buffer):
+            filepath_or_buffer = filepath_or_buffer.replace("*", "")
+        return self._old_to_csv(filepath_or_buffer, **kwargs)
+
+
+
+    delayed: Any = _delayed
+    delayed.__doc__ = _doc_delayed
+
+    concat: Any = pandas.concat
+
+
     compute.__doc__ = _doc_compute
 
 
-    def read_csv(filepath_or_buffer, **kwargs):
-        if not isinstance(filepath_or_buffer, list):
-            return pandas.concat((pandas.read_csv(f, **kwargs) for f in glob.glob(filepath_or_buffer)))
-        else:
-            return pandas.read_csv(filepath_or_buffer, **kwargs)
-
-
     read_csv.__doc__ = pandas.read_csv.__doc__
+
 
     from_pandas: Any = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
     from_pandas.__doc__ = _doc_from_pandas
     from_virtual: Any = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
     from_virtual.__doc__ = _doc_from_virtual
+
+    _VDataFrame.apply_rows = _apply_rows
+    _VDataFrame.apply_rows.__doc__ = _doc_apply_rows
+
+    _VDataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, *args, **kwargs)
+    _VDataFrame.map_partitions.__doc__ = _VSeries.map.__doc__
+    _VSeries.map_partitions = lambda self, func, *args, **kwargs: self.map(func, *args, *kwargs)
+    _VSeries.map_partitions.__doc__ = _VSeries.map.__doc__
 
     _VDataFrame.compute = lambda self, **kwargs: self
     _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
@@ -377,12 +518,6 @@ if VDF_MODE == Mode.pandas:
     _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
     _VSeries.to_pandas = lambda self: self
     _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
-
-
-    def _DataFrame_to_csv(self, filepath_or_buffer, **kwargs):
-        if "*" in str(filepath_or_buffer):
-            filepath_or_buffer = filepath_or_buffer.replace("*", "")
-        return self._old_to_csv(filepath_or_buffer, **kwargs)
 
 
     if "_old_to_csv" not in _VDataFrame.__dict__:

@@ -27,6 +27,8 @@ We propose to replace all these classes and scenarios, with a *uniform model*,
 inspired by [dask](https://www.dask.org/).
 Then, it is possible to write one code, and use it in differents environnements and frameworks.
 
+This project is essentially a back-port of "Dask+Cudf" to others frameworks.
+
 To reduce the confusion, you must use the classes `VDataFrame` and `VSeries` (The prefix `V` is for *Virtual*).
 These classes propose the methods `.to_pandas()` and `.compute()` for each version.
 And a new `@delayed` annotation can be use, with or without Dask.
@@ -87,6 +89,7 @@ The real compatibilty between the differents simulation of Pandas, depends on th
 You can use the `VDF_MODE` variable, to update some part of code, between the selected backend.
 
 It's not always easy to write a code *compatible* with all scenario, but it's possible.
+Generally, add just `.compute()` and/or `.to_pandas()` is enough.
 After this effort, it's possible to compare the performance about the differents technologies,
 or propose a component, compatible with differents contexts.
 
@@ -120,9 +123,11 @@ conda install -q -y $(CONDA_ARGS) \
 | VDataFrame.to_csv()                    | Save to *glob* files                           |
 | VDataFrame.to_numpy()                  | Convert to numpy array                         |
 | VDataFrame.categorize()                | Detect all categories                          |
+| VDataFrame.apply_rows()                | Apply rows, GPU template                       |
+| VDataFrame.map_partitions()            | Apply function for each parttions              |
 | VSeries.compute()                      | Compute the virtual series                     |
-| VSeries.to_pandas()                    | Convert to pandas dataframe                     |
-| VSeries.to_numpy()                     | Convert to numpy array                     |
+| VSeries.to_pandas()                    | Convert to pandas dataframe                    |
+| VSeries.to_numpy()                     | Convert to numpy array                         |
 
 You can read a sample notebook [here](https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo.ipynb).
 
@@ -137,6 +142,50 @@ This project is just a wrapper. So, it inherits limitations and bugs from other 
 | dask-cudf                                                                         | See cudf and dask.<br />Categories with strings not implemented
 
 To be compatible with all framework, you must only use the common features.
+
+|     | small data          | big data                 |
+|-----|---------------------|--------------------------|
+| CPU | pandas<br/>Limite:+ | dask<br/>Limite:++       |
+| GPU | cudf<br/>Limite:++  | dask_cudf<br/>Limite:+++ |
+
+To develop, you can choose the level to be compatible with others frameworks.
+Each cell is strongly compatible the upper left part.
+
+## No need of GPU?
+If you don't need a GPU, then develop for `dask`.
+
+|     | small data              | big data                 |
+|-----|-------------------------|--------------------------|
+| CPU | **pandas<br/>Limite:+** | **dask<br/>Limite:++**   |
+| GPU | cudf<br/>Limite:++      | dask_cudf<br/>Limite:+++ |
+
+You can ignore this API:
+- VDataFrame.apply_rows()
+
+## No need of big data?
+
+If you don't need to use big data, then develop for `cudf`.
+
+|     | small data              | big data                 |
+|-----|-------------------------|--------------------------|
+| CPU | **pandas<br/>Limite:+** | dask<br/>Limite:++       |
+| GPU | **cudf<br/>Limite:++**  | dask_cudf<br/>Limite:+++ |
+
+You can ignore these API:
+- @delayed
+- map_partitions()
+- categorize()
+- compute()
+- npartitions=...
+
+## Need all possibility?
+
+To be compatible with all mode, develop for `dask_cudf`.
+
+|     | small data              | big data                     |
+|-----|-------------------------|------------------------------|
+| CPU | **pandas<br/>Limite:+** | **dask<br/>Limite:++**       |
+| GPU | **cudf<br/>Limite:++**  | **dask_cudf<br/>Limite:+++** |
 
 
 ## FAQ
