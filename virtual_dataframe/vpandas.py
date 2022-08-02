@@ -105,7 +105,7 @@ apply_rows(func, incols, outcols, kwargs, pessimistic_nulls=True, cache_key=None
     1    1    1    1  1.0 -2.0
     2    2    2    2  2.0 -4.0
 '''
-_doc_from_virtual = '''Convert VDataFrame to VDataFrame'''
+_doc_from_backend = '''Convert VDataFrame to VDataFrame'''
 _doc_VDataFrame_to_csv = '''Convert CSV files to VDataFrame'''
 _doc_VSeries_to_csv = '''Convert CSV files to VSeries'''
 _doc_VDataFrame_to_pandas = '''Convert VDataFrame to Pandas DataFrame'''
@@ -113,6 +113,36 @@ _doc_VSeries_to_pandas = '''Convert VSeries to Pandas DataFrame'''
 _doc_VDataFrame_to_numpy = '''Convert VDataFrame to Numpy array'''
 _doc_VSeries_to_numpy = '''Convert VSeries to Numpy array'''
 _doc_VDataFrame_compute = '''Fake compute(). Return self.'''
+_doc_VDataFrame_map_partitions = '''Apply Python function on each DataFrame partition.
+
+    Note that the index and divisions are assumed to remain unchanged.
+
+    Parameters
+    ----------
+    func : function
+        The function applied to each partition. If this function accepts
+        the special ``partition_info`` keyword argument, it will recieve
+        information on the partition's relative location within the
+        dataframe.
+    args, kwargs :
+        Positional and keyword arguments to pass to the function.
+        Positional arguments are computed on a per-partition basis, while
+        keyword arguments are shared across all partitions. The partition
+        itself will be the first positional argument, with all other
+        arguments passed *after*. Arguments can be ``Scalar``, ``Delayed``,
+        or regular Python objects. DataFrame-like args (both dask and
+        pandas) will be repartitioned to align (if necessary) before
+        applying the function; see ``align_dataframes`` to control this
+        behavior.
+    enforce_metadata : bool, default True
+        Ignored
+    transform_divisions : bool, default True
+        Ignored
+    align_dataframes : bool, default True
+        Ignored
+    meta : pd.DataFrame, pd.Series, dict, iterable, tuple, optional
+        Ignored
+'''
 _doc_categorize = '''
 Convert columns of the DataFrame to category dtype.
 
@@ -224,8 +254,9 @@ if VDF_MODE == Mode.dask_cudf:
         print("Please install cudf and dask_cudf via the rapidsai conda channel. "
               "See https://rapids.ai/start.html for instructions.")
         sys.exit(-1)
-    _BackDataFrame: Any = cudf.DataFrame
-    _BackSeries: Any = cudf.Series
+    BackEndDataFrame: Any = cudf.DataFrame
+    BackEndSeries: Any = cudf.Series
+    BackEnd = cudf
 
     _from_back: Any = dask_cudf.from_cudf
 
@@ -236,7 +267,7 @@ if VDF_MODE == Mode.dask_cudf:
     concat: Any = dask.dataframe.multi.concat
 
     from_pandas: Any = dask.dataframe.from_pandas
-    from_virtual: Any = dask_cudf.from_cudf
+    from_backend: Any = dask_cudf.from_cudf
 
     read_csv: Any = dask.dataframe.read_csv
 
@@ -249,6 +280,10 @@ if VDF_MODE == Mode.dask_cudf:
     dask.dataframe.DataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
     dask.dataframe.Series.to_pandas = lambda self: self.compute()
     dask.dataframe.Series.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
+    dask.dataframe.DataFrame.to_backend = lambda self: self.compute()
+    dask.dataframe.DataFrame.to_backend.__doc__ = _doc_VDataFrame_to_pandas
+    dask.dataframe.Series.to_backend = lambda self: self.compute()
+    dask.dataframe.Series.to_backend.__doc__ = _doc_VDataFrame_to_pandas
 
     _VDataFrame.to_pandas = lambda self: self.compute().to_pandas()
     _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
@@ -265,8 +300,9 @@ if VDF_MODE == Mode.dask:
     import dask
     import dask.dataframe
 
-    _BackDataFrame: Any = pandas.DataFrame
-    _BackSeries: Any = pandas.Series
+    BackEndDataFrame: Any = pandas.DataFrame
+    BackEndSeries: Any = pandas.Series
+    BackEnd = pandas
 
     _VDataFrame: Any = dask.dataframe.DataFrame
     _VSeries: Any = dask.dataframe.Series
@@ -311,14 +347,14 @@ if VDF_MODE == Mode.dask:
     concat: Any = dask.dataframe.multi.concat
 
     from_pandas: Any = dask.dataframe.from_pandas
-    from_virtual: Any = dask.dataframe.from_pandas
+    from_backend: Any = dask.dataframe.from_pandas
 
     read_csv: Any = dask.dataframe.read_csv
 
-    _BackDataFrame.to_pandas = lambda self: self
-    _BackDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
-    _BackSeries.to_pandas = lambda self: self
-    _BackSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
+    BackEndDataFrame.to_pandas = lambda self: self
+    BackEndDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
+    BackEndSeries.to_pandas = lambda self: self
+    BackEndSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
 
     _VDataFrame.apply_rows = _apply_rows
     _VDataFrame.apply_rows.__doc__ = _doc_apply_rows
@@ -327,6 +363,11 @@ if VDF_MODE == Mode.dask:
     _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
     _VSeries.to_pandas = lambda self: self.compute()
     _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
+
+    _VDataFrame.to_backend = lambda self: self.compute()
+    _VDataFrame.to_backend.__doc__ = _doc_VDataFrame_to_pandas
+    _VSeries.to_backend = lambda self: self.compute()
+    _VSeries.to_backend.__doc__ = _doc_VSeries_to_pandas
 
     _VDataFrame.to_numpy = lambda self: self.compute().to_numpy()
     _VDataFrame.to_numpy.__doc__ = _doc_VDataFrame_to_numpy
@@ -338,15 +379,16 @@ if VDF_MODE == Mode.cudf:
     import cudf
     import pandas
 
-    _BackDataFrame: Any = cudf.DataFrame
-    _BackSeries: Any = cudf.Series
+    BackEndDataFrame: Any = cudf.DataFrame
+    BackEndSeries: Any = cudf.Series
+    BackEnd = cudf
 
     _VDataFrame: Any = cudf.DataFrame
     _VSeries: Any = cudf.Series
 
 
     def _from_back(
-            data: Union[_BackDataFrame, _BackSeries],
+            data: Union[BackEndDataFrame, BackEndSeries],
             npartitions: Optional[int] = None,
             chunksize: Optional[int] = None,
             sort: bool = True,
@@ -389,16 +431,21 @@ if VDF_MODE == Mode.cudf:
 
     from_pandas: Any = _remove_dask_parameters(cudf.from_pandas)
     from_pandas.__doc__ = _doc_from_pandas
-    from_virtual: Any = _remove_dask_parameters(lambda self: self)
-    from_virtual.__doc__ = _doc_from_virtual
+    from_backend: Any = _remove_dask_parameters(lambda self: self)
+    from_backend.__doc__ = _doc_from_backend
 
     pandas.Series.to_pandas = lambda self: self
     pandas.Series.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
 
     _VDataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, *args, **kwargs)
-    _VDataFrame.map_partitions.__doc__ = _VSeries.map.__doc__
+    _VDataFrame.map_partitions.__doc__ = _doc_VDataFrame_map_partitions
     _VSeries.map_partitions = lambda self, func, *args, **kwargs: self.map(func, *args, *kwargs)
     _VSeries.map_partitions.__doc__ = _VSeries.map.__doc__
+
+    _VDataFrame.to_backend = lambda self: self
+    _VDataFrame.to_backend.__doc__ = _VDataFrame.to_pandas.__doc__
+    _VSeries.to_backend = lambda self: self
+    _VSeries.to_backend.__doc__ = _VSeries.to_pandas.__doc__
 
     _VDataFrame.compute = lambda self, **kwargs: self
     _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
@@ -420,11 +467,12 @@ if VDF_MODE == Mode.pandas:
     import pandas
     import numpy
 
-    # _BackDataFrame = pandas.DataFrame
-    # _BackSeries = pandas.Series
+    # BackEndDataFrame = pandas.DataFrame
+    # BackEndSeries = pandas.Series
     # _BackIndex = pandas.Index
-    _BackDataFrame: Any = pandas.DataFrame
-    _BackSeries: Any = pandas.Series
+    BackEndDataFrame: Any = pandas.DataFrame
+    BackEndSeries: Any = pandas.Series
+    BackEnd = pandas
 
     _VDataFrame: Any = pandas.DataFrame
     _VSeries: Any = pandas.Series
@@ -432,7 +480,7 @@ if VDF_MODE == Mode.pandas:
 
     # noinspection PyUnusedLocal
     def _from_back(  # noqa: F811
-            data: Union[_BackDataFrame, _BackSeries],
+            data: Union[BackEndDataFrame, BackEndSeries],
             npartitions: Optional[int] = None,
             chunksize: Optional[int] = None,
             sort: bool = True,
@@ -495,8 +543,8 @@ if VDF_MODE == Mode.pandas:
 
     from_pandas: Any = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
     from_pandas.__doc__ = _doc_from_pandas
-    from_virtual: Any = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
-    from_virtual.__doc__ = _doc_from_virtual
+    from_backend: Any = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
+    from_backend.__doc__ = _doc_from_backend
 
     _VDataFrame.apply_rows = _apply_rows
     _VDataFrame.apply_rows.__doc__ = _doc_apply_rows
@@ -516,6 +564,11 @@ if VDF_MODE == Mode.pandas:
     _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
     _VSeries.to_pandas = lambda self: self
     _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
+
+    _VDataFrame.to_backend = lambda self: self
+    _VDataFrame.to_backend.__doc__ = _doc_VDataFrame_to_pandas
+    _VSeries.to_backend = lambda self: self
+    _VSeries.to_backend.__doc__ = _doc_VSeries_to_pandas
 
     if "_old_to_csv" not in _VDataFrame.__dict__:
         _VDataFrame._old_to_csv = _VDataFrame.to_csv
@@ -545,7 +598,7 @@ class VDataFrame(_VDataFrame):
                 name: Optional[str] = None,
                 ) -> _VDataFrame:
         return _from_back(
-            _BackDataFrame(data=data, index=index, columns=columns, dtype=dtype),
+            BackEndDataFrame(data=data, index=index, columns=columns, dtype=dtype),
             npartitions=npartitions,
             chunksize=chunksize,
             sort=sort,
@@ -569,7 +622,7 @@ class VSeries(_VSeries):
                 name: Optional[str] = None,
                 ) -> _VSeries:
         return _from_back(
-            _BackSeries(data=data, index=index, dtype=dtype, name=name),
+            BackEndSeries(data=data, index=index, dtype=dtype, name=name),
             npartitions=npartitions,
             chunksize=chunksize,
             sort=sort,
