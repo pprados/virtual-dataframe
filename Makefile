@@ -400,7 +400,9 @@ $(CONDA_PYTHON):
 	@$(VALIDATE_VENV)
 	conda install -q "python=$(PYTHON_VERSION).*" -y $(CONDA_ARGS)
 
-install-rapids:
+install-rapids: $(CONDA_PACKAGE)/cudf
+$(CONDA_PACKAGE)/cudf:
+ifeq ($(USE_GPU),-gpu)
 	@echo "$(green)  Install NVidia Rapids...$(normal)"
 	conda install -q -y $(CONDA_ARGS) \
 		cudf==$(CUDF_VER) \
@@ -408,14 +410,16 @@ install-rapids:
 		dask-cuda \
 		dask-cudf \
 		dask-labextension
+else
+	conda install -q -y $(CONDA_ARGS) \
+		dask-labextension
+endif
 
 # Rule to update the current venv, with the dependencies describe in `setup.py`
-$(PIP_PACKAGE): $(CONDA_PYTHON) setup.py | .git # Install pip dependencies
+$(PIP_PACKAGE): $(CONDA_PYTHON) setup.py $(CONDA_PACKAGE)/cudf | .git # Install pip dependencies
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Install setup.py dependencies ... (may take minutes)$(normal)"
 ifeq ($(USE_GPU),-gpu)
-	# FIXME: voir comment se passer de conda pour un setup "propre"
-	make install-rapids
 	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.[all,dev,test]' | grep -v 'already satisfied' || true
 else
 	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.[pandas,dask,dev,test]' | grep -v 'already satisfied' || true

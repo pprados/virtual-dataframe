@@ -113,6 +113,7 @@ _doc_VSeries_to_pandas = '''Convert VSeries to Pandas DataFrame'''
 _doc_VDataFrame_to_numpy = '''Convert VDataFrame to Numpy array'''
 _doc_VSeries_to_numpy = '''Convert VSeries to Numpy array'''
 _doc_VDataFrame_compute = '''Fake compute(). Return self.'''
+_doc_VDataFrame_visualize = '''Fake visualize(). Return self.'''
 _doc_VDataFrame_map_partitions = '''Apply Python function on each DataFrame partition.
 
     Note that the index and divisions are assumed to remain unchanged.
@@ -263,6 +264,7 @@ if VDF_MODE == Mode.dask_cudf:
     delayed: Any = dask.delayed
 
     compute: Any = dask.compute
+    visualize: Any = dask.visualize
 
     concat: Any = dask.dataframe.multi.concat
 
@@ -316,10 +318,11 @@ if VDF_MODE == Mode.dask:
             kwargs,
     ):
         # The first invocation is with fake datas
+        import numba
         size = len(self)
         params = {param: self[col].to_numpy() for col, param in incols.items()}
         outputs = {param: numpy.empty(size, dtype) for param, dtype in outcols.items()}
-        fn(**params, **outputs, **kwargs)  # TODO: compiler la fn
+        numba.jit(fn, nopython=True)(**params, **outputs, **kwargs)
         for col, data in outputs.items():
             self[col] = data
         return self
@@ -343,6 +346,7 @@ if VDF_MODE == Mode.dask:
     delayed: Any = dask.delayed
 
     compute: Any = dask.compute
+    visualize: Any = dask.visualize
 
     concat: Any = dask.dataframe.multi.concat
 
@@ -421,6 +425,20 @@ if VDF_MODE == Mode.cudf:
         return tuple(args)
 
 
+    # FIXME: __doc__
+
+    def visualize(*args, **kwargs):
+        try:
+            import IPython
+            return IPython.core.display.Image(data=[], url=None, filename=None, format=u'png', embed=None, width=None,
+                                              height=None,
+                                              retina=False)
+        except ModuleNotFoundError:
+            return True
+
+
+    # FIXME: __doc__
+
     delayed: Any = _delayed
     delayed.__doc__ = _doc_delayed
 
@@ -450,7 +468,12 @@ if VDF_MODE == Mode.cudf:
     _VDataFrame.compute = lambda self, **kwargs: self
     _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
     _VSeries.compute = lambda self, **kwargs: self
-    _VSeries.compute.__doc__ = _doc_VDataFrame_compute
+    _VSeries.compute.__doc__ = _doc_VDataFrame_compute  # FIXME
+
+    _VDataFrame.visualize = lambda self: visualize(self)
+    _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
+    _VSeries.visualize = lambda self: visualize(self)
+    _VSeries.visualize.__doc__ = _doc_VDataFrame_visualize  # FIXME
 
     if "_old_to_csv" not in _VDataFrame.__dict__:
         _VDataFrame._old_to_csv = _VDataFrame.to_csv
@@ -506,10 +529,12 @@ if VDF_MODE == Mode.pandas:
             pessimistic_nulls=True,  # FIXME: use it
             cache_key=None,  # FIXME: use it
     ):
+        import numba
+
         size = len(self)
         params = {param: self[col].to_numpy() for col, param in incols.items()}
         outputs = {param: numpy.empty(size, dtype=dtype) for param, dtype in outcols.items()}
-        func(**params, **outputs, **kwargs)  # TODO: compiler la fn
+        numba.jit(func, nopython=True)(**params, **outputs, **kwargs)
         for col, data in outputs.items():
             self[col] = data
         return self
@@ -526,6 +551,21 @@ if VDF_MODE == Mode.pandas:
         return args
 
 
+    compute.__doc__ = _doc_compute
+
+
+    def visualize(*args, **kwargs):
+        try:
+            import IPython
+            return IPython.core.display.Image(data=[], url=None, filename=None, format=u'png', embed=None, width=None,
+                                              height=None,
+                                              retina=False)
+        except ModuleNotFoundError:
+            return True
+
+
+    # FIXME: __doc__
+
     def _DataFrame_to_csv(self, filepath_or_buffer, **kwargs):
         if "*" in str(filepath_or_buffer):
             filepath_or_buffer = filepath_or_buffer.replace("*", "")
@@ -536,8 +576,6 @@ if VDF_MODE == Mode.pandas:
     delayed.__doc__ = _doc_delayed
 
     concat: Any = pandas.concat
-
-    compute.__doc__ = _doc_compute
 
     read_csv.__doc__ = pandas.read_csv.__doc__
 
@@ -557,7 +595,12 @@ if VDF_MODE == Mode.pandas:
     _VDataFrame.compute = lambda self, **kwargs: self
     _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
     _VSeries.compute = lambda self, **kwargs: self
-    _VSeries.compute.__doc__ = _doc_VDataFrame_compute
+    _VSeries.compute.__doc__ = _doc_VDataFrame_compute  # FIXME
+
+    _VDataFrame.visualize = lambda self: visualize(self)
+    _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
+    _VSeries.visualize = lambda self: visualize(self)
+    _VSeries.visualize.__doc__ = _doc_VDataFrame_visualize  # FIXME
 
     # Add fake to_pandas() in pandas
     _VDataFrame.to_pandas = lambda self: self

@@ -100,12 +100,9 @@ $ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
 		dask-cudf \
 		cudf==22.06 \
 		cudatoolkit==11.5
+$ pip install -e virtual_dataframe
 ```
-conda install -q -y $(CONDA_ARGS) \
-		dask-cuda \
-		dask-cudf \
-		cudf==$(CUDF_VERSION) \
-		cudatoolkit=$(CUDA_VER)
+
 ## API
 
 | api                                    | comments                                       |
@@ -128,6 +125,7 @@ conda install -q -y $(CONDA_ARGS) \
 | VSeries.compute()                      | Compute the virtual series                     |
 | VSeries.to_pandas()                    | Convert to pandas dataframe                    |
 | VSeries.to_numpy()                     | Convert to numpy array                         |
+| TODO                                   | ...                                            |
 
 You can read a sample notebook [here](https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo.ipynb).
 
@@ -163,7 +161,7 @@ To be compatible with all framework, you must only use the common features.
 | GPU | cudf<br/>Limite:++  | dask_cudf<br/>Limite:+++ |
 
 To develop, you can choose the level to be compatible with others frameworks.
-Each cell is strongly compatible the upper left part.
+Each cell is strongly compatible with the upper left part.
 
 ## No need of GPU?
 If you don't need a GPU, then develop for `dask`.
@@ -174,7 +172,7 @@ If you don't need a GPU, then develop for `dask`.
 | GPU | cudf<br/>Limite:++      | dask_cudf<br/>Limite:+++ |
 
 You can ignore this API:
-- VDataFrame.apply_rows()
+- `VDataFrame.apply_rows()`
 
 ## No need of big data?
 
@@ -186,11 +184,11 @@ If you don't need to use big data, then develop for `cudf`.
 | GPU | **cudf<br/>Limite:++**  | dask_cudf<br/>Limite:+++ |
 
 You can ignore these API:
-- @delayed
-- map_partitions()
-- categorize()
-- compute()
-- npartitions=...
+- `@delayed`
+- `map_partitions()`
+- `categorize()`
+- `compute()`
+- `npartitions=...`
 
 ## Need all possibility?
 
@@ -201,21 +199,24 @@ To be compatible with all mode, develop for `dask_cudf`.
 | CPU | **pandas<br/>Limite:+** | **dask<br/>Limite:++**       |
 | GPU | **cudf<br/>Limite:++**  | **dask_cudf<br/>Limite:+++** |
 
+and accept all the limitations.
 
 ## FAQ
 
 ### The code run with dask, but not with pandas or cudf ?
 You must use only the similare functionality, and only a subpart of Pandas.
+Develop for dask_cudf. it's easier to be compatible with others frameworks.
 
 ### `.compute()` is not defined with pandas, cudf ?
-If you @delayed function return something, other than a VDataFrame or VSerie, the objet has not
+If you `@delayed` function return something, other than a `VDataFrame` or `VSerie`, the objet has not
 the method `.compute()`. You can solve this, with:
 ```
 @delayed
 def f()-> int:
     return 42
 
-compute([f()])[0]  # Run on all environments
+real_result,=compute(f())  # Warning, compute return a tuple. The comma is important.
+a,b = compute(f(),f())
 ```
 
 ## Pip install
@@ -228,6 +229,7 @@ To install all feature of virtual_dataframe:
 ```shell
 $ pip install virtual_dataframe[all]
 ```
+later, we will package virtual_dataframe with conda dependencies.
 
 To select only a part of dependencies, use pip with specific extension.
 ```shell

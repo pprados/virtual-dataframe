@@ -26,6 +26,13 @@ def test_compute():
 
     assert vdf.compute(f(42), f(50)) == (42, 50)
 
+def test_visualize():
+    @vdf.delayed
+    def f(i):
+        return i
+
+    assert vdf.visualize(f(42), f(50))
+
 
 def test_concat():
     rc = list(vdf.concat([
@@ -40,9 +47,9 @@ def test_from_pandas():
     assert df.to_pandas().equals(pdf)
 
 
-def test_from_virtual():
+def test_from_backend():  # FIXME: le test n'est pas correct
     odf = vdf.VDataFrame({"a": [1, 2]}, npartitions=2)
-    assert odf.to_pandas().equals(vdf.VDataFrame({"a": [1, 2]}).to_pandas())
+    assert vdf.from_backend(odf.to_backend(),npartitions=2).to_pandas().equals(vdf.VDataFrame({"a": [1, 2]}).to_pandas())
 
 
 # %%
@@ -60,14 +67,23 @@ def test_Series_to_from_pandas():
 
 def test_DataFrame_compute():
     expected = pandas.DataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, 0.3, 0.4]})
-    result = vdf.VDataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, 0.3, 0.4]}).to_pandas()
-    assert result.equals(expected)
+    result = vdf.VDataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, 0.3, 0.4]})
+    assert result.compute().to_pandas().equals(expected)
 
 
 def test_Series_compute():
     expected = pandas.Series([1, 2, 3, None, 4])
+    result = vdf.VSeries([1, 2, 3, None, 4])
+    assert result.compute().to_pandas().equals(expected)
+
+def test_DataFrame_visualize():
+    result = vdf.VDataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, 0.3, 0.4]}).to_pandas()
+    assert result.visualize()
+
+
+def test_Series_visualize():
     result = vdf.VSeries([1, 2, 3, None, 4]).to_pandas()
-    assert result.to_pandas().equals(expected)
+    assert result.visualize()
 
 
 def test_DataFrame_to_from_csv():
@@ -76,7 +92,7 @@ def test_DataFrame_to_from_csv():
         filename = f"{d}/test*.csv"
         df = vdf.VDataFrame({'a': [0, 1, 2, 3]}, npartitions=2)
         df.to_csv(filename, index=False)
-        df2 = vdf.read_csv(filename)
+        df2 = vdf.read_csv(filename)  # FIXME: vérifier avec des samples
         assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
     finally:
         shutil.rmtree(d)
