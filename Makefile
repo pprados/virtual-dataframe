@@ -367,6 +367,26 @@ VALIDATE_VENV=$(CHECK_VENV)
 # de run et de test (voir le modèle de `setup.py` proposé)
 
 # All dependencies of the project must be here
+RAPIDS=$(CONDA_PACKAGE)/cuda
+.PHONY: install-rapids
+## Install NVidia rapids framework
+install-rapids: $(RAPIDS)
+$(RAPIDS):
+ifeq ($(USE_GPU),-gpu)
+	@echo "$(green)  Install NVidia Rapids...$(normal)"
+	conda install -q -y $(CONDA_ARGS) \
+		cudf==$(CUDF_VER) \
+		cudatoolkit==$(CUDA_VER) \
+		dask-cuda \
+		dask-cudf \
+		dask-labextension
+else
+	conda install -q -y $(CONDA_ARGS) \
+		dask-labextension
+endif
+	touch $(RAPIDS)
+
+
 .PHONY: requirements dependencies
 REQUIREMENTS=$(PIP_PACKAGE) \
 	.gitattributes
@@ -400,25 +420,11 @@ $(CONDA_PYTHON):
 	@$(VALIDATE_VENV)
 	conda install -q "python=$(PYTHON_VERSION).*" -y $(CONDA_ARGS)
 
-install-rapids: $(CONDA_PACKAGE)/cudf
-$(CONDA_PACKAGE)/cudf:
-ifeq ($(USE_GPU),-gpu)
-	@echo "$(green)  Install NVidia Rapids...$(normal)"
-	conda install -q -y $(CONDA_ARGS) \
-		cudf==$(CUDF_VER) \
-		cudatoolkit==$(CUDA_VER) \
-		dask-cuda \
-		dask-cudf \
-		dask-labextension
-else
-	conda install -q -y $(CONDA_ARGS) \
-		dask-labextension
-endif
-
 # Rule to update the current venv, with the dependencies describe in `setup.py`
-$(PIP_PACKAGE): $(CONDA_PYTHON) setup.py $(CONDA_PACKAGE)/cudf | .git # Install pip dependencies
+$(PIP_PACKAGE): $(CONDA_PYTHON) setup.py | .git # Install pip dependencies
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Install setup.py dependencies ... (may take minutes)$(normal)"
+	$(MAKE) $(RAPIDS)
 ifeq ($(USE_GPU),-gpu)
 	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.[all,dev,test]' | grep -v 'already satisfied' || true
 else
@@ -852,7 +858,7 @@ endif
 
 # Run unit test with a specific *mode*
 .PHONY: unit-test-*
-unit-test-%:
+unit-test-%: $(REQUIREMENTS)
 	@echo -e "$(cyan)set VDF_MODE=$*$(normal)"
 	VDF_MODE=$* $(MAKE) --no-print-directory .make-_unit-test-$*
 
@@ -886,7 +892,7 @@ _make-notebooks-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC) $(JUPYTER_DA
 
 ## Run notebooks test with a specific *mode*
 .PHONY: notebooks-test-*
-notebooks-test-%:
+notebooks-test-%: $(REQUIREMENTS)
 	@VDF_MODE=$* $(MAKE) --no-print-directory _make-notebooks-test-$*
 
 ifneq ($(USE_GPU),-gpu)
@@ -922,7 +928,7 @@ functional-test: .make-functional-test
 
 .PHONY: test-*
 ## Run all tests for a specific *mode* (make test-cudf)
-test-%:
+test-%: $(REQUIREMENTS)
 	@VDF_MODE=$* $(MAKE) --no-print-directory .make-test-$*
 
 ifneq ($(USE_GPU),-gpu)

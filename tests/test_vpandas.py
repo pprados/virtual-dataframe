@@ -151,8 +151,6 @@ def test_apply_rows():
     )
 
     def my_kernel(a_s, b_s, c_s, val, out):  # Compilé pour Kernel GPU
-        if a_s[0] == 2:
-            print("toto")
         for i, (a, b, c) in enumerate(zip(a_s, b_s, c_s)):
             out[i] = (a + b + c) * val
 

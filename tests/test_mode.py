@@ -3,9 +3,6 @@ import os
 import sys
 from typing import Dict
 
-import GPUtil as GPUtil
-
-
 
 import pandas
 import pytest as pytest

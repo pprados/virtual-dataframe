@@ -19,8 +19,10 @@ USE_GPU: str = "-gpu" if (os.environ['GPU'].lower() in 'yes'
 # Run package dependencies
 requirements: List[str] = [
     'python-dotenv',
-    'pandas',  # numpy implicite
-    'GPUtil',
+    'pandas',
+    'numpy',
+    'numba',
+    # 'GPUtil',
     # With patch to accept cudf.
     'pandera@git+https://github.com/pprados/pandera@cudf#egg=pandera',
 ]

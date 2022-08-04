@@ -338,6 +338,7 @@ if VDF_MODE == Mode.dask:
                     ):
         return self.map_partitions(_partition_apply_rows, fn, incols, outcols, kwargs)
 
+    # TODO: _apply_serie https://docs.rapids.ai/api/cudf/stable/user_guide/guide-to-udfs.html#dataframe-udfs
 
     # TODO: apply_grouped. https://docs.rapids.ai/api/cudf/stable/user_guide/guide-to-udfs.html
     # TODO: apply_chunck.

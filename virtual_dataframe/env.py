@@ -25,13 +25,14 @@ class Mode(Enum):
     dask_cudf = "dask_cudf"
 
 
-try:
-    import GPUtil
-
-    USE_GPU: bool = os.environ.get("USE_GPU", "no").lower() in _yes if "USE_GPU" in os.environ \
-        else len(GPUtil.getAvailable()) > 0
-except ModuleNotFoundError:
-    USE_GPU = False
+USE_GPU = os.path.exists("/proc/driver/nvidia")
+# try:
+#     import GPUtil
+#
+#     USE_GPU: bool = os.environ.get("USE_GPU", "no").lower() in _yes if "USE_GPU" in os.environ \
+#         else len(GPUtil.getAvailable()) > 0
+# except ModuleNotFoundError:
+#     USE_GPU = False
 
 # Default is pandas
 VDF_MODE: Mode = Mode[os.environ.get("VDF_MODE", "pandas").replace('-', '_')]
