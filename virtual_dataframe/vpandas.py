@@ -105,6 +105,30 @@ apply_rows(func, incols, outcols, kwargs, pessimistic_nulls=True, cache_key=None
     1    1    1    1  1.0 -2.0
     2    2    2    2  2.0 -4.0
 '''
+_doc_compute = '''Compute several collections at once.
+
+    Parameters
+    ----------
+    args : object
+        Any number of objects. If it is a @delayed object, it's computed and the
+        result is returned. By default, python builtin collections are also
+        traversed to look for @delayed.
+    traverse : bool, optional
+        ignore.
+    scheduler : string, optional
+        ignore.
+    optimize_graph : bool, optional
+        Ignore.
+    get : ``None``
+        Ignore.
+    kwargs
+        Ignore.
+'''
+_doc_visualize = '''Visualize several dask graphs simultaneously.
+
+    Requires ``graphviz`` to be installed.
+    Return 'empty image'
+'''
 _doc_from_backend = '''Convert VDataFrame to VDataFrame'''
 _doc_VDataFrame_to_csv = '''Convert CSV files to VDataFrame'''
 _doc_VSeries_to_csv = '''Convert CSV files to VSeries'''
@@ -113,6 +137,7 @@ _doc_VSeries_to_pandas = '''Convert VSeries to Pandas DataFrame'''
 _doc_VDataFrame_to_numpy = '''Convert VDataFrame to Numpy array'''
 _doc_VSeries_to_numpy = '''Convert VSeries to Numpy array'''
 _doc_VDataFrame_compute = '''Fake compute(). Return self.'''
+_doc_VSeries_compute = '''Fake compute(). Return self.'''
 _doc_VDataFrame_visualize = '''Fake visualize(). Return self.'''
 _doc_VDataFrame_map_partitions = '''Apply Python function on each DataFrame partition.
 
@@ -163,34 +188,6 @@ Convert columns of the DataFrame to category dtype.
                           Default is 16.
             kwargs
                           Keyword arguments are passed on to compute.'''
-_doc_compute = '''Compute several dask collections at once. Return args.
-
-    Parameters
-    ----------
-        args : object
-                Any number of objects. If it is a dask object, it\'s computed and the
-                result is returned. By default, python builtin collections are also
-                traversed to look for dask objects (for more information see the
-                ``traverse`` keyword). Non-dask arguments are passed through unchanged.
-        traverse : bool, optional
-                By default dask traverses builtin python collections looking for dask
-                objects passed to ``compute``. For large collections this can be
-                expensive. If none of the arguments contain any dask objects, set
-                ``traverse=False`` to avoid doing this traversal.
-        scheduler : string, optional
-                Which scheduler to use like "threads", "synchronous" or "processes".
-                If not provided, the default is to check the global settings first,
-                and then fall back to the collection defaults.
-        optimize_graph : bool, optional
-                If True [default], the optimizations for each collection are applied
-                before computation. Otherwise the graph is run as is. This can be
-                useful for debugging.
-        get : ``None``
-                Should be left to ``None`` The get= keyword has been removed.
-        kwargs
-                Extra keywords to forward to the scheduler function.
-'''
-
 
 # %%
 
@@ -404,7 +401,7 @@ if VDF_MODE == Mode.cudf:
 
     def _read_csv(filepath_or_buffer, **kwargs):
         if not isinstance(filepath_or_buffer, list):
-            return cudf.concat((cudf.read_csv(f, **kwargs) for f in glob.glob(filepath_or_buffer)))
+            return cudf.concat((cudf.read_csv(f, **kwargs) for f in sorted(glob.glob(filepath_or_buffer))))
         else:
             return cudf.read_csv(filepath_or_buffer, **kwargs)
 
@@ -424,9 +421,7 @@ if VDF_MODE == Mode.cudf:
                 **kwargs
                 ) -> Tuple:
         return tuple(args)
-
-
-    # FIXME: __doc__
+    compute.__doc__ = _doc_compute
 
     def visualize(*args, **kwargs):
         try:
@@ -436,9 +431,7 @@ if VDF_MODE == Mode.cudf:
                                               retina=False)
         except ModuleNotFoundError:
             return True
-
-
-    # FIXME: __doc__
+    visualize.__doc__ = _doc_visualize
 
     delayed: Any = _delayed
     delayed.__doc__ = _doc_delayed
@@ -469,12 +462,12 @@ if VDF_MODE == Mode.cudf:
     _VDataFrame.compute = lambda self, **kwargs: self
     _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
     _VSeries.compute = lambda self, **kwargs: self
-    _VSeries.compute.__doc__ = _doc_VDataFrame_compute  # FIXME
+    _VSeries.compute.__doc__ = _doc_VSeries_compute
 
     _VDataFrame.visualize = lambda self: visualize(self)
     _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
     _VSeries.visualize = lambda self: visualize(self)
-    _VSeries.visualize.__doc__ = _doc_VDataFrame_visualize  # FIXME
+    _VSeries.visualize.__doc__ = _doc_VSeries_visualize
 
     if "_old_to_csv" not in _VDataFrame.__dict__:
         _VDataFrame._old_to_csv = _VDataFrame.to_csv
@@ -550,10 +543,7 @@ if VDF_MODE == Mode.pandas:
                 **kwargs
                 ) -> Tuple:
         return args
-
-
     compute.__doc__ = _doc_compute
-
 
     def visualize(*args, **kwargs):
         try:
@@ -563,9 +553,7 @@ if VDF_MODE == Mode.pandas:
                                               retina=False)
         except ModuleNotFoundError:
             return True
-
-
-    # FIXME: __doc__
+    visualize.__doc__ = _doc_visualize
 
     def _DataFrame_to_csv(self, filepath_or_buffer, **kwargs):
         if "*" in str(filepath_or_buffer):
@@ -596,12 +584,12 @@ if VDF_MODE == Mode.pandas:
     _VDataFrame.compute = lambda self, **kwargs: self
     _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
     _VSeries.compute = lambda self, **kwargs: self
-    _VSeries.compute.__doc__ = _doc_VDataFrame_compute  # FIXME
+    _VSeries.compute.__doc__ = _doc_VSeries_compute
 
     _VDataFrame.visualize = lambda self: visualize(self)
     _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
     _VSeries.visualize = lambda self: visualize(self)
-    _VSeries.visualize.__doc__ = _doc_VDataFrame_visualize  # FIXME
+    _VSeries.visualize.__doc__ = _doc_VSeries_visualize
 
     # Add fake to_pandas() in pandas
     _VDataFrame.to_pandas = lambda self: self
