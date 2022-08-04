@@ -388,7 +388,7 @@ endif
 
 
 .PHONY: requirements dependencies
-REQUIREMENTS=$(PIP_PACKAGE) \
+REQUIREMENTS= $(RAPIDS) $(PIP_PACKAGE) \
 	.gitattributes
 requirements: $(REQUIREMENTS)
 dependencies: requirements
@@ -424,7 +424,6 @@ $(CONDA_PYTHON):
 $(PIP_PACKAGE): $(CONDA_PYTHON) setup.py | .git # Install pip dependencies
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Install setup.py dependencies ... (may take minutes)$(normal)"
-	$(MAKE) $(RAPIDS)
 ifeq ($(USE_GPU),-gpu)
 	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.[all,dev,test]' | grep -v 'already satisfied' || true
 else
