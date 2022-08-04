@@ -42,90 +42,88 @@ To manage the initialisation of a Dask cluster, you must use the `VClient()`. Th
 with some environment variables.
 
 ```python
-# Sample of code, compatible Pandas, cudf, dask and dask-cudf
+# Sample of code, compatible Pandas, cudf, dask and dask_cudf
 from virtual_dataframe import *
-import pandera
 
-
-class SimpleDF_schema(pandera.SchemaModel):
-    id: pandera.typing.Index[int]
-    data: pandera.typing.Series[int]
-
-    class Config:
-        strict = True
-        ordered = True
-
-
-TestDF = pandera.typing.DataFrame[SimpleDF_schema]
+TestDF = VDataFrame
 
 with (VClient()):
     @delayed
-    @pandera.check_types
     def my_function(data: TestDF) -> TestDF:
         return data
 
 
-    rc = my_function(VDataFrame({"data": [1, 2]}, npartitions=2)).compute()
+    rc = my_function(VDataFrame({"data": [1, 2]}, npartitions=2))
     print(rc.to_pandas())
 
 ```
 
 With this framework, you can update your environment, to debuging your code.
 
-| env                                                                                            | Environement                          |
-|------------------------------------------------------------------------------------------------|---------------------------------------|
-| VDF_MODE=pandas                                                                                | Only Python with classical pandas     |
-| VDF_MODE=cudf                                                                                  | Python with cuDF                      |
-| VDF_MODE=dask                                                                                  | Dask with multiple process and pandas |
-| VDF_MODE=dask-cudf                                                                             | Dask with multiple process and cuDF   |
-| VDF_MODE=dask<br />DEBUG=True                                                                  | Dask with single thread and pandas    |
-| VDF_MODE=dask-cudf<br />DEBUG=True                                                             | Dask with single thread and cuDF      |
-| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                        | Dask with local cluster and pandas    |
-| VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                   | Dask with local cuda cluster and cuDF |
-| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=...        | Dask with remote cluster and Pandas   |
-| VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=...   | Dask with remote cluster and cuDF     |
+| env                                                                                          | Environement                          |
+|----------------------------------------------------------------------------------------------|---------------------------------------|
+| VDF_MODE=pandas                                                                              | Only Python with classical pandas     |
+| VDF_MODE=cudf                                                                                | Python with cuDF                      |
+| VDF_MODE=dask                                                                                | Dask with multiple process and pandas |
+| VDF_MODE=dask_cudf                                                                           | Dask with multiple process and cuDF   |
+| VDF_MODE=dask<br />DEBUG=True                                                                | Dask with single thread and pandas    |
+| VDF_MODE=dask_cudf<br />DEBUG=True                                                           | Dask with single thread and cuDF      |
+| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                      | Dask with local cluster and pandas    |
+| VDF_MODE=dask_cudf<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                 | Dask with local cuda cluster and cuDF |
+| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=...      | Dask with remote cluster and Pandas   |
+| VDF_MODE=dask_cudf<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=... | Dask with remote cluster and cuDF     |
 
 The real compatibilty between the differents simulation of Pandas, depends on the implement of the cudf or dask.
 You can use the `VDF_MODE` variable, to update some part of code, between the selected backend.
 
 It's not always easy to write a code *compatible* with all scenario, but it's possible.
-Generally, add just `.compute()` and/or `.to_pandas()` is enough.
+Generally, add just `.compute()` is enough.
 After this effort, it's possible to compare the performance about the differents technologies,
-or propose a component, compatible with differents contexts.
+or propose a component, compatible with differents scenario.
 
 ## usage
+Install with conda
 ```shell
 $ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
-		dask-cuda \
-		dask-cudf \
-		cudf==22.06 \
-		cudatoolkit==11.5
-$ pip install -e virtual_dataframe
+		virtual_dataframe_all
+```
+or, install alternative.
+```shell
+$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
+		virtual_dataframe  # Minimumal install, without extra dependencies
+$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
+		virtual_dataframe_pandas
+$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
+		virtual_dataframe_cudf
+$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
+		virtual_dataframe_dask
+$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
+		virtual_dataframe_dask_cudf
 ```
 
 ## API
 
-| api                                    | comments                                       |
-|----------------------------------------|------------------------------------------------|
-| @delayed                               | Delayed function                               |
-| vdf.concat(...)                        | Merge VDataFrame                               |
-| vdf.read_csv(...)                      | Read VDataFrame from CSVs *glob* files         |
-| vdf.from_pandas(pdf, npartitions=...)  | Create Virtual Dataframe from Pandas DataFrame |
-| vdf.from_virtual(vdf, npartitions=...) | Create FIXME                                   |
-| vdf.compute([...])                     | Compute multiple @delayed functions            |
-| VDataFrame(data, npartitions=...)      | Create DataFrame in memory                     |
-| VSeries(data, npartitions=...)         | Create Series in memory                        |
-| VDataFrame.compute()                   | Compute the virtual dataframe                  |
-| VDataFrame.to_pandas()                 | Convert to pandas dataframe                    |
-| VDataFrame.to_csv()                    | Save to *glob* files                           |
-| VDataFrame.to_numpy()                  | Convert to numpy array                         |
-| VDataFrame.categorize()                | Detect all categories                          |
-| VDataFrame.apply_rows()                | Apply rows, GPU template                       |
-| VDataFrame.map_partitions()            | Apply function for each parttions              |
-| VSeries.compute()                      | Compute the virtual series                     |
-| VSeries.to_pandas()                    | Convert to pandas dataframe                    |
-| VSeries.to_numpy()                     | Convert to numpy array                         |
-| TODO                                   | ...                                            |
+| api                                    | comments                                        |
+|----------------------------------------|-------------------------------------------------|
+| @delayed                               | Delayed function                                |
+| vdf.concat(...)                        | Merge VDataFrame                                |
+| vdf.read_csv(...)                      | Read VDataFrame from CSVs *glob* files          |
+| vdf.from_pandas(pdf, npartitions=...)  | Create Virtual Dataframe from Pandas DataFrame  |
+| vdf.from_virtual(vdf, npartitions=...) | Create Virtual Dataframe from backend DataFrame |
+| vdf.compute([...])                     | Compute multiple @delayed functions             |
+| VDataFrame(data, npartitions=...)      | Create DataFrame in memory (for debug)          |
+| VSeries(data, npartitions=...)         | Create Series in memory (for debug)             |
+| VDataFrame.compute()                   | Compute the virtual dataframe                   |
+| VDataFrame.to_pandas()                 | Convert to pandas dataframe                     |
+| VDataFrame.to_csv()                    | Save to *glob* files                            |
+| VDataFrame.to_numpy()                  | Convert to numpy array                          |
+| VDataFrame.categorize()                | Detect all categories                           |
+| VDataFrame.apply_rows()                | Apply for all rows, via *GPU* kernel            |
+| VDataFrame.map_partitions()            | Apply function for each parttions               |
+| VSeries.compute()                      | Compute the virtual series                      |
+| VSeries.to_pandas()                    | Convert to pandas dataframe                     |
+| VSeries.to_numpy()                     | Convert to numpy array                          |
+| TODO                                   | ...                                             |
 
 You can read a sample notebook [here](https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo.ipynb).
 
@@ -149,7 +147,7 @@ This project is just a wrapper. So, it inherits limitations and bugs from other 
 | <br />**[dask](https://distributed.dask.org/en/stable/limitations.html)**                       |
 |  transpose() and MultiIndex are not implemented                                                 |
 | Column assignment doesn't support type list                                                     |
-| <br />**dask-cudf**                                                                             |
+| <br />**[dask_cudf](https://docs.rapids.ai/api/cudf/nightly/user_guide/dask-cudf.html)**        |
 | See cudf and dask.                                                                              |
 | Categories with strings not implemented                                                         |
 
@@ -219,26 +217,34 @@ real_result,=compute(f())  # Warning, compute return a tuple. The comma is impor
 a,b = compute(f(),f())
 ```
 
-## Pip install
-Before using virtual_dataframe with GPU, use conda environment, and install some packages:
-```shell
-$ conda install -c rapidsai -c nvidia -c conda-forge cudf cudatoolkit dask-cuda dask-cudf
-```
+## Conda install (recommanded)
 
-To install all feature of virtual_dataframe:
+To install all feature of virtual_dataframe in the current conda environement:
 ```shell
-$ pip install virtual_dataframe[all]
+$ conda install -c conda-forge virtual_dataframe-all
 ```
-later, we will package virtual_dataframe with conda dependencies.
 
 To select only a part of dependencies, use pip with specific extension.
 ```shell
 
-$ pip install virtual_dataframe[pandas]
-$ pip install virtual_dataframe[cudf]
-$ pip install virtual_dataframe[dask]
-$ pip install virtual_dataframe[dask-cudf]
+$ conda install -c conda-forge virtual_dataframe  # Without others frameworks
+$ conda install -c conda-forge virtual_dataframe-pandas
+$ conda install -c conda-forge virtual_dataframe-cudf
+$ conda install -c conda-forge virtual_dataframe-dask
+$ conda install -c conda-forge virtual_dataframe-dask_cudf
 ```
+
+## Pip install
+Before using virtual_dataframe with GPU, use conda environment, and install some packages:
+```shell
+$ conda install -c rapidsai -c nvidia -c conda-forge \
+    cudf cudatoolkit dask-cudf
+```
+Then,
+```shell
+$ pip install virtual_dataframe
+```
+
 ## The latest version
 
 Clone the git repository
@@ -253,7 +259,7 @@ Go inside the directory and
 ```bash
 $ make configure
 $ conda activate virtual_dataframe
-$ make docs
+$ make test
 ```
 
 ## Tests
@@ -290,11 +296,11 @@ $ make validate
     │
     ├── setup.py                    <- makes project pip installable (pip install -e .[tests])
     │                                  so sources can be imported and dependencies installed
+    ├── meta.yaml                   <- setup for build conda package
+    ├── conda_build_config.yaml     <- Set of variant
     ├── virtual_dataframe           <- Source code for use in this project
     │   ├── __init__.py             <- Makes src a Python module
-    │   ├── *.py                    <- Framework codes
-    │   ├── tools/__init__.py       <- Python module to expose internal API
-    │   └── tools/tools.py          <- Python module for functions, object, etc
+    │   └── *.py                    <- Framework codes
     │
     └── tests                       <- Unit and integrations tests ((Mark directory as a sources root).
 

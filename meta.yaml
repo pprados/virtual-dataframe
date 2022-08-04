@@ -1,0 +1,80 @@
+{% set data = load_setup_py_data() %}
+{% set NAME = data.get('name') %}
+#{% set PRJ_VERSION = environ['PRJ_VERSION'] %}
+{% set PRJ_VERSION = environ.get('GIT_DESCRIBE_TAG', 'untagged')|string|replace('-','_') %}
+{% set REMOTE_GIT_URL = environ["REMOTE_GIT_URL"] %}
+{% set PRJ_URL = environ["PRJ_URL"] %}
+{% set PRJ_DOC_URL = environ["PRJ_DOC_URL"] %}
+{% set PRJ_PACKAGE = environ["PRJ_PACKAGE"] %}
+
+package:
+  {% if vdf_mode %}
+  name: "{{ NAME|lower }}-{{ vdf_mode }}"
+  {% else %}
+  name: "{{ NAME|lower }}"
+  {% endif %}
+  version: "{{ PRJ_VERSION }}"
+
+source:
+#  path: .
+#  url: https://pypi.python.org/packages/source/b/bsdiff4/bsdiff4-1.1.4.tar.gz
+#  md5: 29f6089290505fc1a852e176bd276c43
+#  sha1: f0a2c9a30073449cfb7d171c57552f3109d93894
+#  sha256: 5a022ff4c1d1de87232b1c70bde50afbb98212fd246be4a867d8737173cf1f8f
+
+  git_url: {{ REMOTE_GIT_URL }}
+  git_rev: {{ PRJ_VERSION }}
+  git_depth: 1
+
+build:
+  noarch: python
+  #number: {{ environ.get('GIT_DESCRIBE_NUMBER', '0') }}
+  number: 0
+  #string: {{ [environ.get('GIT_DESCRIBE_NUMBER', '0'), vdf_mode, ('h' + PKG_HASH), environ.get('GIT_DESCRIBE_HASH', '')]|join('_') }}
+  string: {{ [environ.get('GIT_DESCRIBE_TAG', '0'), ('h' + PKG_HASH)]|join('_') }}
+  # ou
+  # build_number: 0
+
+  script: "python -m pip install '.' --no-deps --ignore-installed -vv"
+
+#test:
+#  commands:
+#    {% if vdf_mode and vdf_mode != "all" %}
+#    - export VDF_MODE={{vdf_mode}}
+#    {% endif %}
+#    - python -c 'import {{ PRJ_PACKAGE }}'
+
+requirements:
+  build:
+    - pip
+    - setuptools
+    - setuptools_scm
+    - pytest-runner
+
+  run:
+    - python
+    - python-dotenv
+#    - pandas
+##    - numba
+#    {% if vdf_mode in ('all','cudf') %}
+#    - cudf
+#    - cudatoolkit
+#    {% endif %}
+#    {% if vdf_mode in ('all','dask','dask_cudf') %}
+##    - dask
+#    {% endif %}
+#    {% if vdf_mode in ('all','dask_cudf') %}
+##    - dask-cudf
+#    {% endif %}
+
+about:
+  home:    {{ PRJ_URL }}
+  doc_url: {{ PRJ_DOC_URL }}
+  license: {{ data.get('license') }}
+  summary: {{ data.get('description') }}
+
+extra:
+  copy_test_spirce_files: false
+  copy_test_source_files: false
+  recipe-maintainers:
+    - {{ data.get('author_email') }}

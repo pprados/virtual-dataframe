@@ -29,6 +29,7 @@ def _test_scenario_dataframe():
 
 
 @pytest.mark.xdist_group(name="os.environ")
+@pytest.mark.skip(reason="Border effet")
 def test_dask_debug():
     os.environ["DEBUG"] = "Yes"
     os.environ["VDM_MODE"] = "dask"
@@ -40,6 +41,7 @@ def test_dask_debug():
 
 
 @pytest.mark.xdist_group(name="os.environ")
+@pytest.mark.skip(reason="Border effet")
 def test_dask_cluster_gpu():
     os.environ["DEBUG"] = "False"
     os.environ["VDM_MODE"] = "dask-cudf"
@@ -53,6 +55,7 @@ def test_dask_cluster_gpu():
 
 
 @pytest.mark.xdist_group(name="os.environ")
+@pytest.mark.skip(reason="Border effet")
 def test_dask_no_cluster_gpu():
     os.environ["DEBUG"] = "False"
     os.environ["VDM_MODE"] = "dask"
@@ -66,6 +69,7 @@ def test_dask_no_cluster_gpu():
 
 
 @pytest.mark.xdist_group(name="os.environ")
+@pytest.mark.skip(reason="Border effet")
 def test_dask_cluster_no_gpu():
     os.environ["DEBUG"] = "False"
     os.environ["VDM_MODE"] = "dask"

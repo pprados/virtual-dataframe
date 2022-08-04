@@ -77,12 +77,12 @@ def test_Series_compute():
     assert result.compute().to_pandas().equals(expected)
 
 def test_DataFrame_visualize():
-    result = vdf.VDataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, 0.3, 0.4]}).to_pandas()
+    result = vdf.VDataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, 0.3, 0.4]})
     assert result.visualize()
 
 
 def test_Series_visualize():
-    result = vdf.VSeries([1, 2, 3, None, 4]).to_pandas()
+    result = vdf.VSeries([1, 2, 3, None, 4])
     assert result.visualize()
 
 

@@ -1,3 +1,0 @@
-[submodule "pandera"]
-	path = pandera
-	url = https://github.com/pprados/pandera.git

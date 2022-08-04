@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import logging
 import os
 import re
 import subprocess
+import sys
 from typing import List, Set
 
 from setuptools import setup, find_packages
@@ -18,70 +20,48 @@ USE_GPU: str = "-gpu" if (os.environ['GPU'].lower() in 'yes'
 
 # Run package dependencies
 requirements: List[str] = [
-    'python-dotenv',
-    'pandas',
-    'numpy',
+    'python-dotenv==0.20.0',
+    'pandas==1.4.3', # FIXME
     'numba',
-    # 'GPUtil',
-    # With patch to accept cudf.
-    'pandera@git+https://github.com/pprados/pandera@cudf#egg=pandera',
 ]
-
-pandas_requirements: List[str] = \
-    [
-        'pandas'
-    ]
-cudf_requirements: List[str] = \
-    [
-        # 'cudf',               # Only with conda, see https://rapids.ai/start.html#conda
-        # 'numba',
-        # 'rapids==22.6',       # Only with conda, see https://rapids.ai/start.html#conda
-        # 'cudatoolkit==11.2',  # Only with conda, and must be updated with the current cuda version
-        # 'cudf==22.6',         # Only with conda
-    ]
 dask_requirements: List[str] = \
     [
         'dask[distributed]',  # 'dask[distributed]==2021.6.2',  # Version 2021.6.2 for DOMINO 4.6
     ]
-dask_cudf_requirements: Set[str] = (
-        cudf_requirements + dask_requirements + \
-        [
-            # 'dask-cudf',    # Only with conda
-            # 'dask-cuda',    # Only with conda
-        ])
 
-all_requirements: Set[str] = set(pandas_requirements + cudf_requirements + dask_requirements + dask_cudf_requirements)
-
-setup_requirements: List[str] = ["pytest-runner", "setuptools_scm"]
+setup_requirements: List[str] = [
+    "pytest-runner",
+    "setuptools_scm",
+]
 
 # Package nécessaires aux tests
 test_requirements: List[str] = [
     'pytest>=2.8.0',
-    # 'pytest-openfiles', # For tests
-    'pytest-xdist',
-    # 'pytest-httpbin>=0.0.7',
     'pytest-mock',
+    'pytest-xdist',
+    # 'pytest-openfiles',
+    # 'pytest-httpbin>=0.0.7',
 
     'werkzeug==2.0.3',
     'papermill',
 ]
 
 # Package nécessaires aux builds mais pas au run
-# FIXME Ajoutez les dépendances nécessaire au build et au tests à ajuster suivant le projet
 dev_requirements: List[str] = [
     'pip',
     'twine',  # To publish package in Pypi
+    'conda-build',  # To publish package in conda
     'sphinx', 'sphinx-execute-code', 'sphinx_rtd_theme', 'recommonmark', 'nbsphinx',  # To generate doc
     'flake8', 'pylint',  # For lint
     'daff',
-    'pytype', 'mypy',
+    'pytype', 'mypy', 'pandas-stubs',  # For test typing
     'jupyterlab',
-    'dask-labextension',
     'voila',
-    'pandas-stubs',
     # For Dask
+    'dask-labextension',
     'graphviz',
     'bokeh>=2.1.1',
+    'dask-labextension',
 ]
 
 
@@ -117,7 +97,7 @@ setup(
     long_description=open('README.md', mode='r', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
     url=_git_http_url(),
-    license='Private usage',
+    license='Apache v2',
     keywords="dataframe",
     classifiers=[  # See https://pypi.org/classifiers/
         'Development Status :: 2 - PRE-ALPHA',
@@ -125,11 +105,11 @@ setup(
         # 'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Intended Audience :: Developers',
-        'License :: Other/Proprietary License',
+        'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Programming Language :: Python :: ' + PYTHON_VERSION,
         'Operating System :: OS Independent',
-        # FIXME 'Topic :: Scientific/Engineering :: Artificial Intelligence',
+        'Topic :: Scientific/Engineering',
     ],
     python_requires='~=' + PYTHON_VERSION,
     test_suite="tests",
@@ -138,14 +118,11 @@ setup(
     extras_require={
         'dev': dev_requirements,
         'test': test_requirements,
-        'pandas': pandas_requirements,
-        'cudf': cudf_requirements,
         'dask': dask_requirements,
-        'dask_cudf': dask_cudf_requirements,
-        'dask-cudf': dask_cudf_requirements,
-        'all': all_requirements
     },
-    packages=find_packages(),
+    # packages=find_packages(where="virtual_dataframe"),
+    #packages=find_packages(),
+    packages=["virtual_dataframe"],
     package_data={"virtual_dataframe": ["py.typed"]},
     use_scm_version=True,  # Manage versions from Git tags
     install_requires=requirements,

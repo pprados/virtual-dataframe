@@ -1,0 +1,8 @@
+# See https://docs.conda.io/projects/conda-build/en/stable/resources/variants.html
+vdf_mode:
+  -
+  - pandas
+  - dask
+  - cudf
+  - dask_cudf
+  - all

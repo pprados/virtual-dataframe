@@ -7,10 +7,8 @@
 # Puis, par exemple
 # 	ln -s Makefile configure
 # 	ln -s Makefile test
-# 	ln -s Makefile train
 # 	./configure		# Execute make configure
 # 	./test 			# Execute make test
-#   ./train 		# Train the model
 # Attention, il n'est pas possible de passer les paramètres aux scripts
 
 # ---------------------------------------------------------------------------------------
@@ -68,7 +66,7 @@ endif
 ifdef USE_GPU
 # PPR: semble fonctionner s'il n'y a pas nvcc déjà installé
 # FIXME CUDA_VER=$(shell nvidia-smi | awk -F"CUDA Version:" 'NR==3{split($$2,a," ");print a[1]}')
-CUDA_VER=11.5
+#CUDA_VER=11.5
 endif
 
 # ---------------------------------------------------------------------------------------
@@ -78,7 +76,7 @@ NPROC?=$(shell nproc)
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour pouvoir lancer un browser avec un fichier local
 define BROWSER
-	python $(PYTHON_PARAMS) -c '
+	python $(PYTHON_ARGS) -c '
 	import os, sys, webbrowser
 	from urllib.request import pathname2url
 
@@ -120,24 +118,34 @@ endif
 # correspondent au nom du répertoire du projet.
 # Il est possible de modifier cela en valorisant les variables VENV, KERNEL, et/ou PRJ.
 # avant le lancement du Makefile (`VENV=cntk_p36 make`)
-PRJ:=$(shell basename $(shell pwd))
+PRJ:=$(shell basename "$(shell pwd)")
 VENV ?= $(PRJ)
 KERNEL ?=$(VENV)
-PRJ_PACKAGE:=$(PRJ)
-PYTHON_VERSION:=3.9
-PYTHONWARNINGS=ignore
+export REMOTE_GIT_URL?=$(shell git remote get-url origin)
+export PRJ_URL=$(REMOTE_GIT_URL:.git=)
+export PRJ_DOC_URL=$(PRJ_URL)
+export GIT_DESCRIBE_TAG=$(shell git describe --tags --exact-match 2>/dev/null || git symbolic-ref -q --short HEAD)
+export PRJ_PACKAGE:=$(PRJ)
+export PYTHON_VERSION:=3.9
+export PYTHONWARNINGS=ignore
 PYTHON_PARAMS?=
-CUDF_VER=22.06
+
 PYTHON_SRC=$(shell find -L "$(PRJ)" -type f -iname '*.py' | grep -v __pycache__)
 PYTHON_TST=$(shell find -L tests -type f -iname '*.py' | grep -v __pycache__)
 
 export DATA?=data
 
+
 # Conda environment
 CONDA_BASE:=$(shell AWS_DEFAULT_PROFILE=default conda info --base)
 CONDA_PACKAGE:=$(CONDA_PREFIX)/lib/python$(PYTHON_VERSION)/site-packages
 CONDA_PYTHON:=$(CONDA_PREFIX)/bin/python
-CONDA_ARGS?=-c rapidsai -c nvidia -c conda-forge
+#CONDA_BLD_DIR?=${PWD}/build/conda-bld
+CONDA_BLD_DIR=$(CONDA_PREFIX)/conda-bld
+
+#CONDA_CHANNELS?=-c local -c nvidia -c rapidsai -c conda-forge
+CONDA_CHANNELS?=-c local
+CONDA_ARGS?=
 export VIRTUAL_ENV=$(CONDA_PREFIX)
 
 PIP_PACKAGE:=$(CONDA_PACKAGE)/$(PRJ_PACKAGE).egg-link
@@ -149,6 +157,11 @@ JUPYTER_LABEXTENSIONS:=dask-labextension
 JUPYTER_DATA_DIR:=$(shell jupyter --data-dir 2>/dev/null || echo "~/.local/share/jupyter")
 JUPYTER_LABEXTENSIONS_DIR:=$(CONDA_PREFIX)/share/jupyter/labextensions
 _JUPYTER_LABEXTENSIONS:=$(foreach ext,$(JUPYTER_LABEXTENSIONS),$(JUPYTER_LABEXTENSIONS_DIR)/$(ext))
+
+# Project variable
+export VDF_MODES=pandas cudf dask dask_cudf
+
+CHECK_GIT_STATUS=[[ `git status --porcelain` ]] && echo "$(yellow)Warning: All files are not commited$(normal)"
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour ajouter des repositories complémentaires à PIP.
@@ -343,10 +356,10 @@ endif
 # - ACTIVATE_VENV pour activer le VENV avant le traitement
 # Pour cela, sélectionnez la version de VALIDATE_VENV qui vous convient.
 # Attention, toute les règles proposées ne sont pas compatible avec le mode ACTIVATE_VENV
-CHECK_VENV=@if [[ "$(VENV)" != "$(CONDA_DEFAULT_ENV)" ]] ; \
+CHECK_VENV=if [[ "$(VENV)" != "$(CONDA_DEFAULT_ENV)" ]] ; \
   then echo -e "$(green)Use: $(cyan)conda activate $(VENV)$(green) before using 'make'$(normal)"; exit 1 ; fi
 
-ACTIVATE_VENV=source $(CONDA_BASE)/etc/profile.d/conda.sh && conda activate $(VENV) $(CONDA_ARGS)
+ACTIVATE_VENV=source $(CONDA_BASE)/etc/profile.d/conda.sh && conda activate $(VENV) $(CONDA_ARGS) $(CONDA_CHANNELS)
 DEACTIVATE_VENV=source $(CONDA_BASE)/etc/profile.d/conda.sh && conda deactivate
 
 VALIDATE_VENV=$(CHECK_VENV)
@@ -370,21 +383,23 @@ VALIDATE_VENV=$(CHECK_VENV)
 RAPIDS=$(CONDA_PACKAGE)/cuda
 .PHONY: install-rapids
 ## Install NVidia rapids framework
+CUDF_VER=22.06
 install-rapids: $(RAPIDS)
 $(RAPIDS):
 ifeq ($(USE_GPU),-gpu)
 	@echo "$(green)  Install NVidia Rapids...$(normal)"
-	conda install -q -y $(CONDA_ARGS) \
-		cudf==$(CUDF_VER) \
-		cudatoolkit==$(CUDA_VER) \
-		dask-cuda \
-		dask-cudf \
-		dask-labextension
-else
-	conda install -q -y $(CONDA_ARGS) \
-		dask-labextension
+	conda install \
+		-q -y $(CONDA_ARGS) $(CONDA_CHANNELS) \
+		cudatoolkit \
+		cudf \
+		dask-cudf
+#	conda install \
+#		-q -y $(CONDA_ARGS) $(CONDA_CHANNELS) \
+#		cudf==$(CUDF_VER) \
+#		cudatoolkit==$(CUDA_VER) \
+#		dask-cudf
 endif
-	touch $(RAPIDS)
+	#touch $(RAPIDS)
 
 
 .PHONY: requirements dependencies
@@ -411,24 +426,20 @@ dependencies: requirements
 # Download modules and packages before going offline
 offline: ~/.mypypi
 ifeq ($(OFFLINE),True)
-CONDA_ARGS+=--use-index-cache --use-local --offline
+CONDA_ARGS+=--use-index-cache --offline
 PIP_ARGS+=--no-index --find-links ~/.mypypi
 endif
 
 # Rule to check the good installation of python in Conda venv
 $(CONDA_PYTHON):
 	@$(VALIDATE_VENV)
-	conda install -q "python=$(PYTHON_VERSION).*" -y $(CONDA_ARGS)
+	conda install -q "python=$(PYTHON_VERSION).*" -y $(CONDA_ARGS) $(CONDA_CHANNELS)
 
 # Rule to update the current venv, with the dependencies describe in `setup.py`
 $(PIP_PACKAGE): $(CONDA_PYTHON) setup.py | .git # Install pip dependencies
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Install setup.py dependencies ... (may take minutes)$(normal)"
-ifeq ($(USE_GPU),-gpu)
-	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.[all,dev,test]' | grep -v 'already satisfied' || true
-else
-	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.[pandas,dask,dev,test]' | grep -v 'already satisfied' || true
-endif
+	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.[dev,test]' | grep -v 'already satisfied' || true
 	echo -e "$(cyan)setup.py dependencies updated$(normal)"
 	@touch $(PIP_PACKAGE)
 
@@ -437,7 +448,7 @@ endif
 # Intall a Jupyter kernel
 $(JUPYTER_DATA_DIR)/kernels/$(KERNEL): $(REQUIREMENTS)
 	@$(VALIDATE_VENV)
-	python $(PYTHON_PARAMS) -O -m ipykernel install --user --name $(KERNEL)
+	python $(PYTHON_ARGS) -O -m ipykernel install --user --name $(KERNEL)
 	echo -e "$(cyan)Kernel $(KERNEL) installed$(normal)"
 
 # Remove the Jupyter kernel
@@ -460,7 +471,12 @@ $(JUPYTER_LABEXTENSIONS_DIR)/%:
 .PHONY: configure
 ## Prepare the work environment (conda venv, kernel, ...)
 configure:
-	@conda create --name "$(VENV)" python=$(PYTHON_VERSION) -y $(CONDA_ARGS)
+	@conda create \
+		--name "$(VENV)" \
+		python=$(PYTHON_VERSION) \
+		conda-build \
+		-y \
+		$(CONDA_ARGS) $(CONDA_CHANNELS)
 	@if [[ "base" == "$(CONDA_DEFAULT_ENV)" ]] || [[ -z "$(CONDA_DEFAULT_ENV)" ]] ; \
 	then echo -e "Use: $(cyan)conda activate $(VENV)$(normal)" ; fi
 
@@ -483,7 +499,7 @@ ifeq ($(OFFLINE),True)
 	@echo -e "$(red)Can not upgrade virtual env in offline mode$(normal)"
 else
 	@$(VALIDATE_VENV)
-	conda update --all $(CONDA_ARGS)
+	conda update --all $(CONDA_ARGS) $(CONDA_CHANNELS)
 	pip list --format freeze --outdated | sed 's/(.*//g' | xargs -r -n1 pip install $(EXTRA_INDEX) -U
 	@echo -e "$(cyan)After validation, upgrade the setup.py$(normal)"
 endif
@@ -567,10 +583,10 @@ else
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Check typing...$(normal)"
 	# pytype
-	pytype "$(PRJ)"
+	pytype --config=pytype.cfg "$(PRJ)"
 	for phase in scripts/*
 	do
-	  [[ -e "$$phase" ]] && ( cd $$phase && find -L . -type f -name '*.py' -exec pytype {} \; )
+	  [[ -e "$$phase" ]] && ( cd $$phase && find -L . -type f -name '*.py' -exec pytype --config=pytype.cfg {} \; )
 	done
 	touch ".pytype/pyi/$(PRJ)"
 endif
@@ -638,7 +654,7 @@ docs: build/html
 .PHONY: sdist
 dist/$(PRJ_PACKAGE)-*.tar.gz: $(REQUIREMENTS)
 	@$(VALIDATE_VENV)
-	python $(PYTHON_PARAMS) setup.py sdist
+	python $(PYTHON_ARGS) setup.py sdist
 
 # Create a source distribution
 sdist: dist/$(PRJ_PACKAGE)-*.tar.gz
@@ -651,14 +667,96 @@ sdist: dist/$(PRJ_PACKAGE)-*.tar.gz
 .PHONY: bdist
 dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl: $(REQUIREMENTS) $(PYTHON_SRC)
 	@$(VALIDATE_VENV)
-	python $(PYTHON_PARAMS) setup.py bdist_wheel
+	python $(PYTHON_ARGS) setup.py bdist_wheel
 
 # Create a binary wheel distribution
 bdist: dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl
 
+# ---------------------------------------------------------------------------------------
+# SNIPPET pour créer une distribution des binaires au format conda.
+.PHONY:conda-build conda-install conda-debug conda-convert
+
+CONDA_USER?=${USER}
+CONDA_TOKEN?=""
+CONDA_BUILD_TARGET=${CONDA_BLD_DIR}/noarch/${PRJ}-*.tar.bz2
+
+$(CONDA_PREFIX)/bin/conda-build:
+	conda install conda-build conda-verify -y
+
+$(CONDA_BLD_DIR):
+#	@ln -s $(CONDA_PREFIX)/conda-bld $(CONDA_BLD_DIR)
+	#@mkdir -p $(CONDA_BLD_DIR)
+	#conda index $(CONDA_BLD_DIR)
+
+${CONDA_BUILD_TARGET}: clean $(CONDA_BLD_DIR) $(CONDA_PREFIX)/bin/conda-build \
+		dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl \
+		meta.yaml conda_build_config.yaml setup.*
+	@$(CHECK_GIT_STATUS)
+	GIT_DESCRIBE_TAG=$(shell python setup.py --version 2>/dev/null) \
+#		--output-folder ${CONDA_BLD_DIR} \
+#	--skip-existing --dirty --keep-old-work --debug \
+#		-c file://${CONDA_BLD_DIR} \
+	conda build \
+	--no-test --dirty \
+		$(CONDA_CHANNELS) \
+		${CONDA_ARGS} \
+		--python=$(PYTHON_VERSION) \
+		--no-anaconda-upload \
+		.
+	cp --reflink=auto $(CONDA_BUILD_TARGET) dist/
+
+## Build the conda packages
+conda-build: ${CONDA_BUILD_TARGET}
+
+## Purge the conda build process
+conda-purge:
+	@conda build purge \
+	--output-folder ${CONDA_BLD_DIR}
+
+
+## Debug the conda build process
+conda-debug:
+	#GIT_DESCRIBE_TAG=$(shell python setup.py --version 2>/dev/null) \
+	#	-c file://${CONDA_BLD_DIR} $(CONDA_CHANNELS) \
+
+	GIT_DESCRIBE_TAG=v0.0 \
+	conda debug \
+		${CONDA_ARGS} \
+		--python=$(PYTHON_VERSION) \
+		.
+
+## Convert the package for all platform
+conda-convert: ${CONDA_BUILD_TARGET}
+	@conda convert \
+		--platform all \
+		-o dist/ \
+		${CONDA_BUILD_TARGET}
+
+## Test conda package
+conda-test: ${CONDA_BUILD_TARGET}
+	conda build --test \
+		-c file://${PWD}/${CONDA_BLD_DIR} ${CONDA_CHANNELS} \
+		${CONDA_BUILD_TARGET}
+
+#		-c file://${PWD}/${CONDA_BLD_DIR} \
+
+## Install the built conda package
+conda-install: ${CONDA_BUILD_TARGET}
+	$(CHECK_GIT_STATUS)
+	conda install \
+		-c file://${PWD}/${CONDA_BLD_DIR} $(CONDA_CHANNELS) ${CONDA_ARGS} \
+		-y \
+		${PRJ}
+## Install a specific version of conda package
+conda-install-%: ${CONDA_BUILD_TARGET}
+	$(CHECK_GIT_STATUS)
+	conda install \
+		-c file://${PWD}/${CONDA_BLD_DIR} $(CONDA_CHANNELS) ${CONDA_ARGS} \
+		-y \
+		${PRJ}-$*
 
 # ---------------------------------------------------------------------------------------
-# SNIPPET pour créer une distribution des binaires au format egg.
+# SNIPPET pour créer une distribution des binaires au format whl.
 # Pour vérifier la version produite :
 # python setup.py --version
 # Cela correspond au dernier tag d'un format 'version'
@@ -821,7 +919,7 @@ clean-pip:
 # SNIPPET pour nettoyer complètement l'environnement Conda
 .PHONY: clean-venv clean-$(VENV)
 clean-$(VENV): remove-venv
-	@conda create -y -q -n $(VENV) $(CONDA_ARGS)
+	@conda create -y -q -n $(VENV) $(CONDA_ARGS) $(CONDA_CHANNELS)
 	@touch setup.py
 	@echo -e "$(yellow)Warning: Conda virtualenv $(VENV) is empty.$(normal)"
 # Set the current VENV empty
@@ -832,6 +930,7 @@ clean-venv : clean-$(VENV)
 .PHONY: clean
 ## Clean current environment
 clean: clean-pyc clean-build clean-notebooks
+	@rm -Rf .pytest_cache .pytype .eggs dist/ stubs/numpy
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour faire le ménage du projet
@@ -851,9 +950,9 @@ endif
 .PHONY: test unittest functionaltest
 .make-_unit-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC)
 	@$(VALIDATE_VENV)
-	@echo -e "$(cyan)Run unit tests...$(normal)"
-	python $(PYTHON_PARAMS)  -m pytest --rootdir=. -s tests $(PYTEST_ARGS) -m "not functional"
-	@date >.make-_unit-test-$*
+	echo -e "$(cyan)Run unit tests...$(normal)"
+	python $(PYTHON_ARGS)  -m pytest --rootdir=. -s tests $(PYTEST_ARGS) -m "not functional"
+	date >.make-_unit-test-$*
 
 # Run unit test with a specific *mode*
 .PHONY: unit-test-*
@@ -870,7 +969,7 @@ unit-test-dask_cudf:
 endif
 
 .PHONY: unit-test
-.make-unit-test: unit-test-pandas unit-test-cudf unit-test-dask unit-test-dask_cudf
+.make-unit-test: $(foreach ext,$(VDF_MODES),unit-test-$(ext))
 	@date >.make-unit-test
 
 ## Run unit test for all *mode*
@@ -880,14 +979,14 @@ unit-test: .make-unit-test
 .PHONY: notebooks-test
 _make-notebooks-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC) $(JUPYTER_DATA_DIR)/kernels/$(KERNEL) notebooks/demo.ipynb
 	@$(VALIDATE_VENV)
-	@echo -e "$(cyan)Run notebook tests for mode=$(VDF_MODE)...$(normal)"
-	python $(PYTHON_PARAMS) -m papermill \
+	echo -e "$(cyan)Run notebook tests for mode=$(VDF_MODE)...$(normal)"
+	python $(PYTHON_ARGS) -m papermill \
 		-k $(KERNEL) \
 		--log-level ERROR \
 		--no-report-mode \
 		notebooks/demo.ipynb \
 		-p mode $(VDF_MODE) /dev/null
-	@date >.make-notebooks-test-$*
+	date >.make-notebooks-test-$*
 
 ## Run notebooks test with a specific *mode*
 .PHONY: notebooks-test-*
@@ -903,7 +1002,7 @@ notebooks-test-dask_cudf:
 endif
 
 .PHONY: notebooks-test-all
-.make-notebooks-test: notebooks-test-pandas notebooks-test-cudf notebooks-test-dask notebooks-test-dask_cudf
+.make-notebooks-test: $(foreach ext,$(VDF_MODES),notebooks-test-$(ext))
 	@date >.make-notebooks-test
 
 ## Run notebook test for all *mode*
@@ -911,19 +1010,19 @@ notebooks-test: .make-notebooks-test
 
 .make-functional-test: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC)
 	@$(VALIDATE_VENV)
-	@echo -e "$(cyan)Run functional tests...$(normal)"
-	python $(PYTHON_PARAMS)  -m pytest --rootdir=. -s tests $(PYTEST_ARGS) -m "functional"
-	@date >.make-functional-test
+	echo -e "$(cyan)Run functional tests...$(normal)"
+	python $(PYTHON_ARGS)  -m pytest --rootdir=. -s tests $(PYTEST_ARGS) -m "functional"
+	date >.make-functional-test
 # Run only functional tests
 functional-test: .make-functional-test
 
-.make-test-$(VDF_MODE): $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC)
+.make-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC)
 	@echo -e "$(cyan)Run all tests for $(VDF_MODE)...$(normal)"
-	python $(PYTHON_PARAMS)  -m pytest --rootdir=. $(PYTEST_ARGS) -s tests
+	python $(PYTHON_ARGS)  -m pytest --rootdir=. $(PYTEST_ARGS) -s tests
 	#python setup.py test
-	@date >.make-test-$(VDF_MODE)
-	@date >.make-unit-test
-	@date >.make-functional-test
+	date >.make-test-$(VDF_MODE)
+	date >.make-unit-test
+	date >.make-functional-test
 
 .PHONY: test-*
 ## Run all tests for a specific *mode* (make test-cudf)
@@ -939,7 +1038,7 @@ test-dask_cudf:
 endif
 
 
-.make-test: test-pandas test-cudf test-dask test-dask_cudf .make-notebooks-test # FIXME .make-functional-test
+.make-test: $(foreach ext,$(VDF_MODES),test-$(ext)) .make-notebooks-test # FIXME .make-functional-test
 	@date >.make-test
 
 .PHONY: test
@@ -961,7 +1060,7 @@ install: $(CONDA_PREFIX)/bin/$(PRJ)
 
 ## Install the tools in conda env with 'develop' link
 develop:
-	python $(PYTHON_PARAMS) setup.py develop
+	python $(PYTHON_ARGS) setup.py develop
 
 ## Uninstall the tools from the conda env
 uninstall: $(CONDA_PREFIX)/bin/$(PRJ)
