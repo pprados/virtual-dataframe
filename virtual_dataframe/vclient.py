@@ -1,25 +1,43 @@
 """
 A *Virtual Client* to facilitate the startup process.
-With some environment variable, the program use different kind of scheduler.
+
 With some environment variable, the program use different kind of scheduler.
 
-+-----------+-------+-----------------------------+------------------+
-| VDF_MODE  | DEBUG | DASK_SCHEDULER_SERVICE_HOST | Scheduler        |
-+===========+=======+=============================+==================+
-| pandas    | -     | -                           | No scheduler     |
-+-----------+-------+-----------------------------+------------------+
-| cudf      | -     | -                           | No scheduler     |
-+-----------+-------+-----------------------------+------------------+
-| dask      | Yes   | -                           | synchronous      |
-+-----------+-------+-----------------------------+------------------+
-| dask      | No    | -                           | processes        |
-+-----------+-------+-----------------------------+------------------+
-| dask      | No    | localhost                   | LocalCluster     |
-+-----------+-------+-----------------------------+------------------+
-| dask-cudf | No    | localhost                   | LocalCUDACluster |
-+-----------+-------+-----------------------------+------------------+
-| dask-cudf | No    | <host>                      | Dask cluster     |
-+-----------+-------+-----------------------------+------------------+
+Use 'VDF_CLUSTER' with protocol, host and optionaly, the port.
+- dask://locahost:8787
+- ray://locahost:10001
+- ray:auto
+and alternativelly, can use DASK_SCHEDULER_SERVICE_HOST and DASK_SCHEDULER_SERVICE_PORT
+
++------------+-------+------------------+------------------+
+| VDF_MODE   | DEBUG | VDF_CLUSTER      | Scheduler        |
++============+=======+==================+==================+
+| pandas     | -     | -                | No scheduler     |
++------------+-------+------------------+------------------+
+| cudf       | -     | -                | No scheduler     |
++------------+-------+------------------+------------------+
+| dask       | Yes   | -                | synchronous      |
++------------+-------+------------------+------------------+
+| dask       | No    | -                | processes        |
++------------+-------+------------------+------------------+
+| dask       | No    | dask://localhost | LocalCluster     |
++------------+-------+------------------+------------------+
+| dask_modin | No    | -                | LocalCluster     |
++------------+-------+------------------+------------------+
+| dask_modin | No    | dask://localhost | LocalCluster     |
++------------+-------+------------------+------------------+
+| dask_modin | No    | dask://<host>    | Dask cluster     |
++------------+-------+------------------+------------------+
+| ray_modin  | No    | ray:auto         | Dask cluster     |
++------------+-------+------------------+------------------+
+| ray_modin  | No    | ray://localhost  | Dask cluster     |
++------------+-------+------------------+------------------+
+| ray_modin  | No    | ray://<host>     | Dask cluster     |
++------------+-------+------------------+------------------+
+| dask-cudf  | No    | dask://localhost | LocalCUDACluster |
++------------+-------+------------------+------------------+
+| dask-cudf  | No    | dask://<host>    | Dask cluster     |
++------------+-------+------------------+------------------+
 
 
 Sample:
@@ -34,75 +52,94 @@ with (VClient())
 import logging
 import os
 import sys
-from typing import Any
+from urllib.parse import urlparse, ParseResult
+from typing import Any, Tuple, Dict, Optional, Union
 
-from .env import USE_CLUSTER, DEBUG, VDF_MODE, Mode
+from .env import DEBUG, VDF_MODE, Mode
+
+import dask.distributed
 
 LOGGER: logging.Logger = logging.getLogger(__name__)
+DASK_DEFAULT_PORT = 8787
+RAY_DEFAULT_PORT = 10001
+
+_global_client = None
 
 
-class _FakeClient():
-    def cancel(self, futures, asynchronous=None, force=False) -> None:
-        pass
+def _analyse_cluster_url(mode: Mode, env) -> Tuple[ParseResult, Optional[str], int]:
+    vdf_cluster = None
+    # Domino server ?
+    if "DASK_SCHEDULER_SERVICE_HOST" in env and \
+            "DASK_SCHEDULER_SERVICE_PORT" in env:
+        vdf_cluster = \
+            f"dask://{env['DASK_SCHEDULER_SERVICE_HOST']}:{env['DASK_SCHEDULER_SERVICE_PORT']}"
+    else:
+        vdf_cluster = env.get("VDF_CLUSTER", None)
+    if not vdf_cluster:
+        if mode in (Mode.dask, Mode.dask_modin, Mode.dask_cudf):
+            vdf_cluster = "dask://localhost"
+        elif mode == Mode.ray_modin:
+            vdf_cluster = "ray://"
+        else:
+            vdf_cluster = ""
+    parsed = urlparse(vdf_cluster)
+    host = None
+    port = -1
+    if parsed.netloc:
+        if ':' in parsed.netloc:
+            host, port = parsed.netloc.split(':')
+        else:
+            host = parsed.netloc
+        host = host.lower()
+    if parsed.scheme == "dask" and port == -1:
+        port = DASK_DEFAULT_PORT
+    elif parsed.scheme == "ray" and port == -1:
+        port = RAY_DEFAULT_PORT
+    return parsed, host, int(port)
 
-    def close(self, timeout='__no_default__') -> None:
-        pass
 
-    def __enter__(self) -> None:
-        pass
+def _new_VClient(mode: Mode,
+                 env: Union[Dict[str, str], os._Environ[str]],
+                 **kwargs) -> Any:
+    if mode in (Mode.pandas, Mode.cudf):
+        class _FakeClient:
+            def cancel(self, futures, asynchronous=None, force=False) -> None:
+                pass
 
-    def __exit__(self, type: None, value: None, traceback: None) -> None:
-        pass
+            def close(self, timeout='__no_default__') -> None:
+                pass
 
-    def __str__(self) -> str:
-        return "<Client: in-process scheduler>"
+            def __enter__(self) -> Any:
+                return self
 
-    def __repr__(self) -> str:
-        return self.__str__()
+            def __exit__(self, type: None, value: None, traceback: None) -> None:
+                pass
 
+            def __str__(self) -> str:
+                return "<Client: in-process scheduler>"
 
-class VClient():
-    def __new__(cls, **kwargs) -> Any:
-        client = _FakeClient()
-        if VDF_MODE in (Mode.dask, Mode.dask_cudf):
-            import dask.distributed
-            if DEBUG:
-                dask.config.set(scheduler='synchronous')  # type: ignore
-                LOGGER.warning("Use synchronous scheduler for debuging")
-            # Connect to Domino cluster
-            elif "DASK_SCHEDULER_SERVICE_HOST" in os.environ and \
-                    "DASK_SCHEDULER_SERVICE_PORT" in os.environ:
+            def __repr__(self) -> str:
+                return self.__str__()
 
-                host = os.environ["DASK_SCHEDULER_SERVICE_HOST"]
-                port = os.environ["DASK_SCHEDULER_SERVICE_PORT"]
-                if host.lower() in ("localhost", "127.0.0.1"):
-                    if VDF_MODE == "dask_cudf":
-                        from dask_cuda import LocalCUDACluster
+        return _FakeClient()
 
-                        client = dask.distributed.Client(LocalCUDACluster(), **kwargs)
-                        LOGGER.warning("Use LocalCudaCluster scheduler")
-                    else:
-                        from distributed import LocalCluster
+    vdf_cluster, host, port = _analyse_cluster_url(mode, env)
 
-                        client = dask.distributed.Client(LocalCluster(), **kwargs)
-                        LOGGER.warning("Use LocalCluster scheduler")
-
-                # Initialize for remote cluster
-                client = dask.distributed.Client(
-                    address=f"{host}:{port}",
-                    **kwargs)
-                LOGGER.warning("Use remote cluster")
-            elif USE_CLUSTER:
-
-                if VDF_MODE == Mode.dask_cudf:  # Use in local or other environements
-
+    if mode in (Mode.dask, Mode.dask_cudf, Mode.dask_modin):
+        assert vdf_cluster.scheme == "dask"
+        # import dask.distributed
+        if DEBUG:
+            dask.config.set(scheduler='synchronous')  # type: ignore
+            LOGGER.warning("Use synchronous scheduler for debuging")
+        else:
+            if host in ("localhost", "127.0.0.1"):
+                if mode == Mode.dask_cudf:
                     try:
                         from dask_cuda import LocalCUDACluster
                     except ModuleNotFoundError:
-                        print(
+                        raise ValueError(
                             "Please install dask-cuda via the rapidsai conda channel. "
                             "See https://rapids.ai/start.html for instructions.")
-                        sys.exit(-1)
 
                     client = dask.distributed.Client(LocalCUDACluster(), **kwargs)
                     LOGGER.warning("Use LocalCudaCluster scheduler")
@@ -112,13 +149,63 @@ class VClient():
                     client = dask.distributed.Client(LocalCluster(), **kwargs)
                     LOGGER.warning("Use LocalCluster scheduler")
             else:
-                # Use thread to schedule the job
-                # This scheduler only provides parallelism when your computation
-                # is dominated by non-Python code
-                # See https://docs.dask.org/en/latest/scheduling.html#local-threads
-                # dask.config.set(scheduler='threads')
-                # "threads", "synchronous" or "processes"
-                # dask.config.set(scheduler='processes')
-                # client = dask.distributed.Client(processes=True)
-                LOGGER.warning("Use processes scheduler")
-        return client
+                # Initialize for remote cluster
+                client = dask.distributed.Client(
+                    address=f"{host}:{port}",
+                    **kwargs)
+                LOGGER.warning(f"Use remote cluster on {host}:{port}")
+            return client
+    elif mode == Mode.ray_modin:
+        assert vdf_cluster.scheme == "ray"
+        import ray
+        ray_address = None
+        if host:
+            ray_address = f"ray://{host}:{port}" if host != "auto" else "auto"
+
+        if not ray_address:
+            ray_context = ray.init()
+        else:
+            ray_context = ray.init(address=ray_address, **kwargs)
+
+        class RayClient:
+            def __init__(self, ray_context):
+                self.ray_context = ray_context
+
+            def cancel(self, futures, asynchronous=None, force=False) -> None:
+                pass
+
+            def close(self, timeout='__no_default__') -> None:
+                pass
+
+            def __enter__(self) -> Any:
+                return self
+
+            def __exit__(self, type: None, value: None, traceback: None) -> None:
+                # self.ray_context = None
+                # ray.shutdown()
+                pass
+
+            def __str__(self) -> str:
+                return f"<Client: {self.ray_context.address_info['address']}>"
+
+            def __repr__(self) -> str:
+                return self.__str__()
+
+        return RayClient(ray_context)
+    else:
+        assert ("Invalid VDF_MODE")
+
+
+class VClient():
+    def __new__(cls, **kwargs) -> Any:
+        # global _global_client
+        # if not _global_client:
+        #     _global_client = _new_VClient(
+        #         VDF_MODE,
+        #         os.environ,
+        #         **kwargs)
+        # return _global_client
+        return _new_VClient(
+            VDF_MODE,
+            os.environ,
+            **kwargs)

@@ -11,9 +11,6 @@ _yes: List[str] = ["true", "y", "yes"]
 # To use a synchronous scheduler, set DEBUG=y
 DEBUG: bool = os.environ.get("DEBUG", "").lower() in _yes
 
-# Default: no cluster, because it's better for developpers
-USE_CLUSTER: bool = "DASK_SCHEDULER_SERVICE_HOST" in os.environ
-
 
 # If GPU detected, set to True
 # If GPU detected and USE_GPU=No, set to False,
@@ -22,6 +19,8 @@ class Mode(Enum):
     pandas = "pandas"
     cudf = "cudf"
     dask = "dask"
+    dask_modin = "dask_modin"
+    ray_modin = "ray_modin"
     dask_cudf = "dask_cudf"
 
 

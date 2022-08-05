@@ -10,8 +10,18 @@ import pytest
 import virtual_dataframe as vdf
 
 
+# def setup_module(module):
+#     vdf.VClient()
+#
+# def teardown_module(module):
+#     pass
+#
+@pytest.fixture(scope="session")
+def vclient():
+    return vdf.VClient()
+
 # %%
-def test_delayed():
+def test_delayed(vclient):
     @vdf.delayed
     def f(i):
         return i
@@ -19,14 +29,14 @@ def test_delayed():
     assert vdf.compute(f(42))[0] == 42
 
 
-def test_compute():
+def test_compute(vclient):
     @vdf.delayed
     def f(i):
         return i
 
     assert vdf.compute(f(42), f(50)) == (42, 50)
 
-def test_visualize():
+def test_visualize(vclient):
     @vdf.delayed
     def f(i):
         return i
@@ -35,6 +45,7 @@ def test_visualize():
 
 
 def test_concat():
+    vdf.VClient()
     rc = list(vdf.concat([
         vdf.VDataFrame([1]),
         vdf.VDataFrame([2])]).to_pandas()[0])

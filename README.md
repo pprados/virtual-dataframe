@@ -2,31 +2,29 @@
 
 ## Motivation
 
-This is a set of tools, to help the usage of Dask, with differents technology stack.
+Do you want to create a code, and choose at the end, the framework to use it?
+Do you want to be able to choose the best framework after simply performing performance measurements?
+This framework unifies six Panda-compatible components, to allow the writing of a single code, compatible with all
 
 ## Synopsis
 
 With some parameters and Virtual classes, it's possible to write a code, and execute this code:
-- With or without multicore
-- With or without cluster (multi nodes)
+- With or without Dask
 - With or without GPU
+- With or without cluster
 
-To do that, we create some *virtual classes*, add some methods in others classes, etc.
+To do that, we create some virtual classes, add some methods in others classes, etc.
 
 It's difficult to use a combinaison of framework, with the same classe name, with similare semantic, etc.
-For example, if you want to use in the same program, Dask, cudf, pandas and panderas, you must manage:
+For example, if you want to use in the same program, Dask, cudf, pandas, modin and panderas, you must manage:
 - `pandas.DataFrame`, `pandas,Series`
+- `modin.pandas.DataFrame`, `modin.pandas.Series`
 - `cudf.DataFrame`, `cudf.Series`
 - `dask.DataFrame`, `dask.Series`
 - `panderas.DataFrame`, `panderas.Series`
 
  With `cudf`, the code must call `.to_pandas()`. With dask, the code must call `.compute()`, can use `@delayed` or
 `dask.distributed.Client`. etc.
-
-- [Cudf](https://github.com/rapidsai/cudf) is a part of Rapids framework from NVidia, to implement pandas in GPU.
-- [Dask](https://docs.dask.org/en/stable/) is a clustered and leasy version of pandas. It's possible to distribution
-all dataframes transformations with multicore or a cluster.
-
 
 We propose to replace all these classes and scenarios, with a *uniform model*,
 inspired by [dask](https://www.dask.org/).
@@ -38,16 +36,17 @@ To reduce the confusion, you must use the classes `VDataFrame` and `VSeries` (Th
 These classes propose the methods `.to_pandas()` and `.compute()` for each version.
 And a new `@delayed` annotation can be use, with or without Dask.
 
-With some parameters, the real classes may be `panda.DataFrame`, `cudf.DataFrame`, `dask.dataframe.DataFrame` with Pandas or
+With some parameters, the real classes may be `pandas.DataFrame`, `modin.pandas.DataFrame`,
+`cudf.DataFrame`, `dask.dataframe.DataFrame` with Pandas or
 `dask.dataframe.DataFrame` with cudf (with Pandas or cudf for each partition).
-And, it's possible to use a specific version of [Panderas](https://pandera.readthedocs.io/en/stable/)
+And, it's possible to use [Panderas](https://pandera.readthedocs.io/en/stable/)
 for all `@delayed` methods to check the dataframe schema.
 
 To manage the initialisation of a Dask cluster, you must use the `VClient()`. This alias, can be automatically initialized
 with some environment variables.
 
 ```python
-# Sample of code, compatible Pandas, cudf, dask and dask_cudf
+# Sample of code, compatible Pandas, cudf, modin, dask and dask_cudf
 from virtual_dataframe import *
 
 TestDF = VDataFrame
@@ -65,74 +64,61 @@ with (VClient()):
 
 With this framework, you can update your environment, to debuging your code.
 
-| env                                                                                          | Environement                          |
-|----------------------------------------------------------------------------------------------|---------------------------------------|
-| VDF_MODE=pandas                                                                              | Only Python with classical pandas     |
-| VDF_MODE=cudf                                                                                | Python with cuDF                      |
-| VDF_MODE=dask                                                                                | Dask with multiple process and pandas |
-| VDF_MODE=dask_cudf                                                                           | Dask with multiple process and cuDF   |
-| VDF_MODE=dask<br />DEBUG=True                                                                | Dask with single thread and pandas    |
-| VDF_MODE=dask_cudf<br />DEBUG=True                                                           | Dask with single thread and cuDF      |
-| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                      | Dask with local cluster and pandas    |
-| VDF_MODE=dask_cudf<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                 | Dask with local cuda cluster and cuDF |
-| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=...      | Dask with remote cluster and Pandas   |
-| VDF_MODE=dask_cudf<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=... | Dask with remote cluster and cuDF     |
+| env                                                                                            | Environement                          |
+|------------------------------------------------------------------------------------------------|---------------------------------------|
+| VDF_MODE=pandas                                                                                | Only Python with classical pandas     |
+| VDF_MODE=modin                                            | Python with modin (for debug)         |
+| VDF_MODE=cudf                                                                                  | Python with cuDF                      |
+| VDF_MODE=dask                                                                                  | Dask with multiple process and pandas |
+| VDF_MODE=dask-cudf                                                                             | Dask with multiple process and cuDF   |
+| VDF_MODE=dask<br />DEBUG=True                                                                  | Dask with single thread and pandas    |
+| VDF_MODE=dask-cudf<br />DEBUG=True                                                             | Dask with single thread and cuDF      |
+| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                        | Dask with local cluster and pandas    |
+| VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                   | Dask with local cuda cluster and cuDF |
+| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=...        | Dask with remote cluster and Pandas   |
+| VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=...   | Dask with remote cluster and cuDF     |
 
-The real compatibilty between the differents simulation of Pandas, depends on the implement of the cudf or dask.
+The real compatibilty between the differents simulation of Pandas, depends on the implement of the modin, cudf or dask.
 You can use the `VDF_MODE` variable, to update some part of code, between the selected backend.
 
 It's not always easy to write a code *compatible* with all scenario, but it's possible.
-Generally, add just `.compute()` is enough.
+Generally, add just `.compute()` and/or `.to_pandas()` is enough.
 After this effort, it's possible to compare the performance about the differents technologies,
 or propose a component, compatible with differents scenario.
 
 ## usage
-Install with conda
 ```shell
-$ CHANNEL=-c rapidsai -c nvidia -c conda-forge
-$ conda install -q -y $CHANNEL virtual_dataframe
-```
-or, install alternative.
-```shell
-$ CHANNEL=-c rapidsai -c conda-forge
-$ conda install -q -y $CHANNEL \
-		virtual_dataframe-minimal   # Without other frameworks dependencies
-$ conda install -q -y $CHANNEL \
-		virtual_dataframe-pandas    # Only pandas
-$ conda install -q -y $CHANNEL \
-		virtual_dataframe-cudf      # Only pandas and cudf
-$ conda install -q -y $CHANNEL \
-		virtual_dataframe-dask      # Only pandas and dask
-$ conda install -q -y $CHANNEL \
-		virtual_dataframe-dask_cudf # Only pandas, cudf and dask_cudf
+$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
+		dask-cuda \
+		dask-cudf \
+		cudf \
+		cudatoolkit
+$ pip install -e virtual_dataframe
 ```
 
 ## API
 
-The *real documentation* is the [Dask documentation](https://docs.dask.org/en/stable/).
-Essentially, replace `from dask.dataframe import *` with `from virtual_dataframe import *`.
-
-| api                                    | comments                                        |
-|----------------------------------------|-------------------------------------------------|
-| @delayed                               | Delayed function                                |
-| vdf.concat(...)                        | Merge VDataFrame                                |
-| vdf.read_csv(...)                      | Read VDataFrame from CSVs *glob* files          |
-| vdf.from_pandas(pdf, npartitions=...)  | Create Virtual Dataframe from Pandas DataFrame  |
-| vdf.from_virtual(vdf, npartitions=...) | Create Virtual Dataframe from backend DataFrame |
-| vdf.compute([...])                     | Compute multiple @delayed functions             |
-| VDataFrame(data, npartitions=...)      | Create DataFrame in memory (for debug)          |
-| VSeries(data, npartitions=...)         | Create Series in memory (for debug)             |
-| VDataFrame.compute()                   | Compute the virtual dataframe                   |
-| VDataFrame.to_pandas()                 | Convert to pandas dataframe                     |
-| VDataFrame.to_csv()                    | Save to *glob* files                            |
-| VDataFrame.to_numpy()                  | Convert to numpy array                          |
-| VDataFrame.categorize()                | Detect all categories                           |
-| VDataFrame.apply_rows()                | Apply for all rows, via *GPU* kernel            |
-| VDataFrame.map_partitions()            | Apply function for each parttions               |
-| VSeries.compute()                      | Compute the virtual series                      |
-| VSeries.to_pandas()                    | Convert to pandas dataframe                     |
-| VSeries.to_numpy()                     | Convert to numpy array                          |
-| TODO                                   | ...                                             |
+| api                                    | comments                                       |
+|----------------------------------------|------------------------------------------------|
+| @delayed                               | Delayed function                               |
+| vdf.concat(...)                        | Merge VDataFrame                               |
+| vdf.read_csv(...)                      | Read VDataFrame from CSVs *glob* files         |
+| vdf.from_pandas(pdf, npartitions=...)  | Create Virtual Dataframe from Pandas DataFrame |
+| vdf.from_virtual(vdf, npartitions=...) | Create FIXME                                   |
+| vdf.compute([...])                     | Compute multiple @delayed functions            |
+| VDataFrame(data, npartitions=...)      | Create DataFrame in memory                     |
+| VSeries(data, npartitions=...)         | Create Series in memory                        |
+| VDataFrame.compute()                   | Compute the virtual dataframe                  |
+| VDataFrame.to_pandas()                 | Convert to pandas dataframe                    |
+| VDataFrame.to_csv()                    | Save to *glob* files                           |
+| VDataFrame.to_numpy()                  | Convert to numpy array                         |
+| VDataFrame.categorize()                | Detect all categories                          |
+| VDataFrame.apply_rows()                | Apply rows, GPU template                       |
+| VDataFrame.map_partitions()            | Apply function for each parttions              |
+| VSeries.compute()                      | Compute the virtual series                     |
+| VSeries.to_pandas()                    | Convert to pandas dataframe                    |
+| VSeries.to_numpy()                     | Convert to numpy array                         |
+| TODO                                   | ...                                            |
 
 You can read a sample notebook [here](https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo.ipynb).
 
@@ -140,33 +126,35 @@ You can read a sample notebook [here](https://github.com/pprados/virtual-datafra
 This project is just a wrapper. So, it inherits limitations and bugs from other projects. Sorry for that.
 
 
-| Limitations                                                                                       |
-|---------------------------------------------------------------------------------------------------|
-| <br />**pandas**                                                                                  |
-| All data must be in DRAM                                                                          |
-| <br />**[cudf](https://docs.rapids.ai/api/cudf/nightly/user_guide/pandas-comparison.html)**       |
-| All data must be in VRAM                                                                          |
-| All data types in cuDF are nullable                                                               |
-| Iterating over a cuDF `Series`, `DataFrame` or `Index` is not supported.                          |
-| Join (or merge) and groupby operations in cuDF do not guarantee output ordering.                  |
-| The order of operations is not always deterministic                                               |
-| Cudf does not support duplicate column names                                                      |
-| Cudf also supports `.apply()` it relies on Numba to JIT compile the UDF and execute it on the GPU |
-| `.apply(result_type=...)` not supported                                                           |
-| `read_csv()` is not compatible with UTF-8                                                         |
-| <br />**[dask](https://distributed.dask.org/en/stable/limitations.html)**                         |
-| `transpose()` and `MultiIndex` are not implemented                                                |
-| Column assignment doesn't support type `list`                                                     |
-| <br />**[dask_cudf](https://docs.rapids.ai/api/cudf/nightly/user_guide/dask-cudf.html)**          |
-| See cudf and dask.                                                                                |
-| Categories with strings not implemented                                                           |
+| Limitations                                                                                     |
+|-------------------------------------------------------------------------------------------------|
+| <br />**pandas**                                                                                |
+| All data must be in DRAM                                                                        |
+| <br />**modin**                                                                                 |
+| [To describe](https://modin.readthedocs.io/en/stable/getting_started/why_modin/pandas.html)     |
+| <br />**[cudf](https://docs.rapids.ai/api/cudf/nightly/user_guide/pandas-comparison.html)**     |
+| All data must be in VRAM                                                                        |
+| All data types in cuDF are nullable                                                             |
+| Iterating over a cuDF Series, DataFrame or Index is not supported.                              |
+| Join (or merge) and groupby operations in cuDF do not guarantee output ordering.                |
+| The order of operations is not always deterministic                                             |
+| Cudf does not support duplicate column names                                                    |
+| Cudf also supports .apply() it relies on Numba to JIT compile the UDF and execute it on the GPU |
+| .apply(result_type=...) not supported                                                           |
+| <br />**[dask](https://distributed.dask.org/en/stable/limitations.html)**                       |
+|  transpose() and MultiIndex are not implemented                                                 |
+| Column assignment doesn't support type list                                                     |
+| <br />**dask-cudf**                                                                             |
+| See cudf and dask.                                                                              |
+| Categories with strings not implemented                                                         |
 
 To be compatible with all framework, you must only use the common features.
 
-|     | small data          | big data                 |
-|-----|---------------------|--------------------------|
-| CPU | pandas<br/>Limite:+ | dask<br/>Limite:++       |
-| GPU | cudf<br/>Limite:++  | dask_cudf<br/>Limite:+++ |
+|       | small data          | middle data       | big data                         |
+|-------|---------------------|-------------------|----------------------------------|
+| 1-CPU | pandas<br/>Limite:+ |                   |                                  |
+| n-CPU |                     | modin<br/>Limite+ | dask or dask_modin<br/>Limite:++ |
+| GPU   | cudf<br/>Limite:++  |                   | dask_cudf<br/>Limite:+++         |
 
 To develop, you can choose the level to be compatible with others frameworks.
 Each cell is strongly compatible with the upper left part.
@@ -174,10 +162,11 @@ Each cell is strongly compatible with the upper left part.
 ## No need of GPU?
 If you don't need a GPU, then develop for `dask`.
 
-|     | small data              | big data                 |
-|-----|-------------------------|--------------------------|
-| CPU | **pandas<br/>Limite:+** | **dask<br/>Limite:++**   |
-| GPU | cudf<br/>Limite:++      | dask_cudf<br/>Limite:+++ |
+|       | small data              | middle data           | big data                             |
+|-------|-------------------------|-----------------------|--------------------------------------|
+| 1-CPU | **pandas<br/>Limite:+** |                       |                                      |
+| n-CPU |                         | **modin<br/>Limite+** | **dask or dask_modin<br/>Limite:++** |
+| GPU   | cudf<br/>Limite:++      |                       | dask_cudf<br/>Limite:+++             |
 
 You can ignore this API:
 - `VDataFrame.apply_rows()`
@@ -186,10 +175,11 @@ You can ignore this API:
 
 If you don't need to use big data, then develop for `cudf`.
 
-|     | small data              | big data                 |
-|-----|-------------------------|--------------------------|
-| CPU | **pandas<br/>Limite:+** | dask<br/>Limite:++       |
-| GPU | **cudf<br/>Limite:++**  | dask_cudf<br/>Limite:+++ |
+|       | small data              | middle data           | big data                         |
+|-------|-------------------------|-----------------------|----------------------------------|
+| 1-CPU | **pandas<br/>Limite:+** |                       |                                  |
+| n-CPU |                         | **modin<br/>Limite+** | dask or dask_modin<br/>Limite:++ |
+| GPU   | **cudf<br/>Limite:++**  |                       | dask_cudf<br/>Limite:+++         |
 
 You can ignore these API:
 - `@delayed`
@@ -202,10 +192,11 @@ You can ignore these API:
 
 To be compatible with all mode, develop for `dask_cudf`.
 
-|     | small data              | big data                     |
-|-----|-------------------------|------------------------------|
-| CPU | **pandas<br/>Limite:+** | **dask<br/>Limite:++**       |
-| GPU | **cudf<br/>Limite:++**  | **dask_cudf<br/>Limite:+++** |
+|       | small data              | middle data           | big data                             |
+|-------|-------------------------|-----------------------|--------------------------------------|
+| 1-CPU | **pandas<br/>Limite:+** |                       |                                      |
+| n-CPU |                         | **modin<br/>Limite+** | **dask or dask_modin<br/>Limite:++** |
+| GPU   | **cudf<br/>Limite:++**  |                       | **dask_cudf<br/>Limite:+++**         |
 
 and accept all the limitations.
 
@@ -225,23 +216,6 @@ def f()-> int:
 
 real_result,=compute(f())  # Warning, compute return a tuple. The comma is important.
 a,b = compute(f(),f())
-```
-
-## Conda install (recommanded)
-
-To install all feature of virtual_dataframe in the current conda environement:
-```shell
-$ conda install -c conda-forge virtual_dataframe-all
-```
-
-To select only a part of dependencies, use pip with specific extension.
-```shell
-
-$ conda install -c conda-forge virtual_dataframe  # Without others frameworks
-$ conda install -c conda-forge virtual_dataframe-pandas
-$ conda install -c conda-forge virtual_dataframe-cudf
-$ conda install -c conda-forge virtual_dataframe-dask
-$ conda install -c conda-forge virtual_dataframe-dask_cudf
 ```
 
 ## Pip install

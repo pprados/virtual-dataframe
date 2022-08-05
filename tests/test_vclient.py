@@ -1,82 +1,70 @@
-import importlib
-import os
-
 import pytest
+from dask_cuda import LocalCUDACluster
+from distributed import LocalCluster
 
 import virtual_dataframe.vclient as vclient
-import virtual_dataframe.vpandas as vpd
-from .conftest import save_context, restore_context
-from .test_mode import SimpleDF
+from virtual_dataframe import Mode
 
 
-def setup_module(module):
-    save_context()
+def test_panda():
+    env = {
+    }
+    with vclient._new_VClient(mode=Mode.pandas, env=env) as client:
+        assert type(client).__name__ == "_FakeClient"
+        assert repr(client) == '<Client: in-process scheduler>'
 
 
-def teardown_module(module):
-    restore_context()
-
-
-def _test_scenario_dataframe():
-    @vpd.delayed
-    def f_df(data: SimpleDF) -> SimpleDF:
-        return data
-
-    input_df = vpd.VDataFrame({"data": [1, 2]}, npartitions=2)
-
-    rc1 = f_df(input_df).compute()
-    return input_df, rc1
-
+def test_cudf():
+    env = {
+    }
+    with vclient._new_VClient(mode=Mode.cudf, env=env) as client:
+        assert type(client).__name__ == "_FakeClient"
+        assert repr(client) == '<Client: in-process scheduler>'
 
 @pytest.mark.xdist_group(name="os.environ")
-@pytest.mark.skip(reason="Border effet")
 def test_dask_debug():
-    os.environ["DEBUG"] = "Yes"
-    os.environ["VDM_MODE"] = "dask"
-    import virtual_dataframe as vpd
-    importlib.reload(vpd)
-    _ = vclient.VClient()
-    _, rc = _test_scenario_dataframe()
-    assert rc.to_pandas().equals(SimpleDF({"data": [1, 2]}))
+    with (vclient._new_VClient(mode=Mode.dask_cudf, env=dict(DEBUG="True"))) as client:
+        assert isinstance(client.cluster, LocalCluster)
+        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
 
 
 @pytest.mark.xdist_group(name="os.environ")
-@pytest.mark.skip(reason="Border effet")
 def test_dask_cluster_gpu():
-    os.environ["DEBUG"] = "False"
-    os.environ["VDM_MODE"] = "dask-cudf"
-    os.environ["DASK_SCHEDULER_SERVICE_HOST"] = "localhost"
-    import virtual_dataframe as vpd
-    importlib.reload(vpd)
-    _ = vclient.VClient()
-    with (vclient.VClient()):
-        _, rc = _test_scenario_dataframe()
-        assert rc.to_pandas().equals(SimpleDF({"data": [1, 2]}))
+    with (vclient._new_VClient(mode=Mode.dask_cudf, env=dict(VDF_CLUSTER="dask://localhost"))) as client:
+        assert isinstance(client.cluster, LocalCUDACluster)
+        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
 
 
 @pytest.mark.xdist_group(name="os.environ")
-@pytest.mark.skip(reason="Border effet")
 def test_dask_no_cluster_gpu():
-    os.environ["DEBUG"] = "False"
-    os.environ["VDM_MODE"] = "dask"
-    if "DASK_SCHEDULER_SERVICE_HOST" in os.environ:
-        os.environ.pop("DASK_SCHEDULER_SERVICE_HOST")
-    import virtual_dataframe as vpd
-    importlib.reload(vpd)
-    with (vclient.VClient()):
-        _, rc = _test_scenario_dataframe()
-        assert rc.to_pandas().equals(SimpleDF({"data": [1, 2]}))
+    with (vclient._new_VClient(mode=Mode.dask_cudf, env=dict())) as client:
+        assert isinstance(client.cluster, LocalCUDACluster)
+        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
 
 
 @pytest.mark.xdist_group(name="os.environ")
-@pytest.mark.skip(reason="Border effet")
 def test_dask_cluster_no_gpu():
-    os.environ["DEBUG"] = "False"
-    os.environ["VDM_MODE"] = "dask"
-    os.environ["DASK_SCHEDULER_SERVICE_HOST"] = "localhost"
-    import virtual_dataframe as vpd
-    importlib.reload(vpd)
+    with (vclient._new_VClient(mode=Mode.dask, env=dict(VDF_CLUSTER="dask://localhost"))) as client:
+        assert isinstance(client.cluster, LocalCluster)
+        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
 
-    with (vclient.VClient()):
-        _, rc = _test_scenario_dataframe()
-        assert rc.to_pandas().equals(SimpleDF({"data": [1, 2]}))
+
+@pytest.mark.xdist_group(name="os.environ")
+def test_ray_no_cluster_modin(mocker):
+    ray_init = mocker.patch("ray.init")
+    with (vclient._new_VClient(mode=Mode.ray_modin, env=dict())) as client:
+        ray_init.assert_called_with()
+
+
+@pytest.mark.xdist_group(name="os.environ")
+def test_ray_cluster_modin_localhost(mocker):
+    ray_init = mocker.patch("ray.init")
+    with (vclient._new_VClient(mode=Mode.ray_modin, env=dict(VDF_CLUSTER="ray://localhost"))) as client:
+        ray_init.assert_called_with(address='ray://localhost:10001')
+
+
+@pytest.mark.xdist_group(name="os.environ")
+def test_ray_cluster_modin_auto(mocker):
+    ray_init = mocker.patch("ray.init")
+    with (vclient._new_VClient(mode=Mode.ray_modin, env=dict(VDF_CLUSTER="ray://auto"))) as client:
+        ray_init.assert_called_with(address="auto")

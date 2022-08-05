@@ -3,6 +3,7 @@ Virtual Dataframe and Series.
 """
 # flake8: noqa
 import glob
+import os
 import sys
 from functools import wraps
 from typing import Any, List, Tuple, Optional, Union
@@ -140,6 +141,7 @@ _doc_VDataFrame_compute = '''Fake compute(). Return self.'''
 _doc_VSeries_compute = '''Fake compute(). Return self.'''
 _doc_VSeries_visualize = '''Fake visualize(). Return self.'''
 _doc_VDataFrame_visualize = '''Fake visualize(). Return self.'''
+_doc_VSeries_visualize = '''Fake visualize(). Return self.'''
 _doc_VDataFrame_map_partitions = '''Apply Python function on each DataFrame partition.
 
     Note that the index and divisions are assumed to remain unchanged.
@@ -190,6 +192,7 @@ Convert columns of the DataFrame to category dtype.
             kwargs
                           Keyword arguments are passed on to compute.'''
 
+
 # %%
 
 def _remove_parameters(func, _params: List[str], *part_args, **kwargs):
@@ -211,7 +214,7 @@ def _remove_to_csv(func, *part_args, **kwargs):
                                "compute_kwargs"])
 
 
-if VDF_MODE in (Mode.pandas, Mode.cudf):
+if VDF_MODE in (Mode.pandas, Mode.cudf, Mode.dask_modin, Mode.ray_modin):
 
     def _remove_dask_parameters(func, *part_args, **kwargs):
         return _remove_parameters(func, ["npartitions", "chunksize", "sort", "name"])
@@ -336,6 +339,7 @@ if VDF_MODE == Mode.dask:
                     ):
         return self.map_partitions(_partition_apply_rows, fn, incols, outcols, kwargs)
 
+
     # TODO: _apply_serie https://docs.rapids.ai/api/cudf/stable/user_guide/guide-to-udfs.html#dataframe-udfs
 
     # TODO: apply_grouped. https://docs.rapids.ai/api/cudf/stable/user_guide/guide-to-udfs.html
@@ -407,10 +411,10 @@ if VDF_MODE == Mode.cudf:
             return cudf.read_csv(filepath_or_buffer, **kwargs)
 
 
-    def _DataFrame_to_csv(self, filepath_or_buffer, **kwargs):
-        if "*" in str(filepath_or_buffer):
-            filepath_or_buffer = filepath_or_buffer.replace("*", "")
-        return self._old_to_csv(filepath_or_buffer, **kwargs)
+    def _DataFrame_to_csv(self, path_or_buf, **kwargs):
+        if "*" in str(path_or_buf):
+            filepath_or_buffer = path_or_buf.replace("*", "")
+        return self._old_to_csv(path_or_buf, **kwargs)
 
 
     # noinspection PyUnusedLocal
@@ -422,7 +426,10 @@ if VDF_MODE == Mode.cudf:
                 **kwargs
                 ) -> Tuple:
         return tuple(args)
+
+
     compute.__doc__ = _doc_compute
+
 
     def visualize(*args, **kwargs):
         try:
@@ -432,6 +439,8 @@ if VDF_MODE == Mode.cudf:
                                               retina=False)
         except ModuleNotFoundError:
             return True
+
+
     visualize.__doc__ = _doc_visualize
 
     delayed: Any = _delayed
@@ -479,6 +488,152 @@ if VDF_MODE == Mode.cudf:
     _VDataFrame.categorize.__doc__ = _doc_categorize
 
     compute.__doc__ = _doc_compute
+
+# %%
+if VDF_MODE in (Mode.dask_modin, Mode.ray_modin):
+    if VDF_MODE == Mode.dask_modin:
+        os.environ["MODIN_ENGINE"] = "dask"
+    elif VDF_MODE == Mode.ray_modin:
+        os.environ["MODIN_ENGINE"] = "ray"
+    else:
+        os.environ["MODIN_ENGINE"] = "python"  # For debug
+    import modin.pandas
+    import pandas
+    import numpy
+
+    import warnings
+    warnings.filterwarnings('module', '.*Distributing.*This may take some time\\.', )
+
+    BackEndDataFrame: Any = modin.pandas.DataFrame
+    BackEndSeries: Any = modin.pandas.Series
+    BackEnd = modin.pandas
+
+    _VDataFrame: Any = modin.pandas.DataFrame
+    _VSeries: Any = modin.pandas.Series
+
+
+    # noinspection PyUnusedLocal
+    def _from_back(  # noqa: F811
+            data: Union[BackEndDataFrame, BackEndSeries],
+            npartitions: Optional[int] = None,
+            chunksize: Optional[int] = None,
+            sort: bool = True,
+            name: Optional[str] = None,
+    ) -> _VDataFrame:
+        return data
+
+
+    def read_csv(filepath_or_buffer, **kwargs):
+        if not isinstance(filepath_or_buffer, list):
+            return modin.pandas.concat((modin.pandas.read_csv(f, **kwargs) for f in glob.glob(filepath_or_buffer)))
+        else:
+            return modin.pandas.read_csv(filepath_or_buffer, **kwargs)
+
+
+    # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
+    def _apply_rows(
+            self,
+            func,
+            incols,
+            outcols,
+            kwargs,
+            pessimistic_nulls=True,  # FIXME: use it
+            cache_key=None,  # FIXME: use it
+    ):
+        import numba
+
+        size = len(self)
+        params = {param: self[col].to_numpy() for col, param in incols.items()}
+        outputs = {param: numpy.empty(size, dtype=dtype) for param, dtype in outcols.items()}
+        numba.jit(func, nopython=True)(**params, **outputs, **kwargs)
+        for col, data in outputs.items():
+            self[col] = data
+        return self
+
+
+    # noinspection PyUnusedLocal
+    def compute(*args,  # noqa: F811
+                traverse: bool = True,
+                optimize_graph: bool = True,
+                scheduler: bool = None,
+                get=None,
+                **kwargs
+                ) -> Tuple:
+        return args
+
+
+    compute.__doc__ = _doc_compute
+
+
+    def visualize(*args, **kwargs):
+        try:
+            import IPython
+            return IPython.core.display.Image(data=[], url=None, filename=None, format=u'png', embed=None, width=None,
+                                              height=None,
+                                              retina=False)
+        except ModuleNotFoundError:
+            return True
+
+
+    visualize.__doc__ = _doc_visualize
+
+
+    def _DataFrame_to_csv(self, path_or_buf, **kwargs):
+        if "*" in str(path_or_buf):
+            filepath_or_buffer = path_or_buf.replace("*", "")
+        return self._old_to_csv(path_or_buf, **kwargs)
+
+
+    delayed: Any = _delayed
+    delayed.__doc__ = _doc_delayed
+
+    concat: Any = modin.pandas.concat
+
+    read_csv.__doc__ = modin.pandas.read_csv.__doc__
+
+    from_pandas: Any = lambda data, npartitions=1, chuncksize=None, sort=True, name=None: \
+        modin.pandas.DataFrame(data) if isinstance(data, pandas.DataFrame) else modin.pandas.Series(data)
+    from_pandas.__doc__ = _doc_from_pandas
+    from_backend: Any = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
+    from_backend.__doc__ = _doc_from_backend
+
+    _VDataFrame.apply_rows = _apply_rows
+    _VDataFrame.apply_rows.__doc__ = _doc_apply_rows
+
+    _VDataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, *args, **kwargs)
+    _VDataFrame.map_partitions.__doc__ = _VSeries.map.__doc__
+    _VSeries.map_partitions = lambda self, func, *args, **kwargs: self.map(func, *args, *kwargs)
+    _VSeries.map_partitions.__doc__ = _VSeries.map.__doc__
+
+    _VDataFrame.compute = lambda self, **kwargs: self
+    _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
+    _VSeries.compute = lambda self, **kwargs: self
+    _VSeries.compute.__doc__ = _doc_VSeries_compute
+
+    _VDataFrame.visualize = lambda self: visualize(self)
+    _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
+    _VSeries.visualize = lambda self: visualize(self)
+    _VSeries.visualize.__doc__ = _doc_VSeries_visualize
+
+    # Add fake to_pandas() in pandas
+    _VDataFrame.to_pandas = modin.pandas.DataFrame._to_pandas
+    _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
+    _VSeries.to_pandas = modin.pandas.Series._to_pandas
+    _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
+
+    _VDataFrame.to_backend = lambda self: self
+    _VDataFrame.to_backend.__doc__ = _doc_VDataFrame_to_pandas
+    _VSeries.to_backend = lambda self: self
+    _VSeries.to_backend.__doc__ = _doc_VSeries_to_pandas
+
+    # FIXME
+    # if "_old_to_csv" not in _VDataFrame.__dict__:
+    #     _VDataFrame._old_to_csv = _VDataFrame.to_csv
+    # _VDataFrame.to_csv = _remove_to_csv(_DataFrame_to_csv)
+    _VDataFrame.to_csv.__doc__ = _doc_VDataFrame_to_csv
+
+    _VDataFrame.categorize = lambda self: self
+    _VDataFrame.categorize.__doc__ = _doc_categorize
 
 # %%
 if VDF_MODE == Mode.pandas:
@@ -544,7 +699,10 @@ if VDF_MODE == Mode.pandas:
                 **kwargs
                 ) -> Tuple:
         return args
+
+
     compute.__doc__ = _doc_compute
+
 
     def visualize(*args, **kwargs):
         try:
@@ -554,12 +712,15 @@ if VDF_MODE == Mode.pandas:
                                               retina=False)
         except ModuleNotFoundError:
             return True
+
+
     visualize.__doc__ = _doc_visualize
 
-    def _DataFrame_to_csv(self, filepath_or_buffer, **kwargs):
-        if "*" in str(filepath_or_buffer):
-            filepath_or_buffer = filepath_or_buffer.replace("*", "")
-        return self._old_to_csv(filepath_or_buffer, **kwargs)
+
+    def _DataFrame_to_csv(self, path_or_buf, **kwargs):
+        if "*" in str(path_or_buf):
+            filepath_or_buffer = path_or_buf.replace("*", "")
+        return self._old_to_csv(path_or_buf, **kwargs)
 
 
     delayed: Any = _delayed
