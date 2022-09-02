@@ -118,6 +118,10 @@ site/
 *.db
 *.rdb
 
+# conda
+conda-recipe/*.whl
+conda-recipe/setup.*
+
 # Project
 .repository
 datas/interim/

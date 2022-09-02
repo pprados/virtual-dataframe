@@ -1,8 +1,11 @@
 # See https://docs.conda.io/projects/conda-build/en/stable/resources/variants.html
 vdf_mode:
   -
+  - minimal
   - pandas
   - dask
   - cudf
   - dask_cudf
-  - all
+
+numpy:
+  - 1.22

@@ -7,11 +7,11 @@ This is a set of tools, to help the usage of Dask, with differents technology st
 ## Synopsis
 
 With some parameters and Virtual classes, it's possible to write a code, and execute this code:
-- With or without Dask
+- With or without multicore
+- With or without cluster (multi nodes)
 - With or without GPU
-- With or without cluster
 
-To do that, we create some virtual classes, add some methods in others classes, etc.
+To do that, we create some *virtual classes*, add some methods in others classes, etc.
 
 It's difficult to use a combinaison of framework, with the same classe name, with similare semantic, etc.
 For example, if you want to use in the same program, Dask, cudf, pandas and panderas, you must manage:
@@ -23,11 +23,16 @@ For example, if you want to use in the same program, Dask, cudf, pandas and pand
  With `cudf`, the code must call `.to_pandas()`. With dask, the code must call `.compute()`, can use `@delayed` or
 `dask.distributed.Client`. etc.
 
+- [Cudf](https://github.com/rapidsai/cudf) is a part of Rapids framework from NVidia, to implement pandas in GPU.
+- [Dask](https://docs.dask.org/en/stable/) is a clustered and leasy version of pandas. It's possible to distribution
+all dataframes transformations with multicore or a cluster.
+
+
 We propose to replace all these classes and scenarios, with a *uniform model*,
 inspired by [dask](https://www.dask.org/).
 Then, it is possible to write one code, and use it in differents environnements and frameworks.
 
-This project is essentially a back-port of "Dask+Cudf" to others frameworks.
+This project is essentially a back-port of *Dask+Cudf* to others frameworks.
 
 To reduce the confusion, you must use the classes `VDataFrame` and `VSeries` (The prefix `V` is for *Virtual*).
 These classes propose the methods `.to_pandas()` and `.compute()` for each version.
@@ -35,7 +40,7 @@ And a new `@delayed` annotation can be use, with or without Dask.
 
 With some parameters, the real classes may be `panda.DataFrame`, `cudf.DataFrame`, `dask.dataframe.DataFrame` with Pandas or
 `dask.dataframe.DataFrame` with cudf (with Pandas or cudf for each partition).
-And, it's possible to use [Panderas](https://pandera.readthedocs.io/en/stable/)
+And, it's possible to use a specific version of [Panderas](https://pandera.readthedocs.io/en/stable/)
 for all `@delayed` methods to check the dataframe schema.
 
 To manage the initialisation of a Dask cluster, you must use the `VClient()`. This alias, can be automatically initialized
@@ -84,24 +89,28 @@ or propose a component, compatible with differents scenario.
 ## usage
 Install with conda
 ```shell
-$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
-		virtual_dataframe_all
+$ CHANNEL=-c rapidsai -c nvidia -c conda-forge
+$ conda install -q -y $CHANNEL virtual_dataframe
 ```
 or, install alternative.
 ```shell
-$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
-		virtual_dataframe  # Minimumal install, without extra dependencies
-$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
-		virtual_dataframe_pandas
-$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
-		virtual_dataframe_cudf
-$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
-		virtual_dataframe_dask
-$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
-		virtual_dataframe_dask_cudf
+$ CHANNEL=-c rapidsai -c conda-forge
+$ conda install -q -y $CHANNEL \
+		virtual_dataframe-minimal   # Without other frameworks dependencies
+$ conda install -q -y $CHANNEL \
+		virtual_dataframe-pandas    # Only pandas
+$ conda install -q -y $CHANNEL \
+		virtual_dataframe-cudf      # Only pandas and cudf
+$ conda install -q -y $CHANNEL \
+		virtual_dataframe-dask      # Only pandas and dask
+$ conda install -q -y $CHANNEL \
+		virtual_dataframe-dask_cudf # Only pandas, cudf and dask_cudf
 ```
 
 ## API
+
+The *real documentation* is the [Dask documentation](https://docs.dask.org/en/stable/).
+Essentially, replace `from dask.dataframe import *` with `from virtual_dataframe import *`.
 
 | api                                    | comments                                        |
 |----------------------------------------|-------------------------------------------------|
@@ -131,25 +140,26 @@ You can read a sample notebook [here](https://github.com/pprados/virtual-datafra
 This project is just a wrapper. So, it inherits limitations and bugs from other projects. Sorry for that.
 
 
-| Limitations                                                                                     |
-|-------------------------------------------------------------------------------------------------|
-| <br />**pandas**                                                                                |
-| All data must be in DRAM                                                                        |
-| <br />**[cudf](https://docs.rapids.ai/api/cudf/nightly/user_guide/pandas-comparison.html)**     |
-| All data must be in VRAM                                                                        |
-| All data types in cuDF are nullable                                                             |
-| Iterating over a cuDF Series, DataFrame or Index is not supported.                              |
-| Join (or merge) and groupby operations in cuDF do not guarantee output ordering.                |
-| The order of operations is not always deterministic                                             |
-| Cudf does not support duplicate column names                                                    |
-| Cudf also supports .apply() it relies on Numba to JIT compile the UDF and execute it on the GPU |
-| .apply(result_type=...) not supported                                                           |
-| <br />**[dask](https://distributed.dask.org/en/stable/limitations.html)**                       |
-|  transpose() and MultiIndex are not implemented                                                 |
-| Column assignment doesn't support type list                                                     |
-| <br />**[dask_cudf](https://docs.rapids.ai/api/cudf/nightly/user_guide/dask-cudf.html)**        |
-| See cudf and dask.                                                                              |
-| Categories with strings not implemented                                                         |
+| Limitations                                                                                       |
+|---------------------------------------------------------------------------------------------------|
+| <br />**pandas**                                                                                  |
+| All data must be in DRAM                                                                          |
+| <br />**[cudf](https://docs.rapids.ai/api/cudf/nightly/user_guide/pandas-comparison.html)**       |
+| All data must be in VRAM                                                                          |
+| All data types in cuDF are nullable                                                               |
+| Iterating over a cuDF `Series`, `DataFrame` or `Index` is not supported.                          |
+| Join (or merge) and groupby operations in cuDF do not guarantee output ordering.                  |
+| The order of operations is not always deterministic                                               |
+| Cudf does not support duplicate column names                                                      |
+| Cudf also supports `.apply()` it relies on Numba to JIT compile the UDF and execute it on the GPU |
+| `.apply(result_type=...)` not supported                                                           |
+| `read_csv()` is not compatible with UTF-8                                                         |
+| <br />**[dask](https://distributed.dask.org/en/stable/limitations.html)**                         |
+| `transpose()` and `MultiIndex` are not implemented                                                |
+| Column assignment doesn't support type `list`                                                     |
+| <br />**[dask_cudf](https://docs.rapids.ai/api/cudf/nightly/user_guide/dask-cudf.html)**          |
+| See cudf and dask.                                                                                |
+| Categories with strings not implemented                                                           |
 
 To be compatible with all framework, you must only use the common features.
 

@@ -1,0 +1,78 @@
+{% set NAME = environ['PRJ'] %}
+{% set PRJ_VERSION = environ['GIT_DESCRIBE_TAG'] %}
+{% set PRJ_URL = environ["PRJ_URL"] %}
+{% set PRJ_DOC_URL = environ["PRJ_DOC_URL"] %}
+{% set PRJ_PACKAGE = environ["PRJ_PACKAGE"] %}
+{% set PYTHON_VERSION = environ["PYTHON_VERSION"] %}
+{% set PYTHON_VERSION_MAX = environ["PYTHON_VERSION_MAX"] %}
+{% set WHEEL = environ["WHEEL"] %}
+
+package:
+  {% if vdf_mode %}
+  name: "{{ NAME|lower }}-{{ vdf_mode }}"
+  {% else %}
+  name: "{{ NAME|lower }}"
+  {% endif %}
+  version: "{{ PRJ_VERSION }}"
+
+source:
+  path: .
+#  git_url: {{ REMOTE_GIT_URL }}
+#  git_rev: {{ PRJ_VERSION }}
+#  git_depth: 1
+
+build:
+  noarch: python
+  number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
+  script: "python -m pip install {{ WHEEL }} --no-deps --ignore-installed -vv"
+
+test:
+  commands:
+    {% if vdf_mode != "minimal" %}
+    {% if vdf_mode %}
+    - VDF_MODE={{vdf_mode}} python -c 'from {{ PRJ_PACKAGE }} import *'
+    {% else %}
+    - VDF_MODE=pandas    python -c 'from {{ PRJ_PACKAGE }} import *'
+    - VDF_MODE=cudf      python -c 'from {{ PRJ_PACKAGE }} import *'
+    - VDF_MODE=dask      python -c 'from {{ PRJ_PACKAGE }} import *'
+    - VDF_MODE=dask_cudf python -c 'from {{ PRJ_PACKAGE }} import *'
+    {% endif %} # Default, all
+    {% endif %} # minimal
+requirements:
+  build:
+    - python {{ PYTHON_VERSION }}
+    - pip
+    - setuptools
+    - setuptools_scm
+#    - pytest-runner
+
+  run:
+    - python>={{ PYTHON_VERSION }},<={{ PYTHON_VERSION_MAX }}
+    - python-dotenv
+    - numba
+    {% if vdf_mode != 'minimal' %}
+    - pandas>=1.4.3
+#    - numpy=={{ numpy }}
+    {% endif %}
+    {% if vdf_mode in ('', 'cudf', 'dask_cudf') %}
+    - cudf>=22.08
+    - cudatoolkit>=11.7
+    {% endif %}
+    {% if vdf_mode in ('', 'dask', 'dask_cudf') %}
+    - dask>=2022.7.0
+    {% endif %}
+    {% if vdf_mode in ('', 'dask_cudf') %}
+    - dask-cudf>=22.08
+    {% endif %}
+
+about:
+  home:    {{ PRJ_URL }}
+  doc_url: {{ PRJ_DOC_URL }}
+  license: Apache v2
+  summary: Bridge between pandas, cudf, dask and dask-cudf
+
+extra:
+  copy_test_spirce_files: false
+  copy_test_source_files: false
+  recipe-maintainers:
+    - github@prados.fr

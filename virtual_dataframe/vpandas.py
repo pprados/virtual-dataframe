@@ -330,8 +330,8 @@ if VDF_MODE == Mode.dask:
                     incols,
                     outcols,
                     kwargs,
-                    pessimistic_nulls=True,  # FIXME: use it
-                    cache_key=None,  # FIXME: use it
+                    pessimistic_nulls=True,  # TODO: use pessimistic_nulls?
+                    cache_key=None,  # TODO: use cache_key?
                     ):
         return self.map_partitions(_partition_apply_rows, fn, incols, outcols, kwargs)
 
@@ -520,8 +520,8 @@ if VDF_MODE == Mode.pandas:
             incols,
             outcols,
             kwargs,
-            pessimistic_nulls=True,  # FIXME: use it
-            cache_key=None,  # FIXME: use it
+            pessimistic_nulls=True,  # FIXME: use pessimistic_nulls?
+            cache_key=None,  # FIXME: use cache_key?
     ):
         import numba
 

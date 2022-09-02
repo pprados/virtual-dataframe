@@ -57,6 +57,7 @@ endif
 # SNIPPET pour détecter la présence d'un GPU afin de modifier le nom du projet
 # et ses dépendances si nécessaire.
 ifndef USE_GPU
+# FIXME: https://stackoverflow.com/questions/66611439/how-to-check-if-nvidia-gpu-is-available-using-bash-script
 ifneq ("$(wildcard /proc/driver/nvidia)","")
 USE_GPU:=-gpu
 else ifdef CUDA_HOME
@@ -64,9 +65,8 @@ USE_GPU:=-gpu
 endif
 endif
 ifdef USE_GPU
-# PPR: semble fonctionner s'il n'y a pas nvcc déjà installé
-# FIXME CUDA_VER=$(shell nvidia-smi | awk -F"CUDA Version:" 'NR==3{split($$2,a," ");print a[1]}')
-#CUDA_VER=11.5
+CUDA_VER=$(shell nvidia-smi | awk -F"CUDA Version:" 'NR==3{split($$2,a," ");print a[1]}')
+# BUG avec 11.7. Cudf ne s'install plus ?
 endif
 
 # ---------------------------------------------------------------------------------------
@@ -121,13 +121,14 @@ endif
 PRJ:=$(shell basename "$(shell pwd)")
 VENV ?= $(PRJ)
 KERNEL ?=$(VENV)
-export REMOTE_GIT_URL?=$(shell git remote get-url origin)
-export PRJ_URL=$(REMOTE_GIT_URL:.git=)
-export PRJ_DOC_URL=$(PRJ_URL)
-export GIT_DESCRIBE_TAG=$(shell git describe --tags --exact-match 2>/dev/null || git symbolic-ref -q --short HEAD)
-export PRJ_PACKAGE:=$(PRJ)
-export PYTHON_VERSION:=3.9
-export PYTHONWARNINGS=ignore
+REMOTE_GIT_URL?=$(shell git remote get-url origin)
+PRJ_URL=$(REMOTE_GIT_URL:.git=)
+PRJ_DOC_URL=$(PRJ_URL)
+GIT_DESCRIBE_TAG=$(shell git describe --tags --exact-match 2>/dev/null || git symbolic-ref -q --short HEAD)
+PRJ_PACKAGE:=$(PRJ)
+PYTHON_VERSION:=3.8
+PYTHON_VERSION_MAX:=3.9
+PYTHONWARNINGS=ignore
 PYTHON_PARAMS?=
 
 PYTHON_SRC=$(shell find -L "$(PRJ)" -type f -iname '*.py' | grep -v __pycache__)
@@ -137,14 +138,15 @@ export DATA?=data
 
 
 # Conda environment
+# To optimize conda, use mamba
+CONDA:=mamba
+export MAMBA_NO_BANNER=1
 CONDA_BASE:=$(shell AWS_DEFAULT_PROFILE=default conda info --base)
 CONDA_PACKAGE:=$(CONDA_PREFIX)/lib/python$(PYTHON_VERSION)/site-packages
 CONDA_PYTHON:=$(CONDA_PREFIX)/bin/python
-#CONDA_BLD_DIR?=${PWD}/build/conda-bld
-CONDA_BLD_DIR=$(CONDA_PREFIX)/conda-bld
-
-#CONDA_CHANNELS?=-c local -c nvidia -c rapidsai -c conda-forge
-CONDA_CHANNELS?=-c local
+CONDA_BLD_DIR?=./build/conda-bld
+CONDA_CHANNELS?=-c rapidsai -c nvidia -c conda-forge
+#CONDA_CHANNELS?=-c rapidsai -c conda-forge
 CONDA_ARGS?=
 export VIRTUAL_ENV=$(CONDA_PREFIX)
 
@@ -383,23 +385,25 @@ VALIDATE_VENV=$(CHECK_VENV)
 RAPIDS=$(CONDA_PACKAGE)/cuda
 .PHONY: install-rapids
 ## Install NVidia rapids framework
-CUDF_VER=22.06
 install-rapids: $(RAPIDS)
 $(RAPIDS):
+	@$(VALIDATE_VENV)
 ifeq ($(USE_GPU),-gpu)
-	@echo "$(green)  Install NVidia Rapids...$(normal)"
-	conda install \
-		-q -y $(CONDA_ARGS) $(CONDA_CHANNELS) \
+	echo "$(green)  Install NVidia Rapids...$(normal)"
+	$(CONDA) install \
+		-q -y $(CONDA_ARGS) \
+		$(CONDA_CHANNELS) \
 		cudatoolkit \
 		cudf \
 		dask-cudf
-#	conda install \
-#		-q -y $(CONDA_ARGS) $(CONDA_CHANNELS) \
-#		cudf==$(CUDF_VER) \
-#		cudatoolkit==$(CUDA_VER) \
+#	$(CONDA) install \
+#		-q -y $(CONDA_ARGS) \
+#		$(CONDA_CHANNELS) \
+#		cudatoolkit==11.5 \
+#		cudf==22.06 \
 #		dask-cudf
+	touch $(RAPIDS)
 endif
-	#touch $(RAPIDS)
 
 
 .PHONY: requirements dependencies
@@ -418,8 +422,6 @@ dependencies: requirements
 # make ...
 # unset OFFLINE`
 
-# TODO: faire une regle ~/.offline et un variable qui s'ajuste pour tirer la dépendances ?
-# ou bien le faire à la main ?
 # Download dependencies for offline usage
 ~/.mypypi: setup.py
 	pip download '.[dev,test]' --dest ~/.mypypi
@@ -433,13 +435,14 @@ endif
 # Rule to check the good installation of python in Conda venv
 $(CONDA_PYTHON):
 	@$(VALIDATE_VENV)
-	conda install -q "python=$(PYTHON_VERSION).*" -y $(CONDA_ARGS) $(CONDA_CHANNELS)
+	$(CONDA) install -q "python=$(PYTHON_VERSION).*" -y $(CONDA_ARGS) $(CONDA_CHANNELS)
 
 # Rule to update the current venv, with the dependencies describe in `setup.py`
 $(PIP_PACKAGE): $(CONDA_PYTHON) setup.py | .git # Install pip dependencies
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Install setup.py dependencies ... (may take minutes)$(normal)"
 	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.[dev,test]' | grep -v 'already satisfied' || true
+	$(CONDA) install -y anaconda-client
 	echo -e "$(cyan)setup.py dependencies updated$(normal)"
 	@touch $(PIP_PACKAGE)
 
@@ -469,9 +472,15 @@ $(JUPYTER_LABEXTENSIONS_DIR)/%:
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour préparer l'environnement d'un projet juste après un `git clone`
 .PHONY: configure
+$(CONDA_HOME)/bin/mamba:
+	@echo -e "$(green)Install mamba$(normal)"
+	conda install mamba -n base -c conda-forge -y
+
 ## Prepare the work environment (conda venv, kernel, ...)
-configure:
-	@conda create \
+configure: $(CONDA_HOME)/bin/mamba
+	@if [[ "$(CONDA_DEFAULT_ENV)" != "base" ]] ; \
+      then echo -e "$(green)Use: $(cyan)conda deactivate $(VENV)$(green) before using 'make'$(normal)"; exit 1 ; fi
+	$(CONDA) create \
 		--name "$(VENV)" \
 		python=$(PYTHON_VERSION) \
 		conda-build \
@@ -484,7 +493,7 @@ configure:
 .PHONY: remove-venv
 remove-$(VENV):
 	@$(DEACTIVATE_VENV)
-	conda env remove --name "$(VENV)" -y 2>/dev/null
+	$(CONDA) env remove --name "$(VENV)" -y 2>/dev/null
 	echo -e "Use: $(cyan)conda deactivate$(normal)"
 # Remove virtual environement
 remove-venv : remove-$(VENV)
@@ -499,7 +508,7 @@ ifeq ($(OFFLINE),True)
 	@echo -e "$(red)Can not upgrade virtual env in offline mode$(normal)"
 else
 	@$(VALIDATE_VENV)
-	conda update --all $(CONDA_ARGS) $(CONDA_CHANNELS)
+	$(CONDA) update --all $(CONDA_ARGS) $(CONDA_CHANNELS)
 	pip list --format freeze --outdated | sed 's/(.*//g' | xargs -r -n1 pip install $(EXTRA_INDEX) -U
 	@echo -e "$(cyan)After validation, upgrade the setup.py$(normal)"
 endif
@@ -619,10 +628,10 @@ add-typing: typing
 # Voir https://www.sphinx-doc.org/en/master/usage/builders/index.html
 .PHONY: docs
 # Use all processors
-#PPR SPHINX_FLAGS=-j$(NPROC)
+SPHINX_FLAGS=-j$(NPROC)
 SPHINX_FLAGS=
 # Generate API docs
-#PPR: Voir Mkdoc https://news.ycombinator.com/item?id=17717513
+# PPR: Voir Mkdoc https://news.ycombinator.com/item?id=17717513
 docs/source: $(REQUIREMENTS) $(PYTHON_SRC)
 	$(VALIDATE_VENV)
 	sphinx-apidoc -f -o docs/source $(PRJ)/
@@ -675,82 +684,90 @@ bdist: dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour créer une distribution des binaires au format conda.
 .PHONY:conda-build conda-install conda-debug conda-convert
+export PRJ
+export REMOTE_GIT_URL
+export PRJ_URL
+export PRJ_DOC_URL
+export GIT_DESCRIBE_TAG
+export PRJ_PACKAGE
+export PYTHON_VERSION
+export PYTHON_VERSION_MAX
 
 CONDA_USER?=${USER}
 CONDA_TOKEN?=""
 CONDA_BUILD_TARGET=${CONDA_BLD_DIR}/noarch/${PRJ}-*.tar.bz2
 
 $(CONDA_PREFIX)/bin/conda-build:
-	conda install conda-build conda-verify -y
+	$(CONDA) install conda-build conda-verify -y
 
 $(CONDA_BLD_DIR):
-#	@ln -s $(CONDA_PREFIX)/conda-bld $(CONDA_BLD_DIR)
-	#@mkdir -p $(CONDA_BLD_DIR)
-	#conda index $(CONDA_BLD_DIR)
+	@mkdir -p $(CONDA_BLD_DIR)
+	$(CONDA) index $(CONDA_BLD_DIR)
 
-${CONDA_BUILD_TARGET}: clean $(CONDA_BLD_DIR) $(CONDA_PREFIX)/bin/conda-build \
-		dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl \
-		meta.yaml conda_build_config.yaml setup.*
+${CONDA_BUILD_TARGET}: conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl $(CONDA_BLD_DIR) $(CONDA_PREFIX)/bin/conda-build \
+		conda-recipe/meta.yaml conda-recipe/conda_build_config.yaml setup.*
+	@$(VALIDATE_VENV)
 	@$(CHECK_GIT_STATUS)
-	GIT_DESCRIBE_TAG=$(shell python setup.py --version 2>/dev/null) \
-#		--output-folder ${CONDA_BLD_DIR} \
-#	--skip-existing --dirty --keep-old-work --debug \
-#		-c file://${CONDA_BLD_DIR} \
-	conda build \
-	--no-test --dirty \
+	cp -f --reflink=auto dist/*.whl conda-recipe/
+	export GIT_DESCRIBE_TAG=$(shell python setup.py --version 2>/dev/null)
+	export WHEEL=$(subst -,_,$(PRJ_PACKAGE))-*.whl
+
+	mamba build \
+		--output-folder ${CONDA_BLD_DIR} \
 		$(CONDA_CHANNELS) \
 		${CONDA_ARGS} \
 		--python=$(PYTHON_VERSION) \
 		--no-anaconda-upload \
-		.
-	cp --reflink=auto $(CONDA_BUILD_TARGET) dist/
+		conda-recipe
+	cp --reflink=auto \
+		${CONDA_BLD_DIR}/noarch/${PRJ}*-$${GIT_DESCRIBE_TAG}*.tar.bz2 \
+		dist/
+	echo -e "$(green)Conda package builded in dist/${CONDA_BLD_DIR}/noarch/${PRJ}*-$${GIT_DESCRIBE_TAG}*.tar.bz2$(normal)"
+	touch ${CONDA_BUILD_TARGET}
 
 ## Build the conda packages
 conda-build: ${CONDA_BUILD_TARGET}
 
 ## Purge the conda build process
 conda-purge:
-	@conda build purge \
-	--output-folder ${CONDA_BLD_DIR}
+	@$(VALIDATE_VENV)
+	@$(CONDA) build purge \
+		--output-folder ${CONDA_BLD_DIR}
+	rm -f conda-recipe/*.whl conda-recipe/setup.*
+	echo -e "$(cyan)Conda cleaned$(normal)"
 
 
 ## Debug the conda build process
 conda-debug:
-	#GIT_DESCRIBE_TAG=$(shell python setup.py --version 2>/dev/null) \
-	#	-c file://${CONDA_BLD_DIR} $(CONDA_CHANNELS) \
-
-	GIT_DESCRIBE_TAG=v0.0 \
-	conda debug \
+	@$(VALIDATE_VENV)
+	$(CHECK_GIT_STATUS)
+	cp -f --reflink=auto dist/*.whl conda-recipe/
+	export GIT_DESCRIBE_TAG=$(shell python setup.py --version 2>/dev/null)
+	export WHEEL=$(subst -,_,$(PRJ_PACKAGE))-*.whl
+	$(CONDA) debug \
+		$(CONDA_CHANNELS) \
 		${CONDA_ARGS} \
-		--python=$(PYTHON_VERSION) \
-		.
+		conda-recipe
 
 ## Convert the package for all platform
 conda-convert: ${CONDA_BUILD_TARGET}
-	@conda convert \
+	@$(CONDA) convert \
 		--platform all \
 		-o dist/ \
 		${CONDA_BUILD_TARGET}
 
-## Test conda package
-conda-test: ${CONDA_BUILD_TARGET}
-	conda build --test \
-		-c file://${PWD}/${CONDA_BLD_DIR} ${CONDA_CHANNELS} \
-		${CONDA_BUILD_TARGET}
-
-#		-c file://${PWD}/${CONDA_BLD_DIR} \
-
 ## Install the built conda package
 conda-install: ${CONDA_BUILD_TARGET}
-	$(CHECK_GIT_STATUS)
-	conda install \
-		-c file://${PWD}/${CONDA_BLD_DIR} $(CONDA_CHANNELS) ${CONDA_ARGS} \
-		-y \
-		${PRJ}
+	@$(VALIDATE_VENV)
+	$(CONDA) install \
+		-c ${CONDA_BLD_DIR} \
+		$(CONDA_CHANNELS) \
+		$(PRJ_PACKAGE)
+
 ## Install a specific version of conda package
 conda-install-%: ${CONDA_BUILD_TARGET}
 	$(CHECK_GIT_STATUS)
-	conda install \
+	$(CONDA) install \
 		-c file://${PWD}/${CONDA_BLD_DIR} $(CONDA_CHANNELS) ${CONDA_ARGS} \
 		-y \
 		${PRJ}-$*
@@ -919,7 +936,7 @@ clean-pip:
 # SNIPPET pour nettoyer complètement l'environnement Conda
 .PHONY: clean-venv clean-$(VENV)
 clean-$(VENV): remove-venv
-	@conda create -y -q -n $(VENV) $(CONDA_ARGS) $(CONDA_CHANNELS)
+	@$(CONDA) create -y -q -n $(VENV) $(CONDA_ARGS) $(CONDA_CHANNELS)
 	@touch setup.py
 	@echo -e "$(yellow)Warning: Conda virtualenv $(VENV) is empty.$(normal)"
 # Set the current VENV empty
@@ -929,14 +946,14 @@ clean-venv : clean-$(VENV)
 # SNIPPET pour faire le ménage du projet (hors environnement)
 .PHONY: clean
 ## Clean current environment
-clean: clean-pyc clean-build clean-notebooks
-	@rm -Rf .pytest_cache .pytype .eggs dist/ stubs/numpy
+clean: clean-pyc clean-build clean-notebooks conda-purge
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour faire le ménage du projet
 .PHONY: clean-all
 # Clean all environments
 clean-all: remove-kernel clean remove-venv
+	@rm -Rf .pytest_cache .pytype
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour executer les tests unitaires et les tests fonctionnels.
@@ -988,8 +1005,8 @@ _make-notebooks-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC) $(JUPYTER_DA
 		-p mode $(VDF_MODE) /dev/null
 	date >.make-notebooks-test-$*
 
-## Run notebooks test with a specific *mode*
 .PHONY: notebooks-test-*
+## Run notebooks test with a specific *mode*
 notebooks-test-%: $(REQUIREMENTS)
 	@VDF_MODE=$* $(MAKE) --no-print-directory _make-notebooks-test-$*
 
@@ -1038,7 +1055,7 @@ test-dask_cudf:
 endif
 
 
-.make-test: $(foreach ext,$(VDF_MODES),test-$(ext)) .make-notebooks-test # FIXME .make-functional-test
+.make-test: $(foreach ext,$(VDF_MODES),test-$(ext)) .make-notebooks-test
 	@date >.make-test
 
 .PHONY: test

@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-import logging
 import os
 import re
 import subprocess
-import sys
-from typing import List, Set
+from typing import List
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
-PYTHON_VERSION = "3.9"
+PYTHON_VERSION = "3.8"
+PYTHON_VERSION_MAX = "3.10"
 
 # USE_GPU="-gpu" ou "" si le PC possède une carte NVidia
 # ou suivant la valeur de la variable d'environnement GPU (export GPU=yes)
+# FIXME: detection de GPU
 USE_GPU: str = "-gpu" if (os.environ['GPU'].lower() in 'yes'
                           if "GPU" in os.environ
                           else os.path.isdir("/proc/driver/nvidia")
@@ -20,9 +19,10 @@ USE_GPU: str = "-gpu" if (os.environ['GPU'].lower() in 'yes'
 
 # Run package dependencies
 requirements: List[str] = [
-    'python-dotenv==0.20.0',
-    'pandas==1.4.3', # FIXME
+    'python-dotenv>=0.20',
+    'pandas>=1.4',
     'numba',
+    'numpy~=1.22.0',
 ]
 dask_requirements: List[str] = \
     [
@@ -111,10 +111,10 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Scientific/Engineering',
     ],
-    python_requires='~=' + PYTHON_VERSION,
+    python_requires=f'>={PYTHON_VERSION},<={PYTHON_VERSION_MAX}',
     test_suite="tests",
     setup_requires=setup_requirements,
-    tests_require=test_requirements,
+    # tests_require=test_requirements,
     extras_require={
         'dev': dev_requirements,
         'test': test_requirements,
