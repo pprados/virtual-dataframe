@@ -138,6 +138,7 @@ _doc_VDataFrame_to_numpy = '''Convert VDataFrame to Numpy array'''
 _doc_VSeries_to_numpy = '''Convert VSeries to Numpy array'''
 _doc_VDataFrame_compute = '''Fake compute(). Return self.'''
 _doc_VSeries_compute = '''Fake compute(). Return self.'''
+_doc_VSeries_visualize = '''Fake visualize(). Return self.'''
 _doc_VDataFrame_visualize = '''Fake visualize(). Return self.'''
 _doc_VDataFrame_map_partitions = '''Apply Python function on each DataFrame partition.
 

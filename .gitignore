@@ -129,6 +129,7 @@ Dockerfile.standalone
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.jupyterlab-workspace
 
 /stubs/
 .make-*
