@@ -50,6 +50,7 @@ def test_dask_cluster_no_gpu():
 
 
 @pytest.mark.xdist_group(name="os.environ")
+@pytest.mark.skip(reason="Ray not implemented")
 def test_ray_no_cluster_modin(mocker):
     ray_init = mocker.patch("ray.init")
     with (vclient._new_VClient(mode=Mode.ray_modin, env=dict())) as client:
@@ -57,6 +58,7 @@ def test_ray_no_cluster_modin(mocker):
 
 
 @pytest.mark.xdist_group(name="os.environ")
+@pytest.mark.skip(reason="Ray not implemented")
 def test_ray_cluster_modin_localhost(mocker):
     ray_init = mocker.patch("ray.init")
     with (vclient._new_VClient(mode=Mode.ray_modin, env=dict(VDF_CLUSTER="ray://localhost"))) as client:
@@ -64,6 +66,7 @@ def test_ray_cluster_modin_localhost(mocker):
 
 
 @pytest.mark.xdist_group(name="os.environ")
+@pytest.mark.skip(reason="Ray not implemented")
 def test_ray_cluster_modin_auto(mocker):
     ray_init = mocker.patch("ray.init")
     with (vclient._new_VClient(mode=Mode.ray_modin, env=dict(VDF_CLUSTER="ray://auto"))) as client:

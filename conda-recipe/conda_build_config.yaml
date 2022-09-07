@@ -3,8 +3,10 @@ vdf_mode:
   -
   - minimal
   - pandas
+  - modin
   - dask
   - cudf
+  - dask_modin
   - dask_cudf
 
 numpy:

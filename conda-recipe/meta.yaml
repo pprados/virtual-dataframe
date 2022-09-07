@@ -54,6 +54,9 @@ requirements:
     - pandas>=1.4.3
 #    - numpy=={{ numpy }}
     {% endif %}
+    {% if vdf_mode in ('modin',) %}
+    - modin-dask>=0.15.2
+    {% endif %}
     {% if vdf_mode in ('', 'cudf', 'dask_cudf') %}
     - cudf>=22.08
     - cudatoolkit>=11.7
@@ -63,6 +66,7 @@ requirements:
     {% endif %}
     {% if vdf_mode in ('', 'dask_cudf') %}
     - dask-cudf>=22.08
+    - dask-cuda>=22.08
     {% endif %}
 
 about:

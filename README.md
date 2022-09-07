@@ -4,14 +4,14 @@
 
 Do you want to create a code, and choose at the end, the framework to use it?
 Do you want to be able to choose the best framework after simply performing performance measurements?
-This framework unifies six Panda-compatible components, to allow the writing of a single code, compatible with all
+This framework unifies multiple Panda-compatible components, to allow the writing of a single code, compatible with all
 
 ## Synopsis
 
 With some parameters and Virtual classes, it's possible to write a code, and execute this code:
-- With or without Dask
+- With or without multicore
+- With or without cluster (multi nodes)
 - With or without GPU
-- With or without cluster
 
 To do that, we create some virtual classes, add some methods in others classes, etc.
 
@@ -39,11 +39,9 @@ And a new `@delayed` annotation can be use, with or without Dask.
 With some parameters, the real classes may be `pandas.DataFrame`, `modin.pandas.DataFrame`,
 `cudf.DataFrame`, `dask.dataframe.DataFrame` with Pandas or
 `dask.dataframe.DataFrame` with cudf (with Pandas or cudf for each partition).
-And, it's possible to use [Panderas](https://pandera.readthedocs.io/en/stable/)
-for all `@delayed` methods to check the dataframe schema.
 
-To manage the initialisation of a Dask cluster, you must use the `VClient()`. This alias, can be automatically initialized
-with some environment variables.
+To manage the initialisation of a Dask cluster, you must use the `VClient()`. This alias, can be automatically
+initialized with some environment variables.
 
 ```python
 # Sample of code, compatible Pandas, cudf, modin, dask and dask_cudf
@@ -64,19 +62,19 @@ with (VClient()):
 
 With this framework, you can update your environment, to debuging your code.
 
-| env                                                                                            | Environement                          |
-|------------------------------------------------------------------------------------------------|---------------------------------------|
-| VDF_MODE=pandas                                                                                | Only Python with classical pandas     |
-| VDF_MODE=modin                                            | Python with modin (for debug)         |
-| VDF_MODE=cudf                                                                                  | Python with cuDF                      |
-| VDF_MODE=dask                                                                                  | Dask with multiple process and pandas |
-| VDF_MODE=dask-cudf                                                                             | Dask with multiple process and cuDF   |
-| VDF_MODE=dask<br />DEBUG=True                                                                  | Dask with single thread and pandas    |
-| VDF_MODE=dask-cudf<br />DEBUG=True                                                             | Dask with single thread and cuDF      |
-| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                        | Dask with local cluster and pandas    |
-| VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                   | Dask with local cuda cluster and cuDF |
-| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=...        | Dask with remote cluster and Pandas   |
-| VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=...   | Dask with remote cluster and cuDF     |
+| env                                                                                          | Environement                          |
+|----------------------------------------------------------------------------------------------|---------------------------------------|
+| VDF_MODE=pandas                                                                              | Only Python with classical pandas     |
+| VDF_MODE=modin                                                                               | Python with modin (for debug)         |
+| VDF_MODE=cudf                                                                                | Python with cuDF                      |
+| VDF_MODE=dask                                                                                | Dask with multiple process and pandas |
+| VDF_MODE=dask-cudf                                                                           | Dask with multiple process and cuDF   |
+| VDF_MODE=dask<br />DEBUG=True                                                                | Dask with single thread and pandas    |
+| VDF_MODE=dask-cudf<br />DEBUG=True                                                           | Dask with single thread and cuDF      |
+| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                      | Dask with local cluster and pandas    |
+| VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=locahost                                 | Dask with local cuda cluster and cuDF |
+| VDF_MODE=dask<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=...      | Dask with remote cluster and Pandas   |
+| VDF_MODE=dask-cudf<br />DASK_SCHEDULER_SERVICE_HOST=...<br />DASK_SCHEDULER_SERVICE_PORT=... | Dask with remote cluster and cuDF     |
 
 The real compatibilty between the differents simulation of Pandas, depends on the implement of the modin, cudf or dask.
 You can use the `VDF_MODE` variable, to update some part of code, between the selected backend.
@@ -88,12 +86,9 @@ or propose a component, compatible with differents scenario.
 
 ## usage
 ```shell
-$ conda install -q -y -c rapidsai -c nvidia -c conda-forge \
-		dask-cuda \
-		dask-cudf \
-		cudf \
-		cudatoolkit
-$ pip install -e virtual_dataframe
+$ conda install -q -y \
+        -c rapidsai -c nvidia -c conda-forge \
+		virtual_dataframe
 ```
 
 ## API
@@ -131,7 +126,7 @@ This project is just a wrapper. So, it inherits limitations and bugs from other 
 | <br />**pandas**                                                                                |
 | All data must be in DRAM                                                                        |
 | <br />**modin**                                                                                 |
-| [To describe](https://modin.readthedocs.io/en/stable/getting_started/why_modin/pandas.html)     |
+| [Read this](https://modin.readthedocs.io/en/stable/getting_started/why_modin/pandas.html)       |
 | <br />**[cudf](https://docs.rapids.ai/api/cudf/nightly/user_guide/pandas-comparison.html)**     |
 | All data must be in VRAM                                                                        |
 | All data types in cuDF are nullable                                                             |
@@ -150,11 +145,11 @@ This project is just a wrapper. So, it inherits limitations and bugs from other 
 
 To be compatible with all framework, you must only use the common features.
 
-|       | small data          | middle data       | big data                         |
-|-------|---------------------|-------------------|----------------------------------|
-| 1-CPU | pandas<br/>Limite:+ |                   |                                  |
-| n-CPU |                     | modin<br/>Limite+ | dask or dask_modin<br/>Limite:++ |
-| GPU   | cudf<br/>Limite:++  |                   | dask_cudf<br/>Limite:+++         |
+|       | small data         | middle data      | big data                        |
+|-------|--------------------|------------------|---------------------------------|
+| 1-CPU | pandas<br/>Limit:+ |                  |                                 |
+| n-CPU |                    | modin<br/>Limit+ | dask or dask_modin<br/>Limit:++ |
+| GPU   | cudf<br/>Limit:++  |                  | dask_cudf<br/>Limit:+++         |
 
 To develop, you can choose the level to be compatible with others frameworks.
 Each cell is strongly compatible with the upper left part.
@@ -162,11 +157,11 @@ Each cell is strongly compatible with the upper left part.
 ## No need of GPU?
 If you don't need a GPU, then develop for `dask`.
 
-|       | small data              | middle data           | big data                             |
-|-------|-------------------------|-----------------------|--------------------------------------|
-| 1-CPU | **pandas<br/>Limite:+** |                       |                                      |
-| n-CPU |                         | **modin<br/>Limite+** | **dask or dask_modin<br/>Limite:++** |
-| GPU   | cudf<br/>Limite:++      |                       | dask_cudf<br/>Limite:+++             |
+|       | small data             | middle data           | big data                            |
+|-------|------------------------|-----------------------|-------------------------------------|
+| 1-CPU | **pandas<br/>Limit:+** |                       |                                     |
+| n-CPU |                        | **modin<br/>Limite+** | **dask or dask_modin<br/>Limit:++** |
+| GPU   | cudf<br/>Limit:++      |                       | dask_cudf<br/>Limit:+++             |
 
 You can ignore this API:
 - `VDataFrame.apply_rows()`
@@ -175,11 +170,11 @@ You can ignore this API:
 
 If you don't need to use big data, then develop for `cudf`.
 
-|       | small data              | middle data           | big data                         |
-|-------|-------------------------|-----------------------|----------------------------------|
-| 1-CPU | **pandas<br/>Limite:+** |                       |                                  |
-| n-CPU |                         | **modin<br/>Limite+** | dask or dask_modin<br/>Limite:++ |
-| GPU   | **cudf<br/>Limite:++**  |                       | dask_cudf<br/>Limite:+++         |
+|       | small data            | middle data          | big data                        |
+|-------|-----------------------|----------------------|---------------------------------|
+| 1-CPU | **pandas<br/>Limit:+** |                      |                                 |
+| n-CPU |                       | **modin<br/>Limit+** | dask or dask_modin<br/>Limit:++ |
+| GPU   | **cudf<br/>Limit:++** |                      | dask_cudf<br/>Limit:+++         |
 
 You can ignore these API:
 - `@delayed`
@@ -192,11 +187,11 @@ You can ignore these API:
 
 To be compatible with all mode, develop for `dask_cudf`.
 
-|       | small data              | middle data           | big data                             |
-|-------|-------------------------|-----------------------|--------------------------------------|
-| 1-CPU | **pandas<br/>Limite:+** |                       |                                      |
-| n-CPU |                         | **modin<br/>Limite+** | **dask or dask_modin<br/>Limite:++** |
-| GPU   | **cudf<br/>Limite:++**  |                       | **dask_cudf<br/>Limite:+++**         |
+|       | small data            | middle data          | big data                            |
+|-------|-----------------------|----------------------|-------------------------------------|
+| 1-CPU | **pandas<br/>Limit:+** |                      |                                     |
+| n-CPU |                       | **modin<br/>Limit+** | **dask or dask_modin<br/>Limit:++** |
+| GPU   | **cudf<br/>Limit:++** |                      | **dask_cudf<br/>Limit:+++**         |
 
 and accept all the limitations.
 
@@ -204,7 +199,7 @@ and accept all the limitations.
 
 ### The code run with dask, but not with pandas or cudf ?
 You must use only the similare functionality, and only a subpart of Pandas.
-Develop for dask_cudf. it's easier to be compatible with others frameworks.
+Develop for *dask_cudf*. it's easier to be compatible with others frameworks.
 
 ### `.compute()` is not defined with pandas, cudf ?
 If you `@delayed` function return something, other than a `VDataFrame` or `VSerie`, the objet has not
@@ -219,12 +214,7 @@ a,b = compute(f(),f())
 ```
 
 ## Pip install
-Before using virtual_dataframe with GPU, use conda environment, and install some packages:
-```shell
-$ conda install -c rapidsai -c nvidia -c conda-forge \
-    cudf cudatoolkit dask-cudf
-```
-Then,
+NVidia rapids can not be installed with pip. Else, for others frameworks,
 ```shell
 $ pip install virtual_dataframe
 ```

@@ -5,12 +5,14 @@ import re
 import subprocess
 from typing import List, Set
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
-PYTHON_VERSION = "3.9"
+PYTHON_VERSION = "3.8"
+PYTHON_VERSION_MAX = "3.10"
 
 # USE_GPU="-gpu" ou "" si le PC possède une carte NVidia
 # ou suivant la valeur de la variable d'environnement GPU (export GPU=yes)
+# FIXME: detection de GPU
 USE_GPU: str = "-gpu" if (os.environ['GPU'].lower() in 'yes'
                           if "GPU" in os.environ
                           else os.path.isdir("/proc/driver/nvidia")
@@ -18,45 +20,26 @@ USE_GPU: str = "-gpu" if (os.environ['GPU'].lower() in 'yes'
 
 # Run package dependencies
 requirements: List[str] = [
-    'python-dotenv',
-    'pandas',
-    'numpy',
+    'python-dotenv>=0.20',
+    'pandas>=1.4',
     'numba',
-    # 'GPUtil',
-    # With patch to accept cudf.
-    'pandera@git+https://github.com/pprados/pandera@cudf#egg=pandera',
+    'numpy~=1.22.0',
+    ]
+
+pandas_requirements: List[str] = [
+    'pandas'
 ]
 
-pandas_requirements: List[str] = \
-    [
-        'pandas'
-    ]
-modin_requirements: List[str] = \
-    [
-        'modin[dask]'
-    ]
-cudf_requirements: List[str] = \
-    [
-        # 'cudf',               # Only with conda, see https://rapids.ai/start.html#conda
-        # 'numba',
-        # 'rapids==22.6',       # Only with conda, see https://rapids.ai/start.html#conda
-        # 'cudatoolkit==11.2',  # Only with conda, and must be updated with the current cuda version
-        # 'cudf==22.6',         # Only with conda
-    ]
+modin_requirements: List[str] = [
+    'modin[dask]'
+]
 dask_requirements: List[str] = \
     [
         'dask[distributed]',  # 'dask[distributed]==2021.6.2',  # Version 2021.6.2 for DOMINO 4.6
     ]
 dask_modin_requirements: Set[str] = modin_requirements
 
-dask_cudf_requirements: Set[str] = (
-        cudf_requirements + dask_requirements + \
-        [
-            # 'dask-cudf',    # Only with conda
-            # 'dask-cuda',    # Only with conda
-        ])
-
-all_requirements: Set[str] = set(pandas_requirements + cudf_requirements + dask_requirements + dask_cudf_requirements)
+all_requirements: Set[str] = set(pandas_requirements + dask_modin_requirements + dask_requirements)
 
 setup_requirements: List[str] = ["pytest-runner", "setuptools_scm"]
 
@@ -145,10 +128,9 @@ setup(
         'dev': dev_requirements,
         'test': test_requirements,
         'pandas': pandas_requirements,
-        'cudf': cudf_requirements,
+        'modin': modin_requirements,
         'dask': dask_requirements,
-        'dask_cudf': dask_cudf_requirements,
-        'dask-cudf': dask_cudf_requirements,
+        'dask_modin': dask_modin_requirements,
         'all': all_requirements
     },
     # packages=find_packages(where="virtual_dataframe"),

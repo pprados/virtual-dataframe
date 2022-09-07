@@ -99,7 +99,8 @@ def _analyse_cluster_url(mode: Mode, env) -> Tuple[ParseResult, Optional[str], i
 
 
 def _new_VClient(mode: Mode,
-                 env: Union[Dict[str, str], os._Environ[str]],
+                 #env: Union[Dict[str, str], os._Environ[str]],
+                 env: Dict[str, str],
                  **kwargs) -> Any:
     if mode in (Mode.pandas, Mode.cudf):
         class _FakeClient:

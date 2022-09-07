@@ -126,7 +126,8 @@ PRJ_URL=$(REMOTE_GIT_URL:.git=)
 PRJ_DOC_URL=$(PRJ_URL)
 GIT_DESCRIBE_TAG=$(shell git describe --tags --exact-match 2>/dev/null || git symbolic-ref -q --short HEAD)
 PRJ_PACKAGE:=$(PRJ)
-PYTHON_VERSION:=3.8
+#PYTHON_VERSION:=3.8
+PYTHON_VERSION:=3.9
 PYTHON_VERSION_MAX:=3.9
 PYTHONWARNINGS=ignore
 PYTHON_PARAMS?=
@@ -395,7 +396,8 @@ ifeq ($(USE_GPU),-gpu)
 		$(CONDA_CHANNELS) \
 		cudatoolkit \
 		cudf \
-		dask-cudf
+		dask-cudf \
+		dask-cuda
 #	$(CONDA) install \
 #		-q -y $(CONDA_ARGS) \
 #		$(CONDA_CHANNELS) \
