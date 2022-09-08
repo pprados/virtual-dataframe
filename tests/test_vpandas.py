@@ -1,8 +1,6 @@
-import math
 import shutil
 import tempfile
 
-import numpy
 import numpy as np
 import pandas
 import pytest
@@ -20,6 +18,7 @@ import virtual_dataframe as vdf
 def vclient():
     return vdf.VClient()
 
+
 # %%
 def test_delayed(vclient):
     @vdf.delayed
@@ -35,6 +34,7 @@ def test_compute(vclient):
         return i
 
     assert vdf.compute(f(42), f(50)) == (42, 50)
+
 
 def test_visualize(vclient):
     @vdf.delayed
@@ -60,7 +60,8 @@ def test_from_pandas():
 
 def test_from_backend():  # FIXME: le test n'est pas correct
     odf = vdf.VDataFrame({"a": [1, 2]}, npartitions=2)
-    assert vdf.from_backend(odf.to_backend(),npartitions=2).to_pandas().equals(vdf.VDataFrame({"a": [1, 2]}).to_pandas())
+    assert vdf.from_backend(odf.to_backend(), npartitions=2).to_pandas().equals(
+        vdf.VDataFrame({"a": [1, 2]}).to_pandas())
 
 
 # %%
@@ -86,6 +87,7 @@ def test_Series_compute():
     expected = pandas.Series([1, 2, 3, None, 4])
     result = vdf.VSeries([1, 2, 3, None, 4])
     assert result.compute().to_pandas().equals(expected)
+
 
 def test_DataFrame_visualize():
     result = vdf.VDataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, 0.3, 0.4]})

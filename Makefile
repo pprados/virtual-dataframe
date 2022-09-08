@@ -127,7 +127,7 @@ PRJ_DOC_URL=$(PRJ_URL)
 GIT_DESCRIBE_TAG=$(shell git describe --tags --exact-match 2>/dev/null || git symbolic-ref -q --short HEAD)
 PRJ_PACKAGE:=$(PRJ)
 #PYTHON_VERSION:=3.8
-PYTHON_VERSION:=3.9
+PYTHON_VERSION:=3.8
 PYTHON_VERSION_MAX:=3.9
 PYTHONWARNINGS=ignore
 PYTHON_PARAMS?=
@@ -147,7 +147,6 @@ CONDA_PACKAGE:=$(CONDA_PREFIX)/lib/python$(PYTHON_VERSION)/site-packages
 CONDA_PYTHON:=$(CONDA_PREFIX)/bin/python
 CONDA_BLD_DIR?=./build/conda-bld
 CONDA_CHANNELS?=-c rapidsai -c nvidia -c conda-forge
-#CONDA_CHANNELS?=-c rapidsai -c conda-forge
 CONDA_ARGS?=
 export VIRTUAL_ENV=$(CONDA_PREFIX)
 
@@ -162,7 +161,9 @@ JUPYTER_LABEXTENSIONS_DIR:=$(CONDA_PREFIX)/share/jupyter/labextensions
 _JUPYTER_LABEXTENSIONS:=$(foreach ext,$(JUPYTER_LABEXTENSIONS),$(JUPYTER_LABEXTENSIONS_DIR)/$(ext))
 
 # Project variable
-export VDF_MODES=pandas cudf dask dask_cudf
+#export VDF_MODES=pandas cudf modin dask dask_cudf dask_modin ray_modin
+# FIXME
+export VDF_MODES=pandas cudf modin dask dask_cudf dask_modin
 
 CHECK_GIT_STATUS=[[ `git status --porcelain` ]] && echo "$(yellow)Warning: All files are not commited$(normal)"
 
@@ -383,33 +384,19 @@ VALIDATE_VENV=$(CHECK_VENV)
 # de run et de test (voir le modèle de `setup.py` proposé)
 
 # All dependencies of the project must be here
-RAPIDS=$(CONDA_PACKAGE)/cuda
-.PHONY: install-rapids
-## Install NVidia rapids framework
-install-rapids: $(RAPIDS)
-$(RAPIDS):
-	@$(VALIDATE_VENV)
+$(CONDA_PACKAGE): environment.yml
+	$(VALIDATE_VENV)
 ifeq ($(USE_GPU),-gpu)
-	echo "$(green)  Install NVidia Rapids...$(normal)"
-	$(CONDA) install \
-		-q -y $(CONDA_ARGS) \
-		$(CONDA_CHANNELS) \
-		cudatoolkit \
-		cudf \
-		dask-cudf \
-		dask-cuda
-#	$(CONDA) install \
-#		-q -y $(CONDA_ARGS) \
-#		$(CONDA_CHANNELS) \
-#		cudatoolkit==11.5 \
-#		cudf==22.06 \
-#		dask-cudf
-	touch $(RAPIDS)
+	echo "$(green)  Install conda dependencies...$(normal)"
+	$(CONDA) env update \
+		-q $(CONDA_ARGS) \
+		--file environment.yml
+	touch $(CONDA_PACKAGE)
 endif
 
 
 .PHONY: requirements dependencies
-REQUIREMENTS= $(RAPIDS) $(PIP_PACKAGE) \
+REQUIREMENTS= $(CONDA_PACKAGE) $(PIP_PACKAGE) \
 	.gitattributes
 requirements: $(REQUIREMENTS)
 dependencies: requirements
@@ -444,7 +431,6 @@ $(PIP_PACKAGE): $(CONDA_PYTHON) setup.py | .git # Install pip dependencies
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Install setup.py dependencies ... (may take minutes)$(normal)"
 	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.[dev,test]' | grep -v 'already satisfied' || true
-	$(CONDA) install -y anaconda-client
 	echo -e "$(cyan)setup.py dependencies updated$(normal)"
 	@touch $(PIP_PACKAGE)
 
@@ -482,12 +468,11 @@ $(CONDA_HOME)/bin/mamba:
 configure: $(CONDA_HOME)/bin/mamba
 	@if [[ "$(CONDA_DEFAULT_ENV)" != "base" ]] ; \
       then echo -e "$(green)Use: $(cyan)conda deactivate $(VENV)$(green) before using 'make'$(normal)"; exit 1 ; fi
-	$(CONDA) create \
+	$(CONDA) env create \
 		--name "$(VENV)" \
-		python=$(PYTHON_VERSION) \
-		conda-build \
-		-y \
-		$(CONDA_ARGS) $(CONDA_CHANNELS)
+		$(CONDA_ARGS) \
+		--file environment.yml \
+		python=$(PYTHON_VERSION)
 	@if [[ "base" == "$(CONDA_DEFAULT_ENV)" ]] || [[ -z "$(CONDA_DEFAULT_ENV)" ]] ; \
 	then echo -e "Use: $(cyan)conda activate $(VENV)$(normal)" ; fi
 
@@ -706,7 +691,7 @@ $(CONDA_BLD_DIR):
 	@mkdir -p $(CONDA_BLD_DIR)
 	$(CONDA) index $(CONDA_BLD_DIR)
 
-${CONDA_BUILD_TARGET}: conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl $(CONDA_BLD_DIR) $(CONDA_PREFIX)/bin/conda-build \
+${CONDA_BUILD_TARGET}: clean-build conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl $(CONDA_BLD_DIR) $(CONDA_PREFIX)/bin/conda-build \
 		conda-recipe/meta.yaml conda-recipe/conda_build_config.yaml setup.*
 	@$(VALIDATE_VENV)
 	@$(CHECK_GIT_STATUS)
@@ -714,7 +699,10 @@ ${CONDA_BUILD_TARGET}: conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl $(COND
 	export GIT_DESCRIBE_TAG=$(shell python setup.py --version 2>/dev/null)
 	export WHEEL=$(subst -,_,$(PRJ_PACKAGE))-*.whl
 
-	mamba build \
+	# Note: due to a bug in conda-build, it's impossible to run the test with
+	# app packages at the time. So, I desactivate the tests now
+	$(CONDA) build \
+		--no-test \
 		--output-folder ${CONDA_BLD_DIR} \
 		$(CONDA_CHANNELS) \
 		${CONDA_ARGS} \
@@ -915,7 +903,7 @@ clean-pyc:
 # Remove build artifacts and docs
 clean-build:
 	@/usr/bin/find -L . -type f -name ".make-*" -delete
-	@rm -fr build/ dist/* *.egg-info .repository
+	@rm -fr build/ dist/* *.egg-info .eggs .repository conda-recipe/*.whl
 	@echo -e "$(cyan)Build cleaned$(normal)"
 
 # ---------------------------------------------------------------------------------------
@@ -931,7 +919,7 @@ clean-notebooks: $(REQUIREMENTS)
 # Remove all the pip package
 clean-pip:
 	@$(VALIDATE_VENV)
-	pip freeze | grep -v "^-e" | xargs pip uninstall -y
+	pip freeze | grep -v -e "^-e" -e " @.*" -e "^#.*" | xargs pip uninstall -y
 	echo -e "$(cyan)Virtual env cleaned$(normal)"
 
 # ---------------------------------------------------------------------------------------
@@ -1004,7 +992,7 @@ _make-notebooks-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC) $(JUPYTER_DA
 		--log-level ERROR \
 		--no-report-mode \
 		notebooks/demo.ipynb \
-		-p mode $(VDF_MODE) /dev/null
+		-p mode $(VDF_MODE) /dev/null 2>&1 | grep -v "the file is not specified with any extension"
 	date >.make-notebooks-test-$*
 
 .PHONY: notebooks-test-*

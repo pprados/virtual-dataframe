@@ -2,16 +2,17 @@ import pytest
 
 import virtual_dataframe as vpd
 from virtual_dataframe import *
-from virtual_dataframe.sample import sample_function
+
+TestDF = VDataFrame
 
 
-@pytest.fixture(scope="session")
-def vclient():
-    return VClient()
+@delayed
+def sample_function(data: TestDF) -> TestDF:
+    return data
 
-def test_sample(vclient):
-    with (vclient):
+
+def test_sample():
+    with (VClient()):
         vdf = vpd.VDataFrame({"data": [1, 2]})
         rc = sample_function(vdf).compute()
         assert rc.equals(vpd.VDataFrame({"data": [1, 2]}).compute())
-

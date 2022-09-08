@@ -214,7 +214,8 @@ def _remove_to_csv(func, *part_args, **kwargs):
                                "compute_kwargs"])
 
 
-if VDF_MODE in (Mode.pandas, Mode.cudf, Mode.dask_modin, Mode.ray_modin):
+# if VDF_MODE in (Mode.pandas, Mode.cudf, Mode.modin, Mode.dask_modin, Mode.ray_modin):
+if VDF_MODE in (Mode.pandas, Mode.cudf, Mode.modin, Mode.dask_modin):
 
     def _remove_dask_parameters(func, *part_args, **kwargs):
         return _remove_parameters(func, ["npartitions", "chunksize", "sort", "name"])
@@ -490,11 +491,12 @@ if VDF_MODE == Mode.cudf:
     compute.__doc__ = _doc_compute
 
 # %%
-if VDF_MODE in (Mode.dask_modin, Mode.ray_modin):
+# if VDF_MODE in (Mode.modin, Mode.dask_modin, Mode.ray_modin):
+if VDF_MODE in (Mode.modin, Mode.dask_modin):
     if VDF_MODE == Mode.dask_modin:
         os.environ["MODIN_ENGINE"] = "dask"
-    elif VDF_MODE == Mode.ray_modin:
-        os.environ["MODIN_ENGINE"] = "ray"
+    # elif VDF_MODE == Mode.ray_modin:
+    #     os.environ["MODIN_ENGINE"] = "ray"
     else:
         os.environ["MODIN_ENGINE"] = "python"  # For debug
     import modin.pandas
@@ -502,6 +504,7 @@ if VDF_MODE in (Mode.dask_modin, Mode.ray_modin):
     import numpy
 
     import warnings
+
     warnings.filterwarnings('module', '.*Distributing.*This may take some time\\.', )
 
     BackEndDataFrame: Any = modin.pandas.DataFrame
@@ -775,6 +778,7 @@ if VDF_MODE == Mode.pandas:
 
 # %%
 class VDataFrame(_VDataFrame):
+    __test__ = False
     ''' A *virtual* dataframe.
     The concret dataframe depend on the environment variable `VDF_MODE`.
     It's may be : `pandas.DataFrame`, `cudf.DataFrame` or `dask.DataFrame`

@@ -4,60 +4,15 @@ A *Virtual Client* to facilitate the startup process.
 With some environment variable, the program use different kind of scheduler.
 
 Use 'VDF_CLUSTER' with protocol, host and optionaly, the port.
-- dask://locahost:8787
-- ray://locahost:10001
-- ray:auto
-and alternativelly, can use DASK_SCHEDULER_SERVICE_HOST and DASK_SCHEDULER_SERVICE_PORT
-
-+------------+-------+------------------+------------------+
-| VDF_MODE   | DEBUG | VDF_CLUSTER      | Scheduler        |
-+============+=======+==================+==================+
-| pandas     | -     | -                | No scheduler     |
-+------------+-------+------------------+------------------+
-| cudf       | -     | -                | No scheduler     |
-+------------+-------+------------------+------------------+
-| dask       | Yes   | -                | synchronous      |
-+------------+-------+------------------+------------------+
-| dask       | No    | -                | processes        |
-+------------+-------+------------------+------------------+
-| dask       | No    | dask://localhost | LocalCluster     |
-+------------+-------+------------------+------------------+
-| dask_modin | No    | -                | LocalCluster     |
-+------------+-------+------------------+------------------+
-| dask_modin | No    | dask://localhost | LocalCluster     |
-+------------+-------+------------------+------------------+
-| dask_modin | No    | dask://<host>    | Dask cluster     |
-+------------+-------+------------------+------------------+
-| ray_modin  | No    | ray:auto         | Dask cluster     |
-+------------+-------+------------------+------------------+
-| ray_modin  | No    | ray://localhost  | Dask cluster     |
-+------------+-------+------------------+------------------+
-| ray_modin  | No    | ray://<host>     | Dask cluster     |
-+------------+-------+------------------+------------------+
-| dask-cudf  | No    | dask://localhost | LocalCUDACluster |
-+------------+-------+------------------+------------------+
-| dask-cudf  | No    | dask://<host>    | Dask cluster     |
-+------------+-------+------------------+------------------+
-
-
-Sample:
-``
-from virtual_dataframe import VClient
-
-with (VClient())
-    # Now, use the scheduler
-``
+See README.md
 """
 # @see https://blog.dask.org/2020/07/23/current-state-of-distributed-dask-clusters
 import logging
 import os
-import sys
+from typing import Any, Tuple, Dict, Optional
 from urllib.parse import urlparse, ParseResult
-from typing import Any, Tuple, Dict, Optional, Union
 
 from .env import DEBUG, VDF_MODE, Mode
-
-import dask.distributed
 
 LOGGER: logging.Logger = logging.getLogger(__name__)
 DASK_DEFAULT_PORT = 8787
@@ -78,8 +33,8 @@ def _analyse_cluster_url(mode: Mode, env) -> Tuple[ParseResult, Optional[str], i
     if not vdf_cluster:
         if mode in (Mode.dask, Mode.dask_modin, Mode.dask_cudf):
             vdf_cluster = "dask://localhost"
-        elif mode == Mode.ray_modin:
-            vdf_cluster = "ray://"
+        # elif mode == Mode.ray_modin:
+        #     vdf_cluster = "ray://"
         else:
             vdf_cluster = ""
     parsed = urlparse(vdf_cluster)
@@ -99,10 +54,10 @@ def _analyse_cluster_url(mode: Mode, env) -> Tuple[ParseResult, Optional[str], i
 
 
 def _new_VClient(mode: Mode,
-                 #env: Union[Dict[str, str], os._Environ[str]],
+                 # env: Union[Dict[str, str], os._Environ[str]],  # FIXME: limit 3.8 ?
                  env: Dict[str, str],
                  **kwargs) -> Any:
-    if mode in (Mode.pandas, Mode.cudf):
+    if mode in (Mode.pandas, Mode.cudf, Mode.modin):
         class _FakeClient:
             def cancel(self, futures, asynchronous=None, force=False) -> None:
                 pass
@@ -127,6 +82,8 @@ def _new_VClient(mode: Mode,
     vdf_cluster, host, port = _analyse_cluster_url(mode, env)
 
     if mode in (Mode.dask, Mode.dask_cudf, Mode.dask_modin):
+        import dask.distributed
+
         assert vdf_cluster.scheme == "dask"
         # import dask.distributed
         if DEBUG:
@@ -156,43 +113,43 @@ def _new_VClient(mode: Mode,
                     **kwargs)
                 LOGGER.warning(f"Use remote cluster on {host}:{port}")
             return client
-    elif mode == Mode.ray_modin:
-        assert vdf_cluster.scheme == "ray"
-        import ray
-        ray_address = None
-        if host:
-            ray_address = f"ray://{host}:{port}" if host != "auto" else "auto"
-
-        if not ray_address:
-            ray_context = ray.init()
-        else:
-            ray_context = ray.init(address=ray_address, **kwargs)
-
-        class RayClient:
-            def __init__(self, ray_context):
-                self.ray_context = ray_context
-
-            def cancel(self, futures, asynchronous=None, force=False) -> None:
-                pass
-
-            def close(self, timeout='__no_default__') -> None:
-                pass
-
-            def __enter__(self) -> Any:
-                return self
-
-            def __exit__(self, type: None, value: None, traceback: None) -> None:
-                # self.ray_context = None
-                # ray.shutdown()
-                pass
-
-            def __str__(self) -> str:
-                return f"<Client: {self.ray_context.address_info['address']}>"
-
-            def __repr__(self) -> str:
-                return self.__str__()
-
-        return RayClient(ray_context)
+    # elif mode == Mode.ray_modin:
+    #     assert vdf_cluster.scheme == "ray"
+    #     import ray
+    #     ray_address = None
+    #     if host:
+    #         ray_address = f"ray://{host}:{port}" if host != "auto" else "auto"
+    #
+    #     if not ray_address:
+    #         ray_context = ray.init()
+    #     else:
+    #         ray_context = ray.init(address=ray_address, **kwargs)
+    #
+    #     class RayClient:
+    #         def __init__(self, ray_context):
+    #             self.ray_context = ray_context
+    #
+    #         def cancel(self, futures, asynchronous=None, force=False) -> None:
+    #             pass
+    #
+    #         def close(self, timeout='__no_default__') -> None:
+    #             pass
+    #
+    #         def __enter__(self) -> Any:
+    #             return self
+    #
+    #         def __exit__(self, type: None, value: None, traceback: None) -> None:
+    #             # self.ray_context = None
+    #             # ray.shutdown()
+    #             pass
+    #
+    #         def __str__(self) -> str:
+    #             return f"<Client: {self.ray_context.address_info['address']}>"
+    #
+    #         def __repr__(self) -> str:
+    #             return self.__str__()
+    #
+    #     return RayClient(ray_context)
     else:
         assert ("Invalid VDF_MODE")
 

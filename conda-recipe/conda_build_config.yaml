@@ -1,13 +1,11 @@
 # See https://docs.conda.io/projects/conda-build/en/stable/resources/variants.html
 vdf_mode:
   -
-  - minimal
+  - all
   - pandas
   - modin
   - dask
   - cudf
   - dask_modin
+##  - ray_modin
   - dask_cudf
-
-numpy:
-  - 1.22

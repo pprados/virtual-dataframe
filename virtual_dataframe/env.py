@@ -3,7 +3,6 @@ import os
 from enum import Enum
 from typing import List
 
-
 LOGGER: logging.Logger = logging.getLogger(__name__)
 
 _yes: List[str] = ["true", "y", "yes"]
@@ -19,12 +18,13 @@ class Mode(Enum):
     pandas = "pandas"
     cudf = "cudf"
     dask = "dask"
+    modin = "modin"
     dask_modin = "dask_modin"
-    ray_modin = "ray_modin"
+    # ray_modin = "ray_modin"
     dask_cudf = "dask_cudf"
 
 
-USE_GPU = os.path.exists("/proc/driver/nvidia")
+USE_GPU = os.path.exists("/proc/driver/nvidia")  # FIXME: portability with WSL to detect GPU
 # try:
 #     import GPUtil
 #

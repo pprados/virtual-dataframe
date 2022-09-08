@@ -26,5 +26,11 @@ The Makefile contains the central entry points for common tasks related to this 
 * ``make test-twine`` will publish the package in `test.pypi.org <https://test.pypi.org>`_)
 * ``make twine`` will publish the package in `pypi.org <https://pypi.org>`_)
 
+## Conda commands
+* ``make conda-build`` will build the conda package
+* ``make conda-debug`` will build the package in debug mode
+* ``make conda-convert`` will convert the package for all platform
+* ``make conda-install`` will install the conda package
+* ``make conda-purge`` will remove the build artefact
 
 

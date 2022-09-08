@@ -5,7 +5,8 @@ import re
 import subprocess
 from typing import List, Set
 
-from setuptools import setup
+from py.builtin import all
+from setuptools import setup, find_packages
 
 PYTHON_VERSION = "3.8"
 PYTHON_VERSION_MAX = "3.10"
@@ -19,45 +20,53 @@ USE_GPU: str = "-gpu" if (os.environ['GPU'].lower() in 'yes'
                                or "CUDA_PATH" in os.environ) else ""
 
 # Run package dependencies
-requirements: List[str] = [
+requirements = [
     'python-dotenv>=0.20',
     'pandas>=1.4',
-    'numba',
-    'numpy~=1.22.0',
+    'numba>=0.55',
+    'numpy>=1.22',
     ]
 
-pandas_requirements: List[str] = [
-    'pandas'
+pandas_requirements = [
+    'pandas>=1.4'
 ]
 
-modin_requirements: List[str] = [
-    'modin[dask]'
+modin_requirements = [
+#    'modin>=0.15'
+    'modin'
 ]
-dask_requirements: List[str] = \
+dask_requirements = \
     [
-        'dask[distributed]',  # 'dask[distributed]==2021.6.2',  # Version 2021.6.2 for DOMINO 4.6
+        'dask>=2022.2', 'distributed>=2022.2',
     ]
-dask_modin_requirements: Set[str] = modin_requirements
+#dask_modin_requirements = ['modin[dask]>=0.15']
+dask_modin_requirements = ['modin[dask]']
+#ray_modin_requirements = ['modin[ray]>=0.15']
 
-all_requirements: Set[str] = set(pandas_requirements + dask_modin_requirements + dask_requirements)
+all_requirements = set(pandas_requirements +
+                                 dask_modin_requirements +
+                                 # ray_modin_requirements +
+                                 dask_requirements
+                                 )
 
-setup_requirements: List[str] = ["pytest-runner", "setuptools_scm"]
+setup_requirements = ["pytest-runner", "setuptools_scm"]
 
-# Package nécessaires aux tests
-test_requirements: List[str] = [
-    'pytest>=2.8.0',
+# Packages for tests
+test_requirements = [
+    'pytest>=2.8',
     # 'pytest-openfiles', # For tests
     'pytest-xdist',
     # 'pytest-httpbin>=0.0.7',
     'pytest-mock',
+    'pytest-cov>=3.0.0',
 
-    'werkzeug==2.0.3',
+    'werkzeug==2.0',
     'papermill',
 ]
 
 # Package nécessaires aux builds mais pas au run
 # FIXME Ajoutez les dépendances nécessaire au build et au tests à ajuster suivant le projet
-dev_requirements: List[str] = [
+dev_requirements = all_requirements.union([
     'pip',
     'twine',  # To publish package in Pypi
     'sphinx', 'sphinx-execute-code', 'sphinx_rtd_theme', 'recommonmark', 'nbsphinx',  # To generate doc
@@ -71,7 +80,8 @@ dev_requirements: List[str] = [
     # For Dask
     'graphviz',
     'bokeh>=2.1.1',
-]
+    'jupyterlab-git',
+])
 
 
 # Return git remote url
@@ -102,7 +112,7 @@ setup(
     name='virtual_dataframe',
     author="Philippe Prados",
     author_email="github@prados.fr",
-    description="Bridge between pandas, cudf, dask and dask-cudf",
+    description="Bridge between pandas, cudf, modin, dask and dask-cudf",
     long_description=open('README.md', mode='r', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
     url=_git_http_url(),
@@ -133,8 +143,7 @@ setup(
         'dask_modin': dask_modin_requirements,
         'all': all_requirements
     },
-    # packages=find_packages(where="virtual_dataframe"),
-    #packages=find_packages(),
+    # packages=find_packages(),
     packages=["virtual_dataframe"],
     package_data={"virtual_dataframe": ["py.typed"]},
     use_scm_version=True,  # Manage versions from Git tags

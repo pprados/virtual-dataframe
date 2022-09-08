@@ -1,0 +1,11 @@
+#name: virtual_dataframe
+channels:
+  - rapidsai
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - cudatoolkit=11.7.0=hd8887f6_10
+  - dask-cuda=22.08.00=py38_g9a61ce5_0
+  - dask-cudf=22.08.00=cuda_11_py38_gb71873c701_0
+  - conda-build
