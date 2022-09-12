@@ -216,7 +216,6 @@ if VDF_MODE in (Mode.pandas, Mode.cudf):
     def _remove_dask_parameters(func, *part_args, **kwargs):
         return _remove_parameters(func, ["npartitions", "chunksize", "sort", "name"])
 
-
     def _delayed(name: Optional[str] = None,
                  pure: Optional[bool] = None,
                  nout: Optional[int] = None,
@@ -238,6 +237,7 @@ if VDF_MODE in (Mode.pandas, Mode.cudf):
                 return wrapper
 
             return decorate
+
 
 # %%
 if VDF_MODE == Mode.dask_cudf:
@@ -269,7 +269,7 @@ if VDF_MODE == Mode.dask_cudf:
     from_pandas: Any = dask.dataframe.from_pandas
     from_backend: Any = dask_cudf.from_cudf
 
-    read_csv: Any = dask.dataframe.read_csv
+    read_csv: Any = dask_cudf.read_csv
 
     _VDataFrame: Any = dask_cudf.DataFrame
     _VSeries: Any = dask_cudf.Series
@@ -307,7 +307,6 @@ if VDF_MODE == Mode.dask:
     _VDataFrame: Any = dask.dataframe.DataFrame
     _VSeries: Any = dask.dataframe.Series
 
-
     def _partition_apply_rows(
             self,
             fn,
@@ -324,7 +323,6 @@ if VDF_MODE == Mode.dask:
         for col, data in outputs.items():
             self[col] = data
         return self
-
 
     def _apply_rows(self,
                     fn,
@@ -389,7 +387,6 @@ if VDF_MODE == Mode.cudf:
     _VDataFrame: Any = cudf.DataFrame
     _VSeries: Any = cudf.Series
 
-
     def _from_back(
             data: Union[BackEndDataFrame, BackEndSeries],
             npartitions: Optional[int] = None,
@@ -399,21 +396,19 @@ if VDF_MODE == Mode.cudf:
     ) -> _VDataFrame:
         return data
 
-
     def _read_csv(filepath_or_buffer, **kwargs):
         if not isinstance(filepath_or_buffer, list):
             return cudf.concat((cudf.read_csv(f, **kwargs) for f in sorted(glob.glob(filepath_or_buffer))))
         else:
             return cudf.read_csv(filepath_or_buffer, **kwargs)
 
-
     def _DataFrame_to_csv(self, filepath_or_buffer, **kwargs):
         if "*" in str(filepath_or_buffer):
             filepath_or_buffer = filepath_or_buffer.replace("*", "")
         return self._old_to_csv(filepath_or_buffer, **kwargs)
 
-
     # noinspection PyUnusedLocal
+
     def compute(*args,
                 traverse: bool = True,
                 optimize_graph: bool = True,
@@ -495,8 +490,8 @@ if VDF_MODE == Mode.pandas:
     _VDataFrame: Any = pandas.DataFrame
     _VSeries: Any = pandas.Series
 
-
     # noinspection PyUnusedLocal
+
     def _from_back(  # noqa: F811
             data: Union[BackEndDataFrame, BackEndSeries],
             npartitions: Optional[int] = None,
@@ -506,15 +501,14 @@ if VDF_MODE == Mode.pandas:
     ) -> _VDataFrame:
         return data
 
-
     def read_csv(filepath_or_buffer, **kwargs):
         if not isinstance(filepath_or_buffer, list):
             return pandas.concat((pandas.read_csv(f, **kwargs) for f in glob.glob(filepath_or_buffer)))
         else:
             return pandas.read_csv(filepath_or_buffer, **kwargs)
 
-
     # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
+
     def _apply_rows(
             self,
             func,
@@ -534,8 +528,8 @@ if VDF_MODE == Mode.pandas:
             self[col] = data
         return self
 
-
     # noinspection PyUnusedLocal
+
     def compute(*args,  # noqa: F811
                 traverse: bool = True,
                 optimize_graph: bool = True,
@@ -560,7 +554,6 @@ if VDF_MODE == Mode.pandas:
         if "*" in str(filepath_or_buffer):
             filepath_or_buffer = filepath_or_buffer.replace("*", "")
         return self._old_to_csv(filepath_or_buffer, **kwargs)
-
 
     delayed: Any = _delayed
     delayed.__doc__ = _doc_delayed
