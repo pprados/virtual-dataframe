@@ -382,7 +382,7 @@ VALIDATE_VENV=$(CHECK_VENV)
 
 # All dependencies of the project must be here
 $(CONDA_PACKAGE): environment.yml
-	$(VALIDATE_VENV)
+	@$(VALIDATE_VENV)
 ifeq ($(USE_GPU),-gpu)
 	echo "$(green)  Install conda dependencies...$(normal)"
 	$(CONDA) env update \
@@ -469,7 +469,6 @@ configure: $(CONDA_HOME)/bin/mamba
 		--name "$(VENV)" \
 		-y $(CONDA_ARGS) \
 		python==$(PYTHON_VERSION)
-
 	$(CONDA) env update \
 		--name "$(VENV)" \
 		$(CONDA_ARGS) \
@@ -985,7 +984,8 @@ unit-test: .make-unit-test
 
 
 .PHONY: notebooks-test
-_make-notebooks-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC) $(JUPYTER_DATA_DIR)/kernels/$(KERNEL) notebooks/demo.ipynb
+.make-notebooks-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC) $(JUPYTER_DATA_DIR)/kernels/$(KERNEL) \
+	# notebooks/demo.ipynb
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Run notebook tests for mode=$(VDF_MODE)...$(normal)"
 	python $(PYTHON_ARGS) -m papermill \
@@ -993,19 +993,19 @@ _make-notebooks-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC) $(JUPYTER_DA
 		--log-level ERROR \
 		--no-report-mode \
 		notebooks/demo.ipynb \
-		-p mode $(VDF_MODE) /dev/null 2>&1 | grep -v "the file is not specified with any extension"
+		-p mode $(VDF_MODE) /dev/null 2>&1 | grep -v -e "the file is not specified with any extension" -e " *warnings.warn("
 	date >.make-notebooks-test-$*
 
 .PHONY: notebooks-test-*
 ## Run notebooks test with a specific *mode*
 notebooks-test-%: $(REQUIREMENTS)
-	@VDF_MODE=$* $(MAKE) --no-print-directory _make-notebooks-test-$*
+	@VDF_MODE=$* $(MAKE) --no-print-directory .make-notebooks-test-$*
 
 ifneq ($(USE_GPU),-gpu)
-notebooks-test-cudf:
+.make-notebooks-test-cudf:
 	@echo -e "$(red)Ignore VDF_MODE=cudf$(normal)"
 
-notebooks-test-dask_cudf:
+.make-notebooks-test-dask_cudf:
 	@echo -e "$(red)Ignore VDF_MODE=dask_cudf$(normal)"
 endif
 

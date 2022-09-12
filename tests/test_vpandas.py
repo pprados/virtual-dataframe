@@ -180,7 +180,6 @@ def test_apply_rows():
         kwargs={
             "val": 3
         },
-        cache_key=True,
-        # pessimistic_nulls= True,  # FIXME: dask_cudf n'implemente pas ceci
+        cache_key="abc",
     ).compute()
     assert r.to_pandas().equals(expected)

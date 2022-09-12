@@ -6,7 +6,7 @@ import glob
 import os
 import sys
 from functools import wraps
-from typing import Any, List, Tuple, Optional, Union, Callable, Dict, Iterable
+from typing import Any, List, Tuple, Optional, Union, Callable, Dict, Type
 
 from pandas._typing import Axes, Dtype
 
@@ -38,7 +38,7 @@ Construct a VDataFrame from a Pandas DataFrame
 '''
 
 _doc_apply_rows = '''
-apply_rows(func, incols, outcols, kwargs, pessimistic_nulls=True, cache_key=None) method of cudf.core.dataframe.DataFrame instance
+apply_rows(func, incols, outcols, kwargs, cache_key=None) method of cudf.core.dataframe.DataFrame instance
     Apply a row-wise user defined function.
     See https://docs.rapids.ai/api/cudf/stable/user_guide/guide-to-udfs.html#lower-level-control-with-custom-numba-kernels
 
@@ -57,11 +57,6 @@ apply_rows(func, incols, outcols, kwargs, pessimistic_nulls=True, cache_key=None
     kwargs: dict
         name-value of extra arguments.  These values are passed
         directly into the function.
-    pessimistic_nulls : bool
-        Whether or not apply_rows output should be null when any corresponding
-        input is null. If False, all outputs will be non-null, but will be the
-        result of applying func against the underlying column data, which
-        may be garbage.
 
 
     Examples
@@ -312,8 +307,10 @@ if VDF_MODE == Mode.dask:
 
     _cache = dict()  # type: Dict[Any, Any]
 
+
     def _compile(func: Callable, cache_key: Optional[str]):
         import numba
+
         if cache_key is None:
             cache_key = func
 
@@ -330,17 +327,20 @@ if VDF_MODE == Mode.dask:
             self,
             func: Callable,
             incols: Dict[str, str],
-            outcols: Iterable[str, type],
+            outcols: Dict[str, Type],
             kwargs: Dict[str, Any],
-            pessimistic_nulls: bool = True,  # FIXME: use pessimistic_nulls?
-            cache_key: Optional[str] = None,
     ):
         # The first invocation is with fake datas
         import numba
+        kwargs = kwargs.copy()
+        cache_key = kwargs["cache_key"]
+        del kwargs["cache_key"]
         size = len(self)
         params = {param: self[col].to_numpy() for col, param in incols.items()}
         outputs = {param: numpy.empty(size, dtype) for param, dtype in outcols.items()}
-        _compile(func, cache_key)(**params, **outputs, **kwargs)
+        _compile(func, cache_key)(**params, **outputs,
+                                  **kwargs,
+                                  )
         for col, data in outputs.items():
             self[col] = data
         return self
@@ -348,22 +348,23 @@ if VDF_MODE == Mode.dask:
 
     def _apply_rows(self,
                     fn: Callable,
-                    incols: Dict[str,str],
-                    outcols: Iterable[str,type],
-                    kwargs: Dict[str,Any],
-                    pessimistic_nulls:bool=True,
-                    cache_key:Optional[str]=None,
+                    incols: Dict[str, str],
+                    outcols: Dict[str, Type],
+                    kwargs: Dict[str, Any],
+                    cache_key: Optional[str] = None,
                     ):
         return self.map_partitions(_partition_apply_rows, fn, incols, outcols,
-                                   {**kwargs,
-                                   **{"pessimistic_nulls": pessimistic_nulls,
-                                      "cache_key":cache_key}})
+                                   # kwargs,
+                                   {
+                                       **kwargs,
+                                       **{"cache_key": cache_key}
+                                   }
+                                   )
 
 
-    # TODO: _apply_serie https://docs.rapids.ai/api/cudf/stable/user_guide/guide-to-udfs.html#dataframe-udfs
-
-    # TODO: apply_grouped. https://docs.rapids.ai/api/cudf/stable/user_guide/guide-to-udfs.html
-    # TODO: apply_chunck.
+    # TODO: Implements CUDA specific method? (use cuda.threadIdx and cuda.blockDim)
+    # apply_grouped. https://docs.rapids.ai/api/cudf/stable/user_guide/guide-to-udfs.html
+    # apply_chunck? (https://docs.rapids.ai/api/cudf/nightly/api_docs/api/cudf.DataFrame.apply_chunks.html)
     _from_back: Any = dask.dataframe.from_pandas
 
     delayed: Any = dask.delayed
@@ -557,6 +558,7 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
     # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
     _cache = dict()  # type: Dict[Any, Any]
 
+
     def _compile(func: Callable, cache_key: Optional[str]):
         import numba
         if cache_key is None:
@@ -575,9 +577,8 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
             self,
             func: Callable,
             incols: Dict[str, str],
-            outcols: Iterable[str, type],
+            outcols: Dict[str, Type],
             kwargs: Dict[str, Any],
-            pessimistic_nulls: bool = True,  # FIXME: use pessimistic_nulls?
             cache_key: Optional[str] = None,
     ):
 
@@ -711,6 +712,7 @@ if VDF_MODE == Mode.pandas:
     # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
     _cache = dict()  # type: Dict[Any, Any]
 
+
     def _compile(func: Callable, cache_key: Optional[str]):
         import numba
         if cache_key is None:
@@ -724,14 +726,14 @@ if VDF_MODE == Mode.pandas:
             _cache[cache_key] = kernel
             return kernel
 
+
     def _apply_rows(
             self,
             func: Callable,
-            incols: Dict[str,str],
-            outcols: Iterable[str,type],
+            incols: Dict[str, str],
+            outcols: Dict[str, Type],
             kwargs: Dict[str, Any],
-            pessimistic_nulls:bool=True,  # FIXME: use pessimistic_nulls?
-            cache_key:Optional[str]=None,
+            cache_key: Optional[str] = None,
     ):
         import numba
 
