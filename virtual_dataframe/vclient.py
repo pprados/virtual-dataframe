@@ -9,7 +9,8 @@ See README.md
 # @see https://blog.dask.org/2020/07/23/current-state-of-distributed-dask-clusters
 import logging
 import os
-from typing import Any, Tuple, Dict, Optional
+import sys
+from typing import Any, Tuple, Dict, Optional, Union
 from urllib.parse import urlparse, ParseResult
 
 from .env import DEBUG, VDF_MODE, Mode
@@ -53,9 +54,14 @@ def _analyse_cluster_url(mode: Mode, env) -> Tuple[ParseResult, Optional[str], i
     return parsed, host, int(port)
 
 
+if sys.version_info.major == 3 and sys.version_info.minor >= 9:
+    EnvDict = Union[Dict[str, str], os._Environ[str]]
+else:
+    EnvDict = Dict[str, str]
+
+
 def _new_VClient(mode: Mode,
-                 # env: Union[Dict[str, str], os._Environ[str]],  # FIXME: limit 3.8 ?
-                 env: Dict[str, str],
+                 env: EnvDict,
                  **kwargs) -> Any:
     if mode in (Mode.pandas, Mode.cudf, Mode.modin):
         class _FakeClient:

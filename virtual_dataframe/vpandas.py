@@ -3,6 +3,7 @@ Virtual Dataframe and Series.
 """
 # flake8: noqa
 import glob
+import os
 import sys
 from functools import wraps
 from typing import Any, List, Tuple, Optional, Union
@@ -270,7 +271,7 @@ if VDF_MODE == Mode.dask_cudf:
     from_pandas: Any = dask.dataframe.from_pandas
     from_backend: Any = dask_cudf.from_cudf
 
-    read_csv: Any = dask_cudf.read_csv  # FIXME
+    read_csv: Any = dask_cudf.read_csv
 
     _VDataFrame: Any = dask_cudf.DataFrame
     _VSeries: Any = dask_cudf.Series
@@ -431,6 +432,8 @@ if VDF_MODE == Mode.cudf:
             return IPython.core.display.Image(data=[], url=None, filename=None, format=u'png', embed=None, width=None,
                                               height=None,
                                               retina=False)
+        except ImportError:
+            return True
         except ModuleNotFoundError:
             return True
     visualize.__doc__ = _doc_visualize
@@ -531,8 +534,8 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
             incols,
             outcols,
             kwargs,
-            pessimistic_nulls=True,  # FIXME: use it
-            cache_key=None,  # FIXME: use it
+            pessimistic_nulls=True,  # FIXME: use pessimistic_nulls?
+            cache_key=None,  # FIXME: use cache_key?
     ):
         import numba
 
@@ -620,7 +623,7 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
     _VSeries.to_backend = lambda self: self
     _VSeries.to_backend.__doc__ = _doc_VSeries_to_pandas
 
-    # FIXME
+    # FIXME : patch CSV with modin ?
     # if "_old_to_csv" not in _VDataFrame.__dict__:
     #     _VDataFrame._old_to_csv = _VDataFrame.to_csv
     # _VDataFrame.to_csv = _remove_to_csv(_DataFrame_to_csv)

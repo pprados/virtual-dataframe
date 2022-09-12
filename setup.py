@@ -3,21 +3,30 @@
 import os
 import re
 import subprocess
-from typing import List, Set
 
-from py.builtin import all
-from setuptools import setup, find_packages
+from setuptools import setup
 
 PYTHON_VERSION = "3.8"
-PYTHON_VERSION_MAX = "3.10"
 
 # USE_GPU="-gpu" ou "" si le PC possède une carte NVidia
 # ou suivant la valeur de la variable d'environnement GPU (export GPU=yes)
-# FIXME: detection de GPU
-USE_GPU: str = "-gpu" if (os.environ['GPU'].lower() in 'yes'
-                          if "GPU" in os.environ
-                          else os.path.isdir("/proc/driver/nvidia")
-                               or "CUDA_PATH" in os.environ) else ""
+def _check_gpu() -> bool:
+    import ctypes
+    libnames = ('libcuda.so', 'libcuda.dylib', 'cuda.dll')
+    for libname in libnames:
+        try:
+            cuda = ctypes.CDLL(libname)
+            result = cuda.cuInit(0)
+            if not result:
+                return True
+        except OSError:
+            continue
+        else:
+            break
+    return False
+
+
+USE_GPU: str = "-gpu" if _check_gpu() else ""
 
 # Run package dependencies
 requirements = [
@@ -25,6 +34,7 @@ requirements = [
     'pandas>=1.4',
     'numba>=0.55',
     'numpy>=1.22',
+    'GPUtil',
     ]
 
 pandas_requirements = [
@@ -62,6 +72,7 @@ test_requirements = [
 
     'werkzeug==2.0',
     'papermill',
+    'ipython',
 ]
 
 # Package nécessaires aux builds mais pas au run
@@ -130,7 +141,7 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Scientific/Engineering',
     ],
-    python_requires=f'>={PYTHON_VERSION},<={PYTHON_VERSION_MAX}',
+    python_requires=f'>={PYTHON_VERSION}',
     test_suite="tests",
     setup_requires=setup_requirements,
     # tests_require=test_requirements,

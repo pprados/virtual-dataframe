@@ -126,7 +126,6 @@ PRJ_URL=$(REMOTE_GIT_URL:.git=)
 PRJ_DOC_URL=$(PRJ_URL)
 GIT_DESCRIBE_TAG=$(shell git describe --tags --exact-match 2>/dev/null || git symbolic-ref -q --short HEAD)
 PRJ_PACKAGE:=$(PRJ)
-#PYTHON_VERSION:=3.8
 PYTHON_VERSION:=3.8
 PYTHON_VERSION_MAX:=3.9
 PYTHONWARNINGS=ignore
@@ -161,8 +160,6 @@ JUPYTER_LABEXTENSIONS_DIR:=$(CONDA_PREFIX)/share/jupyter/labextensions
 _JUPYTER_LABEXTENSIONS:=$(foreach ext,$(JUPYTER_LABEXTENSIONS),$(JUPYTER_LABEXTENSIONS_DIR)/$(ext))
 
 # Project variable
-#export VDF_MODES=pandas cudf modin dask dask_cudf dask_modin ray_modin
-# FIXME
 export VDF_MODES=pandas cudf modin dask dask_cudf dask_modin
 
 CHECK_GIT_STATUS=[[ `git status --porcelain` ]] && echo "$(yellow)Warning: All files are not commited$(normal)"
@@ -468,11 +465,15 @@ $(CONDA_HOME)/bin/mamba:
 configure: $(CONDA_HOME)/bin/mamba
 	@if [[ "$(CONDA_DEFAULT_ENV)" != "base" ]] ; \
       then echo -e "$(green)Use: $(cyan)conda deactivate $(VENV)$(green) before using 'make'$(normal)"; exit 1 ; fi
-	$(CONDA) env create \
+	$(CONDA) create \
+		--name "$(VENV)" \
+		-y $(CONDA_ARGS) \
+		python==$(PYTHON_VERSION)
+
+	$(CONDA) env update \
 		--name "$(VENV)" \
 		$(CONDA_ARGS) \
-		--file environment.yml \
-		python=$(PYTHON_VERSION)
+		--file environment.yml
 	@if [[ "base" == "$(CONDA_DEFAULT_ENV)" ]] || [[ -z "$(CONDA_DEFAULT_ENV)" ]] ; \
 	then echo -e "Use: $(cyan)conda activate $(VENV)$(normal)" ; fi
 
@@ -610,7 +611,7 @@ add-typing: typing
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour créer la documentation html et pdf du projet.
-# Il est possible d'indiquer build/XXX, ou XXX correspond au type de format
+# Il est possible d'indiquer build/X, où X correspond au type de format
 # à produire. Par exemple: html, singlehtml, latexpdf, ...
 # Voir https://www.sphinx-doc.org/en/master/usage/builders/index.html
 .PHONY: docs
@@ -1056,7 +1057,7 @@ test: .make-test
 # SNIPPET pour vérifier les TU et le recalcul de tout les notebooks et scripts.
 # Cette règle est invoqué avant un commit sur la branche master de git.
 .PHONY: validate
-.make-validate: .make-test clean-notebooks $(DATA)/raw .make-typing notebooks/* build/html # build/linkcheck
+.make-validate: .make-test clean-notebooks $(DATA)/raw .make-typing notebooks/* # build/html build/linkcheck
 	@date >.make-validate
 ## Validate the version before release
 validate: .make-validate

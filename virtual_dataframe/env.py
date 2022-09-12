@@ -24,14 +24,38 @@ class Mode(Enum):
     dask_cudf = "dask_cudf"
 
 
-USE_GPU = os.path.exists("/proc/driver/nvidia")  # FIXME: portability with WSL to detect GPU
-# try:
-#     import GPUtil
-#
-#     USE_GPU: bool = os.environ.get("USE_GPU", "no").lower() in _yes if "USE_GPU" in os.environ \
-#         else len(GPUtil.getAvailable()) > 0
-# except ModuleNotFoundError:
-#     USE_GPU = False
+class _CHECK_CUDA(Enum):
+    File = 0
+    DLL = 1
+    GPUtil = 2
+
+
+_CHECK_CUDA_USE = _CHECK_CUDA.DLL  # FIXME: select strategy to detect cuda
+
+if _CHECK_CUDA_USE == _CHECK_CUDA.File:
+    def _check_cuda() -> bool:
+        return os.path.exists("/proc/driver/nvidia")
+elif _CHECK_CUDA_USE == _CHECK_CUDA.DLL:
+    def _check_cuda() -> bool:
+        import ctypes
+        libnames = ('libcuda.so', 'libcuda.dylib', 'cuda.dll')
+        for libname in libnames:
+            try:
+                cuda = ctypes.CDLL(libname)
+                result = cuda.cuInit(0)
+                if not result:
+                    return True
+            except OSError:
+                continue
+            else:
+                break
+        return False
+# elif _CHECK_CUDA_USE == _CHECK_CUDA.GPUtil:
+#     def _check_cuda() -> bool:
+#         import GPUtil
+#         return len(GPUtil.getAvailable()) > 0
+
+USE_GPU = _check_cuda()
 
 # Default is pandas
 VDF_MODE: Mode = Mode[os.environ.get("VDF_MODE", "pandas").replace('-', '_')]
