@@ -6,7 +6,7 @@ import glob
 import os
 import sys
 from functools import wraps
-from typing import Any, List, Tuple, Optional, Union
+from typing import Any, List, Tuple, Optional, Union, Callable, Dict, Iterable
 
 from pandas._typing import Axes, Dtype
 
@@ -191,6 +191,7 @@ Convert columns of the DataFrame to category dtype.
             kwargs
                           Keyword arguments are passed on to compute.'''
 
+
 # %%
 
 def _remove_parameters(func, _params: List[str], *part_args, **kwargs):
@@ -309,34 +310,55 @@ if VDF_MODE == Mode.dask:
     _VDataFrame: Any = dask.dataframe.DataFrame
     _VSeries: Any = dask.dataframe.Series
 
+    _cache = dict()  # type: Dict[Any, Any]
+
+    def _compile(func: Callable, cache_key: Optional[str]):
+        import numba
+        if cache_key is None:
+            cache_key = func
+
+        try:
+            out = _cache[cache_key]
+            return out
+        except KeyError:
+            kernel = numba.jit(func, nopython=True)
+            _cache[cache_key] = kernel
+            return kernel
+
 
     def _partition_apply_rows(
             self,
-            fn,
-            incols,
-            outcols,
-            kwargs,
+            func: Callable,
+            incols: Dict[str, str],
+            outcols: Iterable[str, type],
+            kwargs: Dict[str, Any],
+            pessimistic_nulls: bool = True,  # FIXME: use pessimistic_nulls?
+            cache_key: Optional[str] = None,
     ):
         # The first invocation is with fake datas
         import numba
         size = len(self)
         params = {param: self[col].to_numpy() for col, param in incols.items()}
         outputs = {param: numpy.empty(size, dtype) for param, dtype in outcols.items()}
-        numba.jit(fn, nopython=True)(**params, **outputs, **kwargs)
+        _compile(func, cache_key)(**params, **outputs, **kwargs)
         for col, data in outputs.items():
             self[col] = data
         return self
 
 
     def _apply_rows(self,
-                    fn,
-                    incols,
-                    outcols,
-                    kwargs,
-                    pessimistic_nulls=True,  # TODO: use pessimistic_nulls?
-                    cache_key=None,  # TODO: use cache_key?
+                    fn: Callable,
+                    incols: Dict[str,str],
+                    outcols: Iterable[str,type],
+                    kwargs: Dict[str,Any],
+                    pessimistic_nulls:bool=True,
+                    cache_key:Optional[str]=None,
                     ):
-        return self.map_partitions(_partition_apply_rows, fn, incols, outcols, kwargs)
+        return self.map_partitions(_partition_apply_rows, fn, incols, outcols,
+                                   {**kwargs,
+                                   **{"pessimistic_nulls": pessimistic_nulls,
+                                      "cache_key":cache_key}})
+
 
     # TODO: _apply_serie https://docs.rapids.ai/api/cudf/stable/user_guide/guide-to-udfs.html#dataframe-udfs
 
@@ -424,7 +446,10 @@ if VDF_MODE == Mode.cudf:
                 **kwargs
                 ) -> Tuple:
         return tuple(args)
+
+
     compute.__doc__ = _doc_compute
+
 
     def visualize(*args, **kwargs):
         try:
@@ -436,6 +461,8 @@ if VDF_MODE == Mode.cudf:
             return True
         except ModuleNotFoundError:
             return True
+
+
     visualize.__doc__ = _doc_visualize
 
     delayed: Any = _delayed
@@ -528,21 +555,36 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
 
 
     # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
+    _cache = dict()  # type: Dict[Any, Any]
+
+    def _compile(func: Callable, cache_key: Optional[str]):
+        import numba
+        if cache_key is None:
+            cache_key = func
+
+        try:
+            out = _cache[cache_key]
+            return out
+        except KeyError:
+            kernel = numba.jit(func, nopython=True)
+            _cache[cache_key] = kernel
+            return kernel
+
+
     def _apply_rows(
             self,
-            func,
-            incols,
-            outcols,
-            kwargs,
-            pessimistic_nulls=True,  # FIXME: use pessimistic_nulls?
-            cache_key=None,  # FIXME: use cache_key?
+            func: Callable,
+            incols: Dict[str, str],
+            outcols: Iterable[str, type],
+            kwargs: Dict[str, Any],
+            pessimistic_nulls: bool = True,  # FIXME: use pessimistic_nulls?
+            cache_key: Optional[str] = None,
     ):
-        import numba
 
         size = len(self)
         params = {param: self[col].to_numpy() for col, param in incols.items()}
         outputs = {param: numpy.empty(size, dtype=dtype) for param, dtype in outcols.items()}
-        numba.jit(func, nopython=True)(**params, **outputs, **kwargs)
+        _compile(func, cache_key)(**params, **outputs, **kwargs)
         for col, data in outputs.items():
             self[col] = data
         return self
@@ -667,21 +709,36 @@ if VDF_MODE == Mode.pandas:
 
 
     # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
+    _cache = dict()  # type: Dict[Any, Any]
+
+    def _compile(func: Callable, cache_key: Optional[str]):
+        import numba
+        if cache_key is None:
+            cache_key = func
+
+        try:
+            out = _cache[cache_key]
+            return out
+        except KeyError:
+            kernel = numba.jit(func, nopython=True)
+            _cache[cache_key] = kernel
+            return kernel
+
     def _apply_rows(
             self,
-            func,
-            incols,
-            outcols,
-            kwargs,
-            pessimistic_nulls=True,  # FIXME: use pessimistic_nulls?
-            cache_key=None,  # FIXME: use cache_key?
+            func: Callable,
+            incols: Dict[str,str],
+            outcols: Iterable[str,type],
+            kwargs: Dict[str, Any],
+            pessimistic_nulls:bool=True,  # FIXME: use pessimistic_nulls?
+            cache_key:Optional[str]=None,
     ):
         import numba
 
         size = len(self)
         params = {param: self[col].to_numpy() for col, param in incols.items()}
         outputs = {param: numpy.empty(size, dtype=dtype) for param, dtype in outcols.items()}
-        numba.jit(func, nopython=True)(**params, **outputs, **kwargs)
+        _compile(func, cache_key)(**params, **outputs, **kwargs)
         for col, data in outputs.items():
             self[col] = data
         return self
@@ -696,7 +753,10 @@ if VDF_MODE == Mode.pandas:
                 **kwargs
                 ) -> Tuple:
         return args
+
+
     compute.__doc__ = _doc_compute
+
 
     def visualize(*args, **kwargs):
         try:
@@ -706,6 +766,8 @@ if VDF_MODE == Mode.pandas:
                                               retina=False)
         except ModuleNotFoundError:
             return True
+
+
     visualize.__doc__ = _doc_visualize
 
 
