@@ -3,7 +3,6 @@ Virtual Dataframe and Series.
 """
 # flake8: noqa
 import glob
-import os
 import sys
 from functools import wraps
 from typing import Any, List, Tuple, Optional, Union
@@ -141,7 +140,6 @@ _doc_VDataFrame_compute = '''Fake compute(). Return self.'''
 _doc_VSeries_compute = '''Fake compute(). Return self.'''
 _doc_VSeries_visualize = '''Fake visualize(). Return self.'''
 _doc_VDataFrame_visualize = '''Fake visualize(). Return self.'''
-_doc_VSeries_visualize = '''Fake visualize(). Return self.'''
 _doc_VDataFrame_map_partitions = '''Apply Python function on each DataFrame partition.
 
     Note that the index and divisions are assumed to remain unchanged.
@@ -191,7 +189,6 @@ Convert columns of the DataFrame to category dtype.
                           Default is 16.
             kwargs
                           Keyword arguments are passed on to compute.'''
-
 
 # %%
 
@@ -273,7 +270,7 @@ if VDF_MODE == Mode.dask_cudf:
     from_pandas: Any = dask.dataframe.from_pandas
     from_backend: Any = dask_cudf.from_cudf
 
-    read_csv: Any = dask.dataframe.read_csv
+    read_csv: Any = dask_cudf.read_csv  # FIXME
 
     _VDataFrame: Any = dask_cudf.DataFrame
     _VSeries: Any = dask_cudf.Series
@@ -339,7 +336,6 @@ if VDF_MODE == Mode.dask:
                     cache_key=None,  # TODO: use cache_key?
                     ):
         return self.map_partitions(_partition_apply_rows, fn, incols, outcols, kwargs)
-
 
     # TODO: _apply_serie https://docs.rapids.ai/api/cudf/stable/user_guide/guide-to-udfs.html#dataframe-udfs
 
@@ -427,10 +423,7 @@ if VDF_MODE == Mode.cudf:
                 **kwargs
                 ) -> Tuple:
         return tuple(args)
-
-
     compute.__doc__ = _doc_compute
-
 
     def visualize(*args, **kwargs):
         try:
@@ -440,8 +433,6 @@ if VDF_MODE == Mode.cudf:
                                               retina=False)
         except ModuleNotFoundError:
             return True
-
-
     visualize.__doc__ = _doc_visualize
 
     delayed: Any = _delayed
@@ -702,10 +693,7 @@ if VDF_MODE == Mode.pandas:
                 **kwargs
                 ) -> Tuple:
         return args
-
-
     compute.__doc__ = _doc_compute
-
 
     def visualize(*args, **kwargs):
         try:
@@ -715,8 +703,6 @@ if VDF_MODE == Mode.pandas:
                                               retina=False)
         except ModuleNotFoundError:
             return True
-
-
     visualize.__doc__ = _doc_visualize
 
 
