@@ -126,7 +126,7 @@ PRJ_URL=$(REMOTE_GIT_URL:.git=)
 PRJ_DOC_URL=$(PRJ_URL)
 GIT_DESCRIBE_TAG=$(shell git describe --tags --exact-match 2>/dev/null || git symbolic-ref -q --short HEAD)
 PRJ_PACKAGE:=$(PRJ)
-PYTHON_VERSION:=3.8
+PYTHON_VERSION?=3.8
 PYTHON_VERSION_MAX:=3.9
 PYTHONWARNINGS=ignore
 PYTHON_PARAMS?=
@@ -141,7 +141,7 @@ export DATA?=data
 # To optimize conda, use mamba
 CONDA:=mamba
 export MAMBA_NO_BANNER=1
-CONDA_BASE:=$(shell AWS_DEFAULT_PROFILE=default conda info --base)
+CONDA_BASE:=$(shell conda info --base)
 CONDA_PACKAGE:=$(CONDA_PREFIX)/lib/python$(PYTHON_VERSION)/site-packages
 CONDA_PYTHON:=$(CONDA_PREFIX)/bin/python
 CONDA_BLD_DIR?=./build/conda-bld
@@ -969,10 +969,10 @@ unit-test-%: $(REQUIREMENTS)
 
 ifneq ($(USE_GPU),-gpu)
 unit-test-cudf:
-	@echo -e "$(red)Ignore VDF_MODE=cudf$(normal)"
+	@echo -e "$(red)Ignore notebook with VDF_MODE=cudf$(normal)"
 
 unit-test-dask_cudf:
-	@echo -e "$(red)Ignore VDF_MODE=dask_cudf$(normal)"
+	@echo -e "$(red)Ignore notebook with VDF_MODE=dask_cudf$(normal)"
 endif
 
 .PHONY: unit-test

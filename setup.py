@@ -31,9 +31,9 @@ USE_GPU: str = "-gpu" if _check_gpu() else ""
 # Run package dependencies
 requirements = [
     'python-dotenv>=0.20',
-    'pandas>=1.4',
+    'pandas>=1.3',
     'numba>=0.55',
-    'numpy>=1.22',
+    'numpy>=1.21',
     'GPUtil',
     ]
 
