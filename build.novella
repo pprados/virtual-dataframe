@@ -1,7 +1,0 @@
-template "mkdocs" {
-  content_directory = "content"
-}
-
-action "preprocess-markdown" {
-  use "pydoc"
-}

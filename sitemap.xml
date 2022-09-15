@@ -6,12 +6,17 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://github.com/pprados/virtual_dataframe/about/</loc>
+         <loc>https://github.com/pprados/virtual_dataframe/CHANGELOG/</loc>
          <lastmod>2022-09-15</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://github.com/pprados/virtual_dataframe/commands/</loc>
+         <lastmod>2022-09-15</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://github.com/pprados/virtual_dataframe/contribute/</loc>
          <lastmod>2022-09-15</lastmod>
          <changefreq>daily</changefreq>
     </url>

@@ -12,7 +12,7 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Virtual DataFrame";
+        var mkdocs_page_name = "Home";
         var mkdocs_page_input_path = "README.md";
         var mkdocs_page_url = "/pprados/virtual_dataframe/";
       </script>
@@ -40,16 +40,65 @@
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-                <li class="toctree-l1"><a class="" href="index.md">Home</a>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href=".">Home</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#motivation">Motivation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#synopsis">Synopsis</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#cluster">Cluster</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#installing-with-conda-recommended">Installing with Conda (recommended)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#installing-with-pip">Installing with pip</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#installing-from-the-github-master-branch">Installing from the GitHub master branch</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#api">API</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#compatibility">Compatibility</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#no-need-of-gpu">No need of GPU?</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#no-need-of-big-data">No need of big data?</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#need-all-possibility">Need all possibility?</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#best-practices">Best practices</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#use-read-file">Use read file</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#no-loop">No loop</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#faq">FAQ</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#the-code-run-with-dask-but-not-with-modin-pandas-or-cudf">The code run with dask, but not with modin, pandas or cudf ?</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#compute-is-not-defined-with-pandas-cudf">.compute() is not defined with pandas, cudf ?</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Contribute</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="commands/">Commands</a>
-                </li>
+                  <li class="toctree-l1"><a class="reference internal" href="contribute/">contribute</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="commands/">Commands</a>
+                  </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="about/">About</a>
+                <li class="toctree-l1"><a class="reference internal" href="CHANGELOG/">Changelog</a>
                 </li>
               </ul>
       </div>
@@ -66,7 +115,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="." class="icon icon-home" alt="Docs"></a> &raquo;</li>
-      <li>Virtual DataFrame</li>
+      <li>Home</li>
     <li class="wy-breadcrumbs-aside">
         <a href="https://github.com/example/repository/edit/master/docs/README.md"
           class="icon icon-github"> Edit on GitHub</a>
@@ -78,6 +127,7 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="virtual-dataframe">Virtual DataFrame</h1>
+<p><a href="https://pprados.github.io/virtual_dataframe/">Full documentation</a></p>
 <h2 id="motivation">Motivation</h2>
 <p>With Panda like dataframe, do you want to create a code, and choose at the end, the framework to use?
 Do you want to be able to choose the best framework after simply performing performance measurements?
@@ -582,7 +632,7 @@ with a framework without distribution (pandas, cudf)
 </table>
 <p>To develop, you can choose the level to be compatible with others frameworks.
 Each cell is strongly compatible with the upper left part.</p>
-<h2 id="no-need-of-gpu">No need of GPU?</h2>
+<h3 id="no-need-of-gpu">No need of GPU?</h3>
 <p>If you don't need to use a GPU, then develop for <code>dask</code> and use mode in <em>bold</em>.</p>
 <table>
 <thead>
@@ -616,7 +666,7 @@ Each cell is strongly compatible with the upper left part.</p>
 </table>
 <p>You can ignore this API:
 - <code>VDataFrame.apply_rows()</code></p>
-<h2 id="no-need-of-big-data">No need of big data?</h2>
+<h3 id="no-need-of-big-data">No need of big data?</h3>
 <p>If you don't need to use big data, then develop for <code>cudf</code> and use mode in <em>bold</em>..</p>
 <table>
 <thead>
@@ -654,7 +704,7 @@ Each cell is strongly compatible with the upper left part.</p>
 - <code>categorize()</code>
 - <code>compute()</code>
 - <code>npartitions=...</code></p>
-<h2 id="need-all-possibility">Need all possibility?</h2>
+<h3 id="need-all-possibility">Need all possibility?</h3>
 <p>To be compatible with all mode, develop for <code>dask_cudf</code> and use mode in <em>bold</em>..</p>
 <table>
 <thead>
@@ -758,6 +808,9 @@ $ make test
               
             </div>
           </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="contribute/" class="btn btn-neutral float-right" title="contribute">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
 
   <hr/>
 
@@ -784,6 +837,8 @@ $ make test
     
     
     
+      <span><a href="contribute/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
   </span>
 </div>
     <script>var base_url = '.';</script>
@@ -801,5 +856,5 @@ $ make test
 
 <!--
 MkDocs version : 1.3.1
-Build Date UTC : 2022-09-15 10:50:23.935849+00:00
+Build Date UTC : 2022-09-15 11:36:34.527577+00:00
 -->
