@@ -434,7 +434,7 @@ if VDF_MODE == Mode.cudf:
 
     def _DataFrame_to_csv(self, path_or_buf, **kwargs):
         if "*" in str(path_or_buf):
-            filepath_or_buffer = path_or_buf.replace("*", "")
+            path_or_buf = path_or_buf.replace("*", "")
         return self._old_to_csv(path_or_buf, **kwargs)
 
 
@@ -620,7 +620,7 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
 
     def _DataFrame_to_csv(self, path_or_buf, **kwargs):
         if "*" in str(path_or_buf):
-            filepath_or_buffer = path_or_buf.replace("*", "")
+            path_or_buf = path_or_buf.replace("*", "")
         return self._old_to_csv(path_or_buf, **kwargs)
 
 
@@ -775,7 +775,7 @@ if VDF_MODE == Mode.pandas:
 
     def _DataFrame_to_csv(self, path_or_buf, **kwargs):
         if "*" in str(path_or_buf):
-            filepath_or_buffer = path_or_buf.replace("*", "")
+            path_or_buf = path_or_buf.replace("*", "")
         return self._old_to_csv(path_or_buf, **kwargs)
 
 
