@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/pprados/virtual_dataframe/commands/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Commands - virtual_dataframe</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Commands";
+        var mkdocs_page_input_path = "commands.md";
+        var mkdocs_page_url = "/pprados/virtual_dataframe/commands/";
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> virtual_dataframe
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="" href="../index.md">Home</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Commands</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#commands">Commands</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#jupyter-commands">Jupyter commands</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#twine-commands">Twine commands</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#conda-commands">Conda commands</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../about/">About</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">virtual_dataframe</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+      <li>Commands</li>
+    <li class="wy-breadcrumbs-aside">
+        <a href="https://github.com/example/repository/edit/master/docs/commands.md"
+          class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="make-commands">Make commands</h1>
+<p>The Makefile contains the central entry points for common tasks related to this project.</p>
+<h2 id="commands">Commands</h2>
+<ul>
+<li><code>make help</code> will print all majors target</li>
+<li><code>make configure</code>  will prepare the environment (conda venv, kernel, ...)</li>
+<li><code>make run-%</code> will invoke all script in lexical order from scripts/&lt;% dir&gt;</li>
+<li><code>make lint</code> will lint the code</li>
+<li><code>make test</code> will run all tests</li>
+<li><code>make typing</code> will check the typing</li>
+<li><code>make validate</code> will validate the version before commit</li>
+<li><code>make clean</code> will clean current environment</li>
+<li><code>make docs</code> will create and show a HTML documentation in 'build/'</li>
+<li><code>make dist</code> will create a full wheel distribution</li>
+</ul>
+<h2 id="jupyter-commands">Jupyter commands</h2>
+<ul>
+<li><code>make notebook</code> will start a jupyter notebook</li>
+<li><code>make remove-kernel</code> will remove the project's kernel</li>
+<li><code>make nb-run-%</code> will execute all notebooks</li>
+<li><code>make nb-convert</code> will convert all notebooks to python</li>
+<li><code>make clean-notebooks</code> will clean all datas in the notebooks</li>
+</ul>
+<h2 id="twine-commands">Twine commands</h2>
+<ul>
+<li><code>make check-twine</code> will check the packaging before publication</li>
+<li><code>make test-twine</code> will publish the package in <code>test.pypi.org &lt;https://test.pypi.org&gt;</code>_)</li>
+<li><code>make twine</code> will publish the package in <code>pypi.org &lt;https://pypi.org&gt;</code>_)</li>
+</ul>
+<h2 id="conda-commands">Conda commands</h2>
+<ul>
+<li><code>make conda-build</code> will build the conda package</li>
+<li><code>make conda-debug</code> will build the package in debug mode</li>
+<li><code>make conda-convert</code> will convert the package for all platform</li>
+<li><code>make conda-install</code> will install the conda package</li>
+<li><code>make conda-purge</code> will remove the build artefact</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../about/" class="btn btn-neutral float-right" title="About">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/example/repository/" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+    
+      <span><a href="../about/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

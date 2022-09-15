@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" /><link rel="canonical" href="https://github.com/pprados/virtual_dataframe/" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>virtual_dataframe</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Virtual DataFrame";
+        var mkdocs_page_input_path = "README.md";
+        var mkdocs_page_url = "/pprados/virtual_dataframe/";
+      </script>
+    
+    <script src="js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> virtual_dataframe
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="" href="index.md">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="commands/">Commands</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="about/">About</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">virtual_dataframe</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+      <li>Virtual DataFrame</li>
+    <li class="wy-breadcrumbs-aside">
+        <a href="https://github.com/example/repository/edit/master/docs/README.md"
+          class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="virtual-dataframe">Virtual DataFrame</h1>
+<h2 id="motivation">Motivation</h2>
+<p>With Panda like dataframe, do you want to create a code, and choose at the end, the framework to use?
+Do you want to be able to choose the best framework after simply performing performance measurements?
+This framework unifies multiple Panda-compatible components, to allow the writing of a single code, compatible with all.</p>
+<h2 id="synopsis">Synopsis</h2>
+<p>With some parameters and Virtual classes, it's possible to write a code, and execute this code:
+- With or without multicore
+- With or without cluster (multi nodes)
+- With or without GPU</p>
+<p>To do that, we create some virtual classes, add some methods in others classes, etc.</p>
+<p>It's difficult to use a combinaison of framework, with the same classe name, with similare semantic, etc.
+For example, if you want to use in the same program, Dask, cudf, pandas and modin, you must manage:
+- <code>pandas.DataFrame</code>, <code>pandas,Series</code>
+- <code>modin.pandas.DataFrame</code>, <code>modin.pandas.Series</code>
+- <code>cudf.DataFrame</code>, <code>cudf.Series</code>
+- <code>dask.DataFrame</code>, <code>dask.Series</code></p>
+<p>With <code>cudf</code>, the code must call <code>.to_pandas()</code>. With dask, the code must call <code>.compute()</code>, can use <code>@delayed</code> or
+<code>dask.distributed.Client</code>. etc.</p>
+<p>We propose to replace all these classes and scenarios, with a <em>uniform model</em>,
+inspired by <a href="https://www.dask.org/">dask</a> (the more complex API).
+Then, it is possible to write one code, and use it in differents environnements and frameworks.</p>
+<p>This project is essentially a back-port of <em>Dask+Cudf</em> to others frameworks.</p>
+<p>To reduce the confusion, you must use the classes <code>VDataFrame</code> and <code>VSeries</code> (The prefix <code>V</code> is for <em>Virtual</em>).
+These classes propose the methods <code>.to_pandas()</code> and <code>.compute()</code> for each version, but are the <em>real</em> classes
+of the selected framework.</p>
+<p>A new <code>@delayed</code> annotation can be use, with or without Dask.</p>
+<p>With some parameters, the real classes may be <code>pandas.DataFrame</code>, <code>modin.pandas.DataFrame</code>,
+<code>cudf.DataFrame</code>, <code>dask.dataframe.DataFrame</code> with Pandas or
+<code>dask.dataframe.DataFrame</code> with cudf (with Pandas or cudf for each partition).</p>
+<p>To manage the initialisation of a Dask or Ray cluster, you must use the <code>VClient()</code>. This alias, can be automatically
+initialized with some environment variables.</p>
+<pre><code class="language-python"># Sample of code, compatible Pandas, cudf, modin, dask and dask_cudf
+from virtual_dataframe import *
+
+TestDF = VDataFrame
+
+with (VClient()):
+    @delayed
+    def my_function(data: TestDF) -&gt; TestDF:
+        return data
+
+
+    rc = my_function(VDataFrame({&quot;data&quot;: [1, 2]}, npartitions=2))
+    print(rc.to_pandas())
+
+</code></pre>
+<p>With this framework, you can select your environment, to run or debug your code.</p>
+<table>
+<thead>
+<tr>
+<th>env</th>
+<th>Environement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VDF_MODE=pandas</td>
+<td>Only Python with classical pandas</td>
+</tr>
+<tr>
+<td>VDF_MODE=modin</td>
+<td>Python with local modin</td>
+</tr>
+<tr>
+<td>VDF_MODE=cudf</td>
+<td>Python with local cuDF (GPU)</td>
+</tr>
+<tr>
+<td>VDF_MODE=dask</td>
+<td>Dask with local multiple process and pandas</td>
+</tr>
+<tr>
+<td>VDF_MODE=dask-cudf</td>
+<td>Dask with local multiple process and cuDF</td>
+</tr>
+<tr>
+<td>VDF_MODE=dask<br />DEBUG=True</td>
+<td>Dask with single thread and pandas</td>
+</tr>
+<tr>
+<td>VDF_MODE=dask-cudf<br />DEBUG=True</td>
+<td>Dask with single thread and cuDF</td>
+</tr>
+<tr>
+<td>VDF_MODE=dask<br />VDF_CLUSTER=dask://localhost</td>
+<td>Dask with local cluster and pandas</td>
+</tr>
+<tr>
+<td>VDF_MODE=dask-cudf<br />VDF_CLUSTER=dask://localhost</td>
+<td>Dask with local cuda cluster and cuDF</td>
+</tr>
+<tr>
+<td>VDF_MODE=dask<br />VDF_CLUSTER=dask://...:ppp</td>
+<td>Dask with remote cluster and Pandas</td>
+</tr>
+<tr>
+<td>VDF_MODE=dask-cudf<br />VDF_CLUSTER=dask://...:ppp</td>
+<td>Dask with remote cluster and cuDF</td>
+</tr>
+<tr>
+<td>VDF_MODE=dask-modin<br />VDF_CLUSTER=dask://localhost</td>
+<td>Dask with local cluster and modin</td>
+</tr>
+<tr>
+<td>VDF_MODE=ray-modin<br />VDF_CLUSTER=ray://localhost</td>
+<td>Ray with local cluster and modin</td>
+</tr>
+<tr>
+<td>VDF_MODE=dask-modin<br />VDF_CLUSTER=dask://...:ppp</td>
+<td>Dask with remote cluster and modin</td>
+</tr>
+<tr>
+<td>VDF_MODE=ray-modin<br />VDF_CLUSTER=ray://...:ppp</td>
+<td>Ray with remote cluster and modin</td>
+</tr>
+</tbody>
+</table>
+<p>The real compatibilty between the differents simulation of Pandas, depends on the implement of the modin, cudf or dask.
+Sometime, you can use the <code>VDF_MODE</code> variable, to update some part of code, between the selected backend.</p>
+<p>It's not always easy to write a code <em>compatible</em> with all scenario, but it's possible.
+Generally, add just <code>.compute()</code> and/or <code>.to_pandas()</code> at the end of the ETL, is enough.
+But, you must use, only the common feature with all frameworks.
+After this effort, it's possible to compare the performance about the differents technologies,
+or propose a component, compatible with differents scenario.</p>
+<p>For the deployment of your project, you can select the best framework for your process (in a dockerfile?),
+with only one ou two environment variable.</p>
+<h2 id="cluster">Cluster</h2>
+<p>To connect to a cluster, use <code>VDF_CLUSTER</code> with protocol, host and optionaly, the port.
+- dask://locahost:8787
+- ray://locahost:10001
+- ray:auto
+- or alternativelly, use <code>DASK_SCHEDULER_SERVICE_HOST</code> and <code>DASK_SCHEDULER_SERVICE_PORT</code></p>
+<table>
+<thead>
+<tr>
+<th>VDF_MODE</th>
+<th>DEBUG</th>
+<th>VDF_CLUSTER</th>
+<th>Scheduler</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pandas</td>
+<td>-</td>
+<td>-</td>
+<td>No scheduler</td>
+</tr>
+<tr>
+<td>cudf</td>
+<td>-</td>
+<td>-</td>
+<td>No scheduler</td>
+</tr>
+<tr>
+<td>modin</td>
+<td>-</td>
+<td>-</td>
+<td>No scheduler</td>
+</tr>
+<tr>
+<td>dask</td>
+<td>Yes</td>
+<td>-</td>
+<td>synchronous</td>
+</tr>
+<tr>
+<td>dask</td>
+<td>No</td>
+<td>-</td>
+<td>processes</td>
+</tr>
+<tr>
+<td>dask</td>
+<td>No</td>
+<td>dask://localhost</td>
+<td>LocalCluster</td>
+</tr>
+<tr>
+<td>dask_modin</td>
+<td>No</td>
+<td>-</td>
+<td>LocalCluster</td>
+</tr>
+<tr>
+<td>dask_modin</td>
+<td>No</td>
+<td>dask://localhost</td>
+<td>LocalCluster</td>
+</tr>
+<tr>
+<td>dask_modin</td>
+<td>No</td>
+<td>dask://<host></td>
+<td>Dask cluster</td>
+</tr>
+<tr>
+<td>ray_modin</td>
+<td>No</td>
+<td>ray:auto</td>
+<td>Dask cluster</td>
+</tr>
+<tr>
+<td>ray_modin</td>
+<td>No</td>
+<td>ray://localhost</td>
+<td>Dask cluster</td>
+</tr>
+<tr>
+<td>ray_modin</td>
+<td>No</td>
+<td>ray://<host></td>
+<td>Dask cluster</td>
+</tr>
+<tr>
+<td>dask-cudf</td>
+<td>No</td>
+<td>dask://localhost</td>
+<td>LocalCUDACluster</td>
+</tr>
+<tr>
+<td>dask-cudf</td>
+<td>No</td>
+<td>dask://<host></td>
+<td>Dask cluster</td>
+</tr>
+</tbody>
+</table>
+<p>Sample:</p>
+<pre><code>from virtual_dataframe import VClient
+
+with (VClient())
+    # Now, use the scheduler
+</code></pre>
+<h2 id="installation">Installation</h2>
+<blockquote>
+<p>Warning: At this time, the packages are not published in pip or conda repositories</p>
+</blockquote>
+<h3 id="installing-with-conda-recommended">Installing with Conda (recommended)</h3>
+<pre><code class="language-shell">$ conda install -q -y \
+    -c rapidsai -c nvidia -c conda-forge \
+    &quot;virtual_dataframe-all&quot;
+</code></pre>
+<p>or, for only one mode:</p>
+<pre><code class="language-shell">$ VDF_MODE=...
+$ conda install -q -y \
+    -c rapidsai -c nvidia -c conda-forge \
+    virtual_dataframe-$VDF_MODE
+</code></pre>
+<p>The package <code>virtual_dataframe</code> (without suffix) has no <em>framework</em> dependencies.</p>
+<h3 id="installing-with-pip">Installing with pip</h3>
+<p>With PIP, it's not possible to install <a href="https://developer.nvidia.com/rapids">NVidia Rapids</a> to use
+the GPU. A limited list of dependencies is possible.</p>
+<pre><code class="language-shell">$ pip install &quot;virtual_dataframe[all]&quot;
+</code></pre>
+<p>or, for a selected framework</p>
+<pre><code class="language-shell">$ VDF_MODE=... # pandas, modin, dask or dask_modin only
+$ pip install &quot;virtual_dataframe[$VDF_MODE]&quot;
+</code></pre>
+<p>The core of the framework can be installed with</p>
+<pre><code class="language-shell">$ pip install &quot;virtual_dataframe&quot;
+</code></pre>
+<h3 id="installing-from-the-github-master-branch">Installing from the GitHub master branch</h3>
+<pre><code class="language-shell">$ pip install &quot;virtual_dataframe[all]@git+https://github.com/pprados/virtual-dataframe&quot;
+</code></pre>
+<p>or, for a selected framework</p>
+<pre><code class="language-shell">$ VDF_MODE=... # pandas, modin, dask or dask_modin only
+$ pip install &quot;virtual_dataframe[$VDF_MODE]@git+https://github.com/pprados/virtual-dataframe&quot;
+</code></pre>
+<p>The core of the framework can be installed with</p>
+<pre><code class="language-shell">$ pip install &quot;virtual_dataframe@git+https://github.com/pprados/virtual-dataframe&quot;
+</code></pre>
+<h2 id="api">API</h2>
+<table>
+<thead>
+<tr>
+<th>api</th>
+<th>comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>@delayed</td>
+<td>Delayed function (do nothing or dask.delayed)</td>
+</tr>
+<tr>
+<td>vdf.concat(...)</td>
+<td>Merge VDataFrame</td>
+</tr>
+<tr>
+<td>vdf.read_csv(...)</td>
+<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.from_pandas(pdf, npartitions=...)</td>
+<td>Create Virtual Dataframe from Pandas DataFrame</td>
+</tr>
+<tr>
+<td>vdf.from_backend(vdf, npartitions=...)</td>
+<td>Create Virtual Dataframe from backend dataframe</td>
+</tr>
+<tr>
+<td>vdf.compute([...])</td>
+<td>Compute multiple @delayed functions</td>
+</tr>
+<tr>
+<td>VDataFrame(data, npartitions=...)</td>
+<td>Create DataFrame in memory (only for test)</td>
+</tr>
+<tr>
+<td>VSeries(data, npartitions=...)</td>
+<td>Create Series in memory (only for test)</td>
+</tr>
+<tr>
+<td>BackEndDataFrame</td>
+<td>The class of dask/ray backend dataframe</td>
+</tr>
+<tr>
+<td>BackEndSeries</td>
+<td>The class of dask/ray backend series</td>
+</tr>
+<tr>
+<td>BackEnd</td>
+<td>The backend framework</td>
+</tr>
+<tr>
+<td>VDataFrame.compute()</td>
+<td>Compute the virtual dataframe</td>
+</tr>
+<tr>
+<td>VDataFrame.visualize()</td>
+<td>Create an image with the graph</td>
+</tr>
+<tr>
+<td>VDataFrame.to_pandas()</td>
+<td>Convert to pandas dataframe</td>
+</tr>
+<tr>
+<td>VDataFrame.to_csv()</td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_numpy()</td>
+<td>Convert to numpy array</td>
+</tr>
+<tr>
+<td>VDataFrame.to_backend()</td>
+<td>Convert to backend dataframe</td>
+</tr>
+<tr>
+<td>VDataFrame.categorize()</td>
+<td>Detect all categories</td>
+</tr>
+<tr>
+<td>VDataFrame.apply_rows()</td>
+<td>Apply rows, GPU template</td>
+</tr>
+<tr>
+<td>VDataFrame.map_partitions()</td>
+<td>Apply function for each parttions</td>
+</tr>
+<tr>
+<td>VSeries.compute()</td>
+<td>Compute the virtual series</td>
+</tr>
+<tr>
+<td>VSeries.to_pandas()</td>
+<td>Convert to pandas series</td>
+</tr>
+<tr>
+<td>VSeries.to_backend()</td>
+<td>Convert to backend series</td>
+</tr>
+<tr>
+<td>VSeries.to_numpy()</td>
+<td>Convert to numpy array</td>
+</tr>
+<tr>
+<td>VClient(...)</td>
+<td>The connexion with the cluster</td>
+</tr>
+<tr>
+<td>VDF_MODE</td>
+<td>The current mode</td>
+</tr>
+<tr>
+<td>Mode</td>
+<td>The enumeration of differents mode</td>
+</tr>
+</tbody>
+</table>
+<p>You can read a sample notebook <a href="https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo.ipynb">here</a>
+for an exemple of all API.</p>
+<p>Each API propose a specific version for each framework. For example:
+- the  <code>toPandas()</code> with Panda, return <code>self</code>
+- <code>@delayed</code> use the dask <code>@delayed</code> or do nothing, and apply the code when the function was called.
+In the first case, the function return a part of the graph. In the second case, the function return immediately
+the result.
+- <code>read_csv("file*.csv")</code> read each file in parallele with dask by each worker,
+and read sequencially each file, and combine each dataframe, with a framework without distribution (pandas, cudf)
+- <code>save_csv("file*.csv")</code> write each file in parallele with dask, and write one file <code>"file.csv"</code> (without the star)
+with a framework without distribution (pandas, cudf)
+- ...</p>
+<h2 id="compatibility">Compatibility</h2>
+<p>This project is just a wrapper. So, it inherits limitations and bugs from other projects. Sorry for that.</p>
+<table>
+<thead>
+<tr>
+<th>Limitations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><br /><strong>pandas</strong></td>
+</tr>
+<tr>
+<td>All data must be in DRAM</td>
+</tr>
+<tr>
+<td><br /><strong>modin</strong></td>
+</tr>
+<tr>
+<td><a href="https://modin.readthedocs.io/en/stable/getting_started/why_modin/pandas.html">Read this</a></td>
+</tr>
+<tr>
+<td><br /><strong><a href="https://docs.rapids.ai/api/cudf/nightly/user_guide/pandas-comparison.html">cudf</a></strong></td>
+</tr>
+<tr>
+<td>All data must be in VRAM</td>
+</tr>
+<tr>
+<td>All data types in cuDF are nullable</td>
+</tr>
+<tr>
+<td>Iterating over a cuDF Series, DataFrame or Index is not supported.</td>
+</tr>
+<tr>
+<td>Join (or merge) and groupby operations in cuDF do not guarantee output ordering.</td>
+</tr>
+<tr>
+<td>The order of operations is not always deterministic</td>
+</tr>
+<tr>
+<td>Cudf does not support duplicate column names</td>
+</tr>
+<tr>
+<td>Cudf also supports .apply() it relies on Numba to JIT compile the UDF and execute it on the GPU</td>
+</tr>
+<tr>
+<td>.apply(result_type=...) not supported</td>
+</tr>
+<tr>
+<td><br /><strong><a href="https://distributed.dask.org/en/stable/limitations.html">dask</a></strong></td>
+</tr>
+<tr>
+<td> transpose() and MultiIndex are not implemented</td>
+</tr>
+<tr>
+<td>Column assignment doesn't support type list</td>
+</tr>
+<tr>
+<td><br /><strong>dask-cudf</strong></td>
+</tr>
+<tr>
+<td>See cudf and dask.</td>
+</tr>
+<tr>
+<td>Categories with strings not implemented</td>
+</tr>
+</tbody>
+</table>
+<p>To be compatible with all framework, you must only use the common features.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>small data</th>
+<th>middle data</th>
+<th>big data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-CPU</td>
+<td>pandas<br/>Limit:+</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>n-CPU</td>
+<td></td>
+<td>modin<br/>Limit+</td>
+<td>dask or dask_modin<br/>Limit:++</td>
+</tr>
+<tr>
+<td>GPU</td>
+<td>cudf<br/>Limit:++</td>
+<td></td>
+<td>dask_cudf<br/>Limit:+++</td>
+</tr>
+</tbody>
+</table>
+<p>To develop, you can choose the level to be compatible with others frameworks.
+Each cell is strongly compatible with the upper left part.</p>
+<h2 id="no-need-of-gpu">No need of GPU?</h2>
+<p>If you don't need to use a GPU, then develop for <code>dask</code> and use mode in <em>bold</em>.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>small data</th>
+<th>middle data</th>
+<th>big data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-CPU</td>
+<td><strong>pandas<br/>Limit:+</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>n-CPU</td>
+<td></td>
+<td><strong>modin<br/>Limite+</strong></td>
+<td><strong>dask or dask_modin<br/>Limit:++</strong></td>
+</tr>
+<tr>
+<td>GPU</td>
+<td>cudf<br/>Limit:++</td>
+<td></td>
+<td>dask_cudf<br/>Limit:+++</td>
+</tr>
+</tbody>
+</table>
+<p>You can ignore this API:
+- <code>VDataFrame.apply_rows()</code></p>
+<h2 id="no-need-of-big-data">No need of big data?</h2>
+<p>If you don't need to use big data, then develop for <code>cudf</code> and use mode in <em>bold</em>..</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>small data</th>
+<th>middle data</th>
+<th>big data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-CPU</td>
+<td><strong>pandas<br/>Limit:+</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>n-CPU</td>
+<td></td>
+<td><strong>modin<br/>Limit+</strong></td>
+<td>dask or dask_modin<br/>Limit:++</td>
+</tr>
+<tr>
+<td>GPU</td>
+<td><strong>cudf<br/>Limit:++</strong></td>
+<td></td>
+<td>dask_cudf<br/>Limit:+++</td>
+</tr>
+</tbody>
+</table>
+<p>You can ignore these API:
+- <code>@delayed</code>
+- <code>map_partitions()</code>
+- <code>categorize()</code>
+- <code>compute()</code>
+- <code>npartitions=...</code></p>
+<h2 id="need-all-possibility">Need all possibility?</h2>
+<p>To be compatible with all mode, develop for <code>dask_cudf</code> and use mode in <em>bold</em>..</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>small data</th>
+<th>middle data</th>
+<th>big data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-CPU</td>
+<td><strong>pandas<br/>Limit:+</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>n-CPU</td>
+<td></td>
+<td><strong>modin<br/>Limit+</strong></td>
+<td><strong>dask or dask_modin<br/>Limit:++</strong></td>
+</tr>
+<tr>
+<td>GPU</td>
+<td><strong>cudf<br/>Limit:++</strong></td>
+<td></td>
+<td><strong>dask_cudf<br/>Limit:+++</strong></td>
+</tr>
+</tbody>
+</table>
+<p>and accept all the limitations.</p>
+<h2 id="best-practices">Best practices</h2>
+<p>For write a code, optimized with all frameworks, you must use some <em>best practices</em>."</p>
+<h3 id="use-read-file">Use <em>read file</em></h3>
+<p>It's not a good idea to use the constructor of <code>VDataFrame</code> or <code>VSeries</code> because, all the datas
+must be in memory in the driver. If the dataframe is big, an <em>out of memory</em> can happen.
+To partitionning the job, create multiple files, and use <code>read_csv("filename*.csv")</code> or other
+file format. Then, each worker can read directly a partition.</p>
+<p>The constructor for <code>VDataFrame</code> and <code>VSeries</code> are present, only to help to write some unit test,
+but may not be used in production.</p>
+<h3 id="no-loop">No loop</h3>
+<p>It's not a good idea to iterate over row of DataFrame. Some framework are very slow with this approach.
+It's better to use <code>apply()</code> or <code>apply_rows()</code> to distribute the code in the cluster and GPU.
+The code used in <code>apply</code>, will be compiled to CPU or GPU, before using, with some frameworks.</p>
+<h2 id="faq">FAQ</h2>
+<h3 id="the-code-run-with-dask-but-not-with-modin-pandas-or-cudf">The code run with dask, but not with modin, pandas or cudf ?</h3>
+<p>You must use only the similare functionality, and only a subpart of Pandas.
+Develop for <em>dask_cudf</em>. it's easier to be compatible with others frameworks.</p>
+<h3 id="compute-is-not-defined-with-pandas-cudf"><code>.compute()</code> is not defined with pandas, cudf ?</h3>
+<p>If your <code>@delayed</code> function return something, other than a <code>VDataFrame</code> or <code>VSerie</code>, the objet has not
+the method <code>.compute()</code>. You can solve this, with:</p>
+<pre><code>@delayed
+def f()-&gt; int:
+    return 42
+
+real_result,=compute(f())  # Warning, compute return a tuple. The comma is important.
+a,b = compute(f(),f())
+</code></pre>
+<h1 id="contribute">Contribute</h1>
+<h2 id="the-latest-version">The latest version</h2>
+<p>Clone the git repository</p>
+<pre><code class="language-bash">$ git clone --recurse-submodules https://github.com/pprados/virtual-dataframe.git
+</code></pre>
+<h2 id="installation_1">Installation</h2>
+<p>Go inside the directory and</p>
+<pre><code class="language-bash">$ make configure
+$ conda activate virtual_dataframe
+$ make test
+</code></pre>
+<h2 id="tests">Tests</h2>
+<p>To test the project</p>
+<pre><code class="language-bash">$ make test
+</code></pre>
+<p>To validate the typing</p>
+<pre><code class="language-bash">$ make typing
+</code></pre>
+<p>To validate all the project</p>
+<pre><code class="language-bash">$ make validate
+</code></pre>
+<h2 id="project-organization">Project Organization</h2>
+<pre><code>├── Makefile                    &lt;- Makefile with commands like `make data` or `make train`
+├── README.md                   &lt;- The top-level README for developers using this project.
+├── data
+├── docs                        &lt;- A default Sphinx project; see sphinx-doc.org for details
+├── conda_recipe                &lt;- Script to build the conda package
+│
+├── notebooks                   &lt;- Jupyter notebooks. Naming convention is a number (for ordering),
+│   │                              the creator's initials, and a short `-` delimited description, e.g.
+│   │                              `1.0-jqp-initial-data-exploration`.
+│   └── demo.ipynb              &lt;- A demo for all API
+│
+├── setup.py                    &lt;- makes project pip installable (pip install -e .[tests])
+│                                  so sources can be imported and dependencies installed
+├── virtual_dataframe           &lt;- Source code for use in this project
+│   ├── __init__.py             &lt;- Makes src a Python module
+│   └── *.py                    &lt;- Framework codes
+│
+└── tests                       &lt;- Unit and integrations tests ((Mark directory as a sources root).
+</code></pre>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/example/repository/" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+    
+  </span>
+</div>
+    <script>var base_url = '.';</script>
+    <script src="js/theme_extra.js" defer></script>
+    <script src="js/theme.js" defer></script>
+      <script src="search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.3.1
+Build Date UTC : 2022-09-15 10:50:23.935849+00:00
+-->
