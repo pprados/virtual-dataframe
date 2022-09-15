@@ -1,5 +1,7 @@
 # Virtual DataFrame
 
+[Full documentation](https://pprados.github.io/virtual_dataframe/)
+
 ## Motivation
 
 With Panda like dataframe, do you want to create a code, and choose at the end, the framework to use?
@@ -177,7 +179,7 @@ $ pip install "virtual_dataframe@git+https://github.com/pprados/virtual-datafram
 
 | api                                    | comments                                        |
 |----------------------------------------|-------------------------------------------------|
-| @delayed                               | Delayed function (do nothing or dask.delayed)   |
+| vdf.@delayed                           | Delayed function (do nothing or dask.delayed)   |
 | vdf.concat(...)                        | Merge VDataFrame                                |
 | vdf.read_csv(...)                      | Read VDataFrame from CSVs *glob* files          |
 | vdf.from_pandas(pdf, npartitions=...)  | Create Virtual Dataframe from Pandas DataFrame  |
@@ -256,7 +258,7 @@ To be compatible with all framework, you must only use the common features.
 To develop, you can choose the level to be compatible with others frameworks.
 Each cell is strongly compatible with the upper left part.
 
-## No need of GPU?
+### No need of GPU?
 If you don't need to use a GPU, then develop for `dask` and use mode in *bold*.
 
 |       | small data             | middle data           | big data                            |
@@ -268,7 +270,7 @@ If you don't need to use a GPU, then develop for `dask` and use mode in *bold*.
 You can ignore this API:
 - `VDataFrame.apply_rows()`
 
-## No need of big data?
+### No need of big data?
 
 If you don't need to use big data, then develop for `cudf` and use mode in *bold*..
 
@@ -285,7 +287,7 @@ You can ignore these API:
 - `compute()`
 - `npartitions=...`
 
-## Need all possibility?
+### Need all possibility?
 
 To be compatible with all mode, develop for `dask_cudf` and use mode in *bold*..
 

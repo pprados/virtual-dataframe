@@ -608,42 +608,25 @@ add-typing: typing
 
 
 
+
 # ---------------------------------------------------------------------------------------
-# SNIPPET pour créer la documentation html et pdf du projet.
-# Il est possible d'indiquer build/X, où X correspond au type de format
-# à produire. Par exemple: html, singlehtml, latexpdf, ...
-# Voir https://www.sphinx-doc.org/en/master/usage/builders/index.html
-.PHONY: docs
-# Use all processors
-SPHINX_FLAGS=-j$(NPROC)
-SPHINX_FLAGS=
-# Generate API docs
-# PPR: Voir Mkdoc https://news.ycombinator.com/item?id=17717513
-docs/source: $(REQUIREMENTS) $(PYTHON_SRC)
-	$(VALIDATE_VENV)
-	sphinx-apidoc -f -o docs/source $(PRJ)/
-	touch docs/source
-
-# Build the documentation in specificed format (build/html, build/latexpdf, ...)
-build/%: $(REQUIREMENTS) docs/source docs/* *.md | .git
-	@$(VALIDATE_VENV)
-	@TARGET=$(*:build/%=%)
-ifeq ($(OFFLINE),True)
-	if [ "$$TARGET" != "linkcheck" ] ; then
-endif
-	@echo "Build $$TARGET..."
-	@LATEXMKOPTS=-silent sphinx-build -M $$TARGET docs build $(SPHINX_FLAGS)
-	touch build/$$TARGET
-ifeq ($(OFFLINE),True)
-	else
-		@echo -e "$(red)Can not to build '$$TARGET' in offline mode$(normal)"
-	fi
-endif
-# Build all format of documentations
+# SNIPPET pour créer la documentation html à partir de fichier Markdown.
+.PHONY: docs docs-serve docs-gh-deploy
 ## Generate and show the HTML documentation
-docs: build/html
-	@$(BROWSER) build/html/index.html
+docs:
+	@$(VALIDATE_VENV)
+	mkdocs build
+	$(BROWSER) site/index.html
 
+## Start an html server with the current documentation
+docs-serve:
+	@$(VALIDATE_VENV)
+	mkdocs serve
+
+## Deploy the document to github static pages
+docs-gh-deploy:
+	@$(VALIDATE_VENV)
+	mkdocs gh-deploy
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour créer une distribution des sources
