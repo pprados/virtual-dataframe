@@ -381,13 +381,16 @@ VALIDATE_VENV=$(CHECK_VENV)
 # de run et de test (voir le modèle de `setup.py` proposé)
 
 # All dependencies of the project must be here
-$(CONDA_PACKAGE): environment.yml
+$(CONDA_PACKAGE): environment.yml environment-dev.yml
 	@$(VALIDATE_VENV)
 ifeq ($(USE_GPU),-gpu)
 	echo "$(green)  Install conda dependencies...$(normal)"
 	$(CONDA) env update \
 		-q $(CONDA_ARGS) \
 		--file environment.yml
+	$(CONDA) env update \
+		-q $(CONDA_ARGS) \
+		--file environment-dev.yml
 	touch $(CONDA_PACKAGE)
 endif
 

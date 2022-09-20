@@ -66,10 +66,9 @@ def test_from_backend():  # FIXME: le test n'est pas correct
 
 # %%
 def test_DataFrame_to_from_pandas():
-    pdf = pandas.DataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, None, 0.3]})
+    pdf = pandas.DataFrame({'a': [0.0, 1.0, 2.0, 3.0], 'b': [0.1, 0.2, None, 0.3]})
     df = vdf.from_pandas(pdf, npartitions=2)
-    assert df.to_pandas().equals(pandas.DataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, None, 0.3]}))
-
+    assert df.to_pandas().equals(pandas.DataFrame({'a': [0.0, 1.0, 2.0, 3.0], 'b': [0.1, 0.2, None, 0.3]}))
 
 def test_Series_to_from_pandas():
     ps = pandas.Series([1, 2, 3, None, 4])
@@ -78,8 +77,8 @@ def test_Series_to_from_pandas():
 
 
 def test_DataFrame_compute():
-    expected = pandas.DataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, 0.3, 0.4]})
-    result = vdf.VDataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, 0.3, 0.4]})
+    expected = pandas.DataFrame({'a': [0.0, 1.0, 2.0, 3.0], 'b': [0.1, 0.2, 0.3, 0.4]})
+    result = vdf.VDataFrame({'a': [0.0, 1.0, 2.0, 3.0], 'b': [0.1, 0.2, 0.3, 0.4]})
     assert result.compute().to_pandas().equals(expected)
 
 
@@ -90,7 +89,7 @@ def test_Series_compute():
 
 
 def test_DataFrame_visualize():
-    result = vdf.VDataFrame({'a': [0, 1, 2, 3], 'b': [0.1, 0.2, 0.3, 0.4]})
+    result = vdf.VDataFrame({'a': [0.0, 1.0, 2.0, 3.0], 'b': [0.1, 0.2, 0.3, 0.4]})
     assert result.visualize()
 
 
@@ -99,20 +98,130 @@ def test_Series_visualize():
     assert result.visualize()
 
 
-def test_DataFrame_to_from_csv():
+def test_DataFrame_to_read_csv():
     d = tempfile.mkdtemp()
     try:
         filename = f"{d}/test*.csv"
-        df = vdf.VDataFrame({'a': [0, 1, 2, 3]}, npartitions=2)
+        df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df.to_csv(filename, index=False)
-        df2 = vdf.read_csv(filename)  # FIXME: vérifier avec des samples
+        df2 = vdf.read_csv(filename)
         assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
     finally:
         shutil.rmtree(d)
 
 
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask, vdf.Mode.dask_cudf), reason="Incompatible mode")
+def test_DataFrame_to_read_excel():
+    d = tempfile.mkdtemp()
+    try:
+        filename = f"{d}/test.xlsx"  # FIXME
+        df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
+        df.to_excel(filename, index=False)
+        df2 = vdf.read_excel(filename, dtype=int)
+        assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+    finally:
+        shutil.rmtree(d)
+
+
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+def test_DataFrame_read_fwf():
+    filename = f"tests/test.fwf"  # FIXME *
+    df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
+    df2 = vdf.read_fwf(filename, dtype=int)
+    assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+
+
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask_cudf,), reason="Incompatible mode")
+def test_DataFrame_to_read_hdf():
+    d = tempfile.mkdtemp()
+    try:
+        filename = f"{d}/test*.h5"
+        df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
+        df.to_hdf(filename, key='a', index=False)
+        df2 = vdf.read_hdf(filename, key='a')
+        assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+    finally:
+        shutil.rmtree(d)
+
+
+def test_DataFrame_to_read_json():
+    d = tempfile.mkdtemp()
+    try:
+        filename = f"{d}/test.json"  # FIXME *
+        df = vdf.VDataFrame({'a': list(range(0, 10000)), 'b': list(range(0, 10000))}, npartitions=2)
+        df.to_json(filename)
+        df2 = vdf.read_json(filename)
+        assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+    finally:
+        shutil.rmtree(d)
+
+
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.pandas,
+                                     vdf.Mode.dask_cudf,
+                                     vdf.Mode.modin,
+                                     vdf.Mode.dask_modin), reason="Incompatible mode")
+def test_DataFrame_to_read_orc():
+    d = tempfile.mkdtemp()
+    try:
+        filename = f"{d}/test.orc"
+        df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
+        df.to_orc(filename)  # Bug with dask
+        df2 = vdf.read_orc(filename)
+        assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+    finally:
+        shutil.rmtree(d)
+
+
+def test_DataFrame_to_read_parquet():
+    d = tempfile.mkdtemp()
+    try:
+        filename = f"{d}/test.parquet"
+        df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
+        df.to_parquet(filename)
+        df2 = vdf.read_parquet(filename)
+        assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+    finally:
+        shutil.rmtree(d)
+
+
+@pytest.mark.skip("Not implemented now")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf,), reason="Incompatible mode")
+def test_DataFrame_to_read_sql():
+    d = tempfile.mkdtemp()
+    try:
+        import sqlalchemy
+        db_uri = f'sqlite:///{d}/test.db'
+        engine = sqlalchemy.create_engine(db_uri)
+        import sqlite3
+        filename = f"{d}/test.db"
+        conn = sqlite3.connect(filename)
+        c = conn.cursor()
+        c.execute('CREATE TABLE IF NOT EXISTS test (a number)')
+        conn.commit()
+        with engine.connect() as conn:
+            df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
+            # if vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.dask_cudf)
+            df.to_sql('test',
+                      uri=db_uri,  # For dask and dask_cudf
+                      # con=conn,
+                      if_exists='replace',
+                      index=True)
+            # else:
+            #     df.to_sql('test', con= conn, if_exists='replace', index=False)
+            df2 = vdf.read_sql("SELECT * FROM test",
+                               con=db_uri,
+                               # con=conn,
+                               index_col='a',
+                               )
+            df2 = df2.drop("index", axis=1)
+            assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+    finally:
+        # shutil.rmtree(d)
+        pass
+
+
 def test_DataFrame_to_from_numpy():
-    df = vdf.VDataFrame({'a': [0, 1, 2, 3]}, npartitions=2)
+    df = vdf.VDataFrame({'a': [0.0, 1.0, 2.0, 3.0]}, npartitions=2)
     n = df.to_numpy()
     df2 = vdf.VDataFrame(n, columns=df.columns, npartitions=2)
     assert df.compute().equals(df2.compute())
@@ -128,16 +237,16 @@ def test_Series_to_from_numpy():
 def test_DataFrame_map_partitions():
     df = vdf.VDataFrame(
         {
-            'a': [0, 1, 2, 3],
+            'a': [0.0, 1.0, 2.0, 3.0],
             'b': [1, 2, 3, 4],
         },
         npartitions=2
     )
     expected = pandas.DataFrame(
         {
-            'a': [0, 1, 2, 3],
+            'a': [0.0, 1.0, 2.0, 3.0],
             'b': [1, 2, 3, 4],
-            'c': [0, 20, 60, 120]
+            'c': [0.0, 20.0, 60.0, 120.0]
         }
     )
     # _VDataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, **args, **kwargs)
@@ -146,17 +255,17 @@ def test_DataFrame_map_partitions():
 
 
 def test_Series_map_partitions():
-    s = vdf.VSeries([0, 1, 2, 3],
+    s = vdf.VSeries([0.0, 1.0, 2.0, 3.0],
                     npartitions=2
                     )
-    expected = pandas.Series([0, 2, 4, 6])
+    expected = pandas.Series([0.0, 2.0, 4.0, 6.0])
     result = s.map_partitions(lambda s: s * 2).compute().to_pandas()
     assert result.equals(expected)
 
 
 def test_apply_rows():
     df = vdf.VDataFrame(
-        {'a': [0, 1, 2, 3],
+        {'a': [0.0, 1.0, 2.0, 3.0],
          'b': [1, 2, 3, 4],
          'c': [10, 20, 30, 40]
          },
@@ -168,7 +277,7 @@ def test_apply_rows():
             out[i] = (a + b + c) * val
 
     expected = pandas.DataFrame(
-        {'a': [0, 1, 2, 3],
+        {'a': [0.0, 1.0, 2.0, 3.0],
          'b': [1, 2, 3, 4],
          'c': [10, 20, 30, 40],
          'out': [33, 69, 105, 141]

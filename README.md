@@ -32,6 +32,7 @@ inspired by [dask](https://www.dask.org/) (the more complex API).
 Then, it is possible to write one code, and use it in differents environnements and frameworks.
 
 This project is essentially a back-port of *Dask+Cudf* to others frameworks.
+We try to normalize the API of all frameworks.
 
 To reduce the confusion, you must use the classes `VDataFrame` and `VSeries` (The prefix `V` is for *Virtual*).
 These classes propose the methods `.to_pandas()` and `.compute()` for each version, but are the *real* classes
@@ -150,6 +151,12 @@ The package `virtual_dataframe` (without suffix) has no *framework* dependencies
 ### Installing with pip
 With PIP, it's not possible to install [NVidia Rapids](https://developer.nvidia.com/rapids) to use
 the GPU. A limited list of dependencies is possible.
+
+NOW: use
+```shell
+$ pip install git+https://github.com/pprados/virtual_dataframe.git#all
+```
+When the project were published, use
 ```shell
 $ pip install "virtual_dataframe[all]"
 ```
@@ -186,14 +193,11 @@ $ pip install "virtual_dataframe@git+https://github.com/pprados/virtual-datafram
 | vdf.read_csv(...)                      | Read VDataFrame from CSVs *glob* files          |
 | vdf.read_excel(...)<sup>*</sup>        | Read VDataFrame from CSVs *glob* files          |
 | vdf.read_fwf(...)<sup>*</sup>          | Read VDataFrame from CSVs *glob* files          |
-| vdf.read_hdf(...)                      | Read VDataFrame from CSVs *glob* files          |
+| vdf.read_hdf(...)<sup>*</sup>          | Read VDataFrame from CSVs *glob* files          |
 | vdf.read_json(...)                     | Read VDataFrame from CSVs *glob* files          |
 | vdf.read_orc(...)                      | Read VDataFrame from CSVs *glob* files          |
 | vdf.read_parquet(...)                  | Read VDataFrame from CSVs *glob* files          |
 | vdf.read_sql(...)<sup>*</sup>          | Read VDataFrame from CSVs *glob* files          |
-| vdf.read_sql_query(...)<sup>*</sup>    | Read VDataFrame from CSVs *glob* files          |
-| vdf.read_sql_table(...)<sup>*</sup>    | Read VDataFrame from CSVs *glob* files          |
-| vdf.read_table(...)<sup>*</sup>        | Read VDataFrame from CSVs *glob* files          |
 | vdf.from_pandas(pdf, npartitions=...)  | Create Virtual Dataframe from Pandas DataFrame  |
 | vdf.from_backend(vdf, npartitions=...) | Create Virtual Dataframe from backend dataframe |
 | vdf.compute([...])                     | Compute multiple @delayed functions             |
@@ -206,6 +210,7 @@ $ pip install "virtual_dataframe@git+https://github.com/pprados/virtual-datafram
 | VDataFrame.visualize()                 | Create an image with the graph                  |
 | VDataFrame.to_pandas()                 | Convert to pandas dataframe                     |
 | VDataFrame.to_csv()                    | Save to *glob* files                            |
+| TODO                                   | Save to *glob* files                            |
 | VDataFrame.to_numpy()                  | Convert to numpy array                          |
 | VDataFrame.to_backend()                | Convert to backend dataframe                    |
 | VDataFrame.categorize()                | Detect all categories                           |
@@ -263,20 +268,27 @@ This project is just a wrapper. So, it inherits limitations and bugs from other 
 | Categories with strings not implemented                                                         |
 
 To be compatible with all framework, you must only use the common features.
+We accept some function to read or write files, but we write a warning
+if you use a function not compatible with others frameworks.
 
-| read_...       | pandas | cudf | modin | dask   | dask_cudf |
-|----------------|--------|------|-------|--------|-----------|
-| read_csv       | ✓      | ✓    | ✓     | ✓      | ✓         |
-| read_excel     | ✓      |      | ✓     |        |           |
-| read_fwf       | ✓      |      | ✓     | ✓      | ✓         |
-| read_hdf       | ✓      | ✓    | ✓     | ✓      | ✓         |
-| read_json      | ✓      | ✓    | ✓     | ✓      | ✓         |
-| read_orc       | ✓      | ✓    | ✓     | ✓      | ✓         |
-| read_parquet   | ✓      | ✓    | ✓     | ✓      | ✓         |
-| read_sql       | ✓      |      | ✓     | ✓      | ✓         |
-| read_sql_query | ✓      |      | ✓     | ✓      | ✓         |
-| read_sql_table | ✓      |      | ✓     | ✓      | ✓         |
-| read_table     | ✓      |      | ✓     | ✓      | ✓         |
+| read_... / to_... | pandas | cudf | modin | dask | dask_cudf |
+|-------------------|:------:|:----:|:-----:|:----:|:---------:|
+| read_csv          |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| to_csv            |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| read_excel        |   ✓    |      |   ✓   |      |           |
+| to_excel          |   ✓    |      |   ✓   |      |           |
+| read_fwf          |   ✓    |      |   ✓   |  ✓   |           |
+| to_fwf            |        |      |       |      |           |
+| read_hdf          |   ✓    |  ✓   |   ✓   |  ✓   |           |
+| to_hdf            |   ✓    |  ✓   |   ✓   |  ✓   |           |
+| read_json         |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| to_json           |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| read_orc          |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| to_orc            |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| read_parquet      |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| to_parquet        |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| read_sql          |   ✓    |      |   ✓   |  ✓   |           |
+| to_sql            |   ✓    |      |   ✓   |  ✓   |           |
 
 
 

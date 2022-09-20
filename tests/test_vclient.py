@@ -20,7 +20,6 @@ def test_cudf():
         assert repr(client) == '<Client: in-process scheduler>'
 
 
-@pytest.mark.xdist_group(name="os.environ")
 @pytest.mark.skipif(not VDF_MODE.name.startswith("dask"), reason="Invalid mode")
 def test_dask_debug():
     from distributed import LocalCluster
@@ -30,7 +29,6 @@ def test_dask_debug():
         assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
 
 
-@pytest.mark.xdist_group(name="os.environ")
 @pytest.mark.skipif(VDF_MODE != Mode.dask_cudf, reason="Invalid mode")
 def test_dask_cluster_gpu():
     from dask_cuda import LocalCUDACluster
@@ -39,7 +37,6 @@ def test_dask_cluster_gpu():
         assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
 
 
-@pytest.mark.xdist_group(name="os.environ")
 @pytest.mark.skipif(VDF_MODE != Mode.dask_cudf, reason="Invalid mode")
 def test_dask_no_cluster_gpu():
     from dask_cuda import LocalCUDACluster
@@ -48,7 +45,6 @@ def test_dask_no_cluster_gpu():
         assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
 
 
-@pytest.mark.xdist_group(name="os.environ")
 @pytest.mark.skipif(not VDF_MODE.name.startswith("dask"), reason="Invalid mode")
 def test_dask_cluster_no_gpu():
     from distributed import LocalCluster
@@ -56,21 +52,18 @@ def test_dask_cluster_no_gpu():
         assert isinstance(client.cluster, LocalCluster)
         assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
 
-# @pytest.mark.xdist_group(name="os.environ")
 # def test_ray_no_cluster_modin(mocker):
 #     ray_init = mocker.patch("ray.init")
 #     with (vclient._new_VClient(mode=Mode.ray_modin, env=dict())) as client:
 #         ray_init.assert_called_with()
 #
 #
-# @pytest.mark.xdist_group(name="os.environ")
 # def test_ray_cluster_modin_localhost(mocker):
 #     ray_init = mocker.patch("ray.init")
 #     with (vclient._new_VClient(mode=Mode.ray_modin, env=dict(VDF_CLUSTER="ray://localhost"))) as client:
 #         ray_init.assert_called_with(address='ray://localhost:10001')
 
 
-# @pytest.mark.xdist_group(name="os.environ")
 # def test_ray_cluster_modin_auto(mocker):
 #     ray_init = mocker.patch("ray.init")
 #     with (vclient._new_VClient(mode=Mode.ray_modin, env=dict(VDF_CLUSTER="ray://auto"))) as client:

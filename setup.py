@@ -93,6 +93,7 @@ dev_requirements = all_requirements.union([
     'bokeh>=2.1.1',
     'jupyterlab-git',
     'mkdocs',
+    'sqlalchemy',
 ])
 
 

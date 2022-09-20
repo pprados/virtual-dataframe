@@ -2,13 +2,13 @@
 Virtual Dataframe and Series.
 """
 # flake8: noqa
-import collections
 import glob
 import os
 import sys
-from functools import wraps, partial
-from typing import Any, List, Tuple, Optional, Union, Callable, Dict, Type, Iterator
 import warnings
+from functools import wraps
+from typing import Any, List, Tuple, Optional, Union, Callable, Dict, Type, Iterator
+
 from pandas._typing import Axes, Dtype
 
 from .env import VDF_MODE, Mode
@@ -190,7 +190,7 @@ Convert columns of the DataFrame to category dtype.
 
 # %%
 
-def _remove_parameters(func, _params: List[str], *part_args, **kwargs):
+def _remove_parameters(func, _params: List[str]):
     def wrapper(*args, **kwargs):
         for k in _params:
             kwargs.pop(k, None)
@@ -198,22 +198,27 @@ def _remove_parameters(func, _params: List[str], *part_args, **kwargs):
 
     return wrapper
 
-def _not_implemented(*args,**kwargs):
+
+def _not_implemented(*args, **kwargs):
     raise NotImplementedError()
+
 
 _printed_warning = set()
 
-def _warn(func, scope: str,
-          ) -> Any:
+
+def _warn(func: Callable, scope: str,
+          ) -> Callable:
     def _warn_fn(*args, **kwargs):
-        if func not in _printed_warning:
-            _printed_warning.add(func)
+        if func.__name__ not in _printed_warning:
+            _printed_warning.add(func.__name__)
             warnings.warn(f"Function '{func.__name__}' not implemented in mode {scope}",
                           RuntimeWarning, stacklevel=0)
         return func(*args, **kwargs)
+
     return _warn_fn
 
-def _remove_to_csv(func, *part_args, **kwargs):
+
+def _rm_to(func):  # FIXME
     return _remove_parameters(func,
                               ["single_file",
                                "name_function",
@@ -223,7 +228,41 @@ def _remove_to_csv(func, *part_args, **kwargs):
                                "compute_kwargs"])
 
 
-# if VDF_MODE in (Mode.pandas, Mode.cudf, Mode.modin, Mode.dask_modin, Mode.ray_modin):
+def _patch_to(clazz, func, rm_params, scope=None):
+    def _patch(self, path_or_buf, *args, **kwargs):
+        if scope and func not in _printed_warning:
+            _printed_warning.add(func)
+            warnings.warn(f"Function '{func}' not implemented in mode {scope}",
+                          RuntimeWarning, stacklevel=0)
+        if "*" in str(path_or_buf):
+            path_or_buf = path_or_buf.replace("*", "")
+        for k in rm_params:
+            kwargs.pop(k, None)
+        # FIXME: via la clausure, eviter le _old
+        return getattr(self, "_old_" + func)(path_or_buf, *args, **kwargs)
+
+    _patch.__name__ = func
+    setattr(clazz, "_old_" + func, getattr(clazz, func))
+    setattr(clazz, func, _patch)
+
+
+def _patch_read(front, func, scope=None):
+    def _patch(filepath_or_buffer, *args, **kwargs) -> Union[_VDataFrame, Iterator[_VDataFrame]]:
+        if scope:
+            if func not in _printed_warning:
+                _printed_warning.add(func)
+                warnings.warn(f"Function '{func}' not implemented in mode {scope}",
+                              RuntimeWarning, stacklevel=0)
+
+        if not isinstance(filepath_or_buffer, list):
+            return front.concat(
+                (getattr(front, func)(f, *args[1:], **kwargs) for f in sorted(glob.glob(filepath_or_buffer))))
+        return getattr(front, func)(filepath_or_buffer, *args[1:], **kwargs)
+
+    _patch.__name__ = func
+    return _patch
+
+
 if VDF_MODE in (Mode.pandas, Mode.cudf, Mode.modin, Mode.dask_modin):
 
     def _remove_dask_parameters(func, *part_args, **kwargs):
@@ -253,6 +292,160 @@ if VDF_MODE in (Mode.pandas, Mode.cudf, Mode.modin, Mode.dask_modin):
             return decorate
 
 # %%
+# if VDF_MODE in (Mode.modin, Mode.dask_modin, Mode.ray_modin):
+if VDF_MODE in (Mode.modin, Mode.dask_modin):
+    if VDF_MODE == Mode.dask_modin:
+        os.environ["MODIN_ENGINE"] = "dask"
+    # elif VDF_MODE == Mode.ray_modin:
+    #     os.environ["MODIN_ENGINE"] = "ray"
+    else:
+        os.environ["MODIN_ENGINE"] = "python"  # For debug
+    import modin.pandas
+    import pandas
+    import numpy
+
+    warnings.filterwarnings('module', '.*Distributing.*This may take some time\\.', )
+
+    BackEndDataFrame: Any = modin.pandas.DataFrame
+    BackEndSeries: Any = modin.pandas.Series
+    BackEnd = modin.pandas
+
+    FrontEnd = modin.pandas
+
+    _VDataFrame: Any = BackEndDataFrame
+    _VSeries: Any = BackEndSeries
+
+
+    # noinspection PyUnusedLocal
+    def _from_back(  # noqa: F811
+            data: Union[BackEndDataFrame, BackEndSeries],
+            npartitions: Optional[int] = None,
+            chunksize: Optional[int] = None,
+            sort: bool = True,
+            name: Optional[str] = None,
+    ) -> _VDataFrame:
+        return data
+
+
+    # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
+    _cache = dict()  # type: Dict[Any, Any]
+
+
+    def _compile(func: Callable, cache_key: Optional[str]):
+        import numba
+        if cache_key is None:
+            cache_key = func
+
+        try:
+            out = _cache[cache_key]
+            return out
+        except KeyError:
+            kernel = numba.jit(func, nopython=True)
+            _cache[cache_key] = kernel
+            return kernel
+
+
+    def _apply_rows(
+            self,
+            func: Callable,
+            incols: Dict[str, str],
+            outcols: Dict[str, Type],
+            kwargs: Dict[str, Any],
+            cache_key: Optional[str] = None,
+    ):
+
+        size = len(self)
+        params = {param: self[col].to_numpy() for col, param in incols.items()}
+        outputs = {param: numpy.empty(size, dtype=dtype) for param, dtype in outcols.items()}
+        _compile(func, cache_key)(**params, **outputs, **kwargs)
+        for col, data in outputs.items():
+            self[col] = data
+        return self
+
+
+    delayed: Any = _delayed
+    delayed.__doc__ = _doc_delayed
+
+
+    # noinspection PyUnusedLocal
+    def compute(*args,  # noqa: F811
+                traverse: bool = True,
+                optimize_graph: bool = True,
+                scheduler: bool = None,
+                get=None,
+                **kwargs
+                ) -> Tuple:
+        return args
+
+
+    compute.__doc__ = _doc_compute
+
+
+    def visualize(*args, **kwargs):
+        try:
+            import IPython
+            return IPython.core.display.Image(data=[], url=None, filename=None, format=u'png', embed=None, width=None,
+                                              height=None,
+                                              retina=False)
+        except ModuleNotFoundError:
+            return True
+
+
+    visualize.__doc__ = _doc_visualize
+
+    concat: Any = modin.pandas.concat
+
+    from_pandas: Any = lambda data, npartitions=1, chuncksize=None, sort=True, name=None: \
+        modin.pandas.DataFrame(data) if isinstance(data, pandas.DataFrame) else modin.pandas.Series(data)
+    from_backend: Any = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
+
+    from_pandas.__doc__ = _doc_from_pandas
+    from_backend.__doc__ = _doc_from_backend
+
+    # modin
+    read_csv = FrontEnd.read_csv
+    read_excel = _patch_read(FrontEnd, "read_excel", "cudf, dask and dask_cudf")
+    read_fwf = _patch_read(FrontEnd, "read_fwf", "cudf and dask_cudf")
+    read_hdf = _patch_read(FrontEnd, "read_hdf", "dask_cudf")
+    read_json = FrontEnd.read_json
+    read_orc = _patch_read(FrontEnd, "read_orc")
+    read_parquet = FrontEnd.read_parquet
+    read_sql = _warn(FrontEnd.read_sql, "cudf and dask_cudf")
+
+    # Add-on and patch of original dataframes and series
+    _VDataFrame.to_orc = _not_implemented
+
+    _patch_to(_VDataFrame, "to_excel", [], "cudf, dask, dask_cudf")
+    _patch_to(_VDataFrame, "to_hdf", [], "dask_cudf")
+    _VDataFrame.to_sql = _warn(_VDataFrame.to_sql, "cudf, dask_cudf")
+
+    _VDataFrame.to_backend = lambda self: self
+    _VDataFrame.to_backend.__doc__ = _doc_VDataFrame_to_pandas
+
+    _VDataFrame.apply_rows = _apply_rows
+    _VDataFrame.apply_rows.__doc__ = _doc_apply_rows
+    _VDataFrame.map_partitions = lambda df, func, *args, **kwargs: func(df, *args, **kwargs)
+    _VDataFrame.map_partitions.__doc__ = _doc_VDataFrame_map_partitions
+    _VDataFrame.compute = lambda self, **kwargs: self
+    _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
+    _VDataFrame.visualize = lambda self: visualize(self)
+    _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
+    _VDataFrame.categorize = lambda self: self
+    _VDataFrame.categorize.__doc__ = _doc_categorize
+    _VDataFrame.to_pandas = _VDataFrame._to_pandas
+
+    _VSeries.map_partitions = lambda df, func, *args, **kwargs: func(df, *args, **kwargs)
+    _VSeries.map_partitions.__doc__ = _VSeries.map.__doc__
+    _VSeries.compute = lambda self, **kwargs: self
+    _VSeries.compute.__doc__ = _doc_VSeries_compute
+    _VSeries.visualize = lambda self: visualize(self)
+    _VSeries.visualize.__doc__ = _doc_VSeries_visualize
+    _VSeries.to_pandas = modin.pandas.Series._to_pandas
+    _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
+    _VSeries.to_backend = lambda self: self
+    _VSeries.to_backend.__doc__ = _doc_VSeries_to_pandas
+
+# %%
 if VDF_MODE == Mode.dask_cudf:
     import pandas
     import dask
@@ -272,7 +465,7 @@ if VDF_MODE == Mode.dask_cudf:
     BackEndSeries: Any = cudf.Series
     BackEnd = cudf
 
-    FrontEnd = dask.dataframe  # FIXME: dask_cudf ?
+    FrontEnd = dask_cudf
 
     _VDataFrame: Any = dask_cudf.DataFrame
     _VSeries: Any = dask_cudf.Series
@@ -282,38 +475,39 @@ if VDF_MODE == Mode.dask_cudf:
     delayed: Any = dask.delayed
     compute: Any = dask.compute
     visualize: Any = dask.visualize
-    concat: _VDataFrame = dask.dataframe.multi.concat
+    concat: _VDataFrame = dask.dataframe.multi.concat  # FIXME
 
-    from_dict: _VDataFrame = FrontEnd.from_dict
-    from_pandas: _VDataFrame = FrontEnd.from_pandas
-    from_arrow: _VDataFrame = FrontEnd.frol_arrow  # !pandas, !dask
-    from_backend: Any = dask_cudf.from_cudf
+    def _from_pandas(df, npartitions=1):
+        return dask_cudf.from_cudf(cudf.from_pandas(df), npartitions=npartitions)
 
-    read_csv = dask_cudf.read_csv  # dask_cudf
-    read_excel = _not_implemented  # !dask_cudf
-    read_fwf = FrontEnd.read_fwf  # dask_cudf
-    read_hdf = FrontEnd.read_hdf  # dask_cudf
-    read_json = dask_cudf.read_json  # dask_cudf
-    read_orc = dask_cudf.read_orc  # dask_cudf
-    read_parquet = dask_cudf.read_parquet  # dask_cudf
-    read_sql = FrontEnd.read_sql  # dask_cudf
-    read_sql_query = FrontEnd.read_sql_query  # dask_cudf
-    read_sql_table = FrontEnd.read_sql_table  # dask_cudf
-    read_table = FrontEnd.read_table  # dask_cudf
+    from_pandas = _from_pandas
+    from_backend = dask_cudf.from_cudf
 
-    # _VDataFrame.to_csv # dask_cudf
-    # _VDataFrame.to_dict  # !dask_cudf
-    # _VDataFrame.to_excel  # !dask_cudf
-    # _VDataFrame.to_hdf # !dask_cudf
-    # _VDataFrame.to_json # !dask_cudf
-    # _VDataFrame.to_sql # !dask_cudf
-    # _VDataFrame..to_orc # dask_cudf
-    # _VDataFrame.to_parquet # dask_cudf
+    def _patch_read_json(path_or_buf, **kwargs):
+        if os.path.isdir(path_or_buf):
+            path_or_buf = path_or_buf + "/*"
+        return FrontEnd.read_json(path_or_buf, **kwargs)
+
+
+    # dask_cudf
+    read_csv = FrontEnd.read_csv
+    read_excel = _not_implemented
+    read_fwf = _not_implemented
+    read_hdf = _not_implemented
+    read_json = _patch_read_json
+    read_orc = FrontEnd.read_orc
+    read_parquet = FrontEnd.read_parquet
+    read_sql = _not_implemented
+
+    _VDataFrame.to_excel = _not_implemented
+    _VDataFrame.to_fwf = _not_implemented
+    _VDataFrame.to_hdf = _not_implemented
+    _VDataFrame.to_sql = _not_implemented
 
     # Add-on and patch of original dataframes and series
     pandas.DataFrame.to_pandas = lambda self: self
     pandas.DataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
-    _VDataFrame.to_pandas = lambda self: self.compute()
+    _VDataFrame.to_pandas = lambda self: self.compute().to_pandas()
     _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
     _VDataFrame.to_backend = lambda self: self.compute()
     _VDataFrame.to_backend.__doc__ = _doc_VDataFrame_to_pandas
@@ -322,7 +516,7 @@ if VDF_MODE == Mode.dask_cudf:
     _VDataFrame.to_numpy = lambda self: self.compute().to_numpy()
     _VDataFrame.to_numpy.__doc__ = _doc_VDataFrame_to_numpy
 
-    _VSeries.to_pandas = lambda self: self.compute()
+    _VSeries.to_pandas = lambda self: self.compute().to_pandas()
     _VSeries.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
     _VSeries.to_backend = lambda self: self.compute()
     _VSeries.to_backend.__doc__ = _doc_VDataFrame_to_pandas
@@ -412,31 +606,28 @@ if VDF_MODE == Mode.dask:
     visualize: Any = dask.visualize
     concat: _VDataFrame = FrontEnd.multi.concat
 
-    from_dict: _VDataFrame = FrontEnd.from_dict
     from_pandas: _VDataFrame = FrontEnd.from_pandas
-    from_arrow: _VDataFrame = FrontEnd.from_arrow  # !pandas, !dask
     from_backend: _VDataFrame = FrontEnd.from_pandas
 
-    read_csv = FrontEnd.read_csv  # dask
-    read_excel = _not_implemented  # !dask
-    read_fwf = FrontEnd.read_fwf  # dask
-    read_hdf = FrontEnd.read_hdf  # dask
-    read_json = FrontEnd.read_json  # dask
-    read_orc = FrontEnd.read_orc  # dask
-    read_parquet = FrontEnd.read_parquet  # dask
-    read_sql = FrontEnd.read_sql  # dask
-    read_sql_query = FrontEnd.read_sql_query  # dask
-    read_sql_table = FrontEnd.read_sql_table  # dask
-    read_table = FrontEnd.read_table  # dask
 
-    # _VDataFrame.to_csv # dask
-    # _VDataFrame.to_dict  # !dask
-    # _VDataFrame.to_excel  # !dask
-    # _VDataFrame.to_hdf # !dask
-    # _VDataFrame.to_json # !dask
-    # _VDataFrame.to_sql # !dask
-    # _VDataFrame.to_orc # !dask
-    # _VDataFrame.to_parquet # dask
+    def _patch_read_json(path_or_buf, **kwargs):
+        if os.path.isdir(path_or_buf):
+            path_or_buf = path_or_buf + "/*"
+        return FrontEnd.read_json(path_or_buf, **kwargs)
+
+
+    # dask
+    read_csv = FrontEnd.read_csv
+    read_excel = _not_implemented
+    read_fwf = _warn(FrontEnd.read_fwf, "cudf and dask_cudf")
+    read_hdf = _warn(FrontEnd.read_hdf, "dask_cudf")
+    read_json = _patch_read_json
+    read_orc = FrontEnd.read_orc
+    read_parquet = FrontEnd.read_parquet
+    read_sql = _warn(FrontEnd.read_sql, "dask_cudf")
+
+    _VDataFrame.to_excel = _not_implemented
+    _VDataFrame.to_fwf = _not_implemented
 
     BackEndDataFrame.to_pandas = lambda self: self
     BackEndDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
@@ -498,12 +689,6 @@ if VDF_MODE == Mode.cudf:
             return cudf.read_csv(filepath_or_buffer, **kwargs)
 
 
-    def _to_csv(self, path_or_buf, **kwargs):
-        if "*" in str(path_or_buf):
-            path_or_buf = path_or_buf.replace("*", "")
-        return self._old_to_csv(path_or_buf, **kwargs)
-
-
     delayed: Any = _delayed
     delayed.__doc__ = _doc_delayed
 
@@ -538,38 +723,36 @@ if VDF_MODE == Mode.cudf:
 
     concat: Any = cudf.concat
 
-    from_dict: _VDataFrame = FrontEnd.from_dict
     from_pandas: _VDataFrame = _remove_dask_parameters(cudf.from_pandas)
-    from_arrow: _VDataFrame = FrontEnd.from_arrow  # !pandas, !dask
     from_backend: _VDataFrame = _remove_dask_parameters(lambda self: self)
 
     from_pandas.__doc__ = _doc_from_pandas
     from_backend.__doc__ = _doc_from_backend
 
-    read_csv = _read_csv  # cudf
-    read_excel = _not_implemented  # !cudf
-    read_fwf = _not_implemented  # !cudf
-    read_hdf = FrontEnd.read_hdf  # cudf
-    read_json = FrontEnd.read_json  # cudf
-    read_orc = FrontEnd.read_orc  # cudf
-    read_parquet = FrontEnd.read_parquet  # cudf
-    read_sql = _not_implemented  # !cudf
-    read_sql_query = _not_implemented  # !cudf
-    read_sql_table = _not_implemented  # !cudf
-    read_table = _not_implemented  # !cudf
+    # cudf
+    read_csv = _patch_read(FrontEnd, "read_csv")
+    read_excel = _not_implemented
+    read_fwf = _not_implemented
+    read_hdf = _patch_read(FrontEnd, "read_hdf", "dask_cudf")
+    read_json = _patch_read(FrontEnd, "read_json")
+    read_orc = FrontEnd.read_orc
+    read_parquet = FrontEnd.read_parquet
+    read_sql = _not_implemented
 
-    read_csv.__doc__ = cudf.read_csv.__doc__
-
-    _VDataFrame.to_csv = _remove_to_csv(_to_csv)
-    _VDataFrame.to_csv.__doc__ = _doc_VDataFrame_to_csv
-    # _VDataFrame.to_dict: # !cudf
-    # _VDataFrame.to_excel: # !cudf
-    # _VDataFrame.to_excel: # !cudf
-    # _VDataFrame.to_hdf  # !cudf
-    # _VDataFrame.to_json  # !cudf
-    # _VDataFrame.to_sql  # !cudf
-    # _VDataFrame.to_orc  # !cudf
-    # _VDataFrame.to_parquet  # !cudf
+    _extra_params = ["single_file",
+                     "name_function",
+                     "compute",
+                     "scheduler",
+                     "header_first_partition_only",
+                     "compute_kwargs"]
+    _patch_to(_VDataFrame, "to_csv", _extra_params)
+    _VDataFrame.to_excel = _not_implemented
+    _VDataFrame.to_fwf = _not_implemented
+    _patch_to(_VDataFrame, "to_hdf", _extra_params)
+    _patch_to(_VDataFrame, "to_json", _extra_params)
+    _patch_to(_VDataFrame, "to_orc", _extra_params)
+    _patch_to(_VDataFrame, "to_parquet", _extra_params)
+    _VDataFrame.to_sql = _not_implemented
 
     pandas.Series.to_pandas = lambda self: self
     pandas.Series.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
@@ -583,6 +766,8 @@ if VDF_MODE == Mode.cudf:
     _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
     _VDataFrame.visualize = lambda self: visualize(self)
     _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
+    _VDataFrame.categorize = lambda self: self
+    _VDataFrame.categorize.__doc__ = _doc_categorize
 
     _VSeries.map_partitions = lambda self, func, *args, **kwargs: self.map(func, *args, *kwargs)
     _VSeries.map_partitions.__doc__ = _VSeries.map.__doc__
@@ -592,193 +777,6 @@ if VDF_MODE == Mode.cudf:
     _VSeries.compute.__doc__ = _doc_VSeries_compute
     _VSeries.visualize = lambda self: visualize(self)
     _VSeries.visualize.__doc__ = _doc_VSeries_visualize
-
-    _VDataFrame.categorize = lambda self: self
-    _VDataFrame.categorize.__doc__ = _doc_categorize
-    if "_old_to_csv" not in _VDataFrame.__dict__:
-        _VDataFrame._old_to_csv = _VDataFrame.to_csv
-
-# %%
-# if VDF_MODE in (Mode.modin, Mode.dask_modin, Mode.ray_modin):
-if VDF_MODE in (Mode.modin, Mode.dask_modin):
-    if VDF_MODE == Mode.dask_modin:
-        os.environ["MODIN_ENGINE"] = "dask"
-    # elif VDF_MODE == Mode.ray_modin:
-    #     os.environ["MODIN_ENGINE"] = "ray"
-    else:
-        os.environ["MODIN_ENGINE"] = "python"  # For debug
-    import modin.pandas
-    import pandas
-    import numpy
-
-    import warnings
-
-    warnings.filterwarnings('module', '.*Distributing.*This may take some time\\.', )
-
-    BackEndDataFrame: Any = modin.pandas.DataFrame
-    BackEndSeries: Any = modin.pandas.Series
-    BackEnd = modin.pandas
-
-    FrontEnd = modin.pandas
-
-    _VDataFrame: Any = BackEndDataFrame
-    _VSeries: Any = BackEndSeries
-
-
-    # noinspection PyUnusedLocal
-    def _from_back(  # noqa: F811
-            data: Union[BackEndDataFrame, BackEndSeries],
-            npartitions: Optional[int] = None,
-            chunksize: Optional[int] = None,
-            sort: bool = True,
-            name: Optional[str] = None,
-    ) -> _VDataFrame:
-        return data
-
-
-    def _read_csv(filepath_or_buffer, **kwargs) -> Union[_VDataFrame, Iterator[_VDataFrame]]:
-        if not isinstance(filepath_or_buffer, list):
-            return BackEnd.concat((BackEnd.read_csv(f, **kwargs) for f in glob.glob(filepath_or_buffer)))
-        else:
-            return BackEnd.read_csv(filepath_or_buffer, **kwargs)
-
-
-    # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
-    _cache = dict()  # type: Dict[Any, Any]
-
-
-    def _compile(func: Callable, cache_key: Optional[str]):
-        import numba
-        if cache_key is None:
-            cache_key = func
-
-        try:
-            out = _cache[cache_key]
-            return out
-        except KeyError:
-            kernel = numba.jit(func, nopython=True)
-            _cache[cache_key] = kernel
-            return kernel
-
-
-    def _apply_rows(
-            self,
-            func: Callable,
-            incols: Dict[str, str],
-            outcols: Dict[str, Type],
-            kwargs: Dict[str, Any],
-            cache_key: Optional[str] = None,
-    ):
-
-        size = len(self)
-        params = {param: self[col].to_numpy() for col, param in incols.items()}
-        outputs = {param: numpy.empty(size, dtype=dtype) for param, dtype in outcols.items()}
-        _compile(func, cache_key)(**params, **outputs, **kwargs)
-        for col, data in outputs.items():
-            self[col] = data
-        return self
-
-
-    delayed: Any = _delayed
-    delayed.__doc__ = _doc_delayed
-
-
-    # noinspection PyUnusedLocal
-    def compute(*args,  # noqa: F811
-                traverse: bool = True,
-                optimize_graph: bool = True,
-                scheduler: bool = None,
-                get=None,
-                **kwargs
-                ) -> Tuple:
-        return args
-
-
-    compute.__doc__ = _doc_compute
-
-
-    def visualize(*args, **kwargs):
-        try:
-            import IPython
-            return IPython.core.display.Image(data=[], url=None, filename=None, format=u'png', embed=None, width=None,
-                                              height=None,
-                                              retina=False)
-        except ModuleNotFoundError:
-            return True
-
-
-    visualize.__doc__ = _doc_visualize
-
-
-    def _to_csv(self, path_or_buf, **kwargs):
-        if "*" in str(path_or_buf):
-            path_or_buf = path_or_buf.replace("*", "")
-        return self._old_to_csv(path_or_buf, **kwargs)
-
-
-    concat: Any = modin.pandas.concat
-
-    from_dict: _VDataFrame = FrontEnd.from_dict  # !modin
-    from_pandas: Any = lambda data, npartitions=1, chuncksize=None, sort=True, name=None: \
-        modin.pandas.DataFrame(data) if isinstance(data, pandas.DataFrame) else modin.pandas.Series(data)
-    from_arrow: _VDataFrame = FrontEnd.from_arrow  # !modin
-    from_backend: Any = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
-
-    from_pandas.__doc__ = _doc_from_pandas
-    from_backend.__doc__ = _doc_from_backend
-
-    read_csv.__doc__ = modin.pandas.read_csv.__doc__
-
-    read_csv = _read_csv  # modin
-    read_excel = FrontEnd.read_excel  # modin
-    read_fwf = FrontEnd.read_fwf  # modin
-    read_hdf = FrontEnd.read_hdf  # modin
-    read_json = FrontEnd.read_json  # modin
-    read_orc = FrontEnd.read_orc  # modin
-    read_parquet = FrontEnd.read_parquet  # modin
-    read_sql = FrontEnd.read_sql  # modin
-    read_sql_query = FrontEnd.read_sql_query  # modin
-    read_sql_table = FrontEnd.read_sql_table  # modin
-    read_table = FrontEnd.read_table  # modin
-
-    _VDataFrame.to_csv = _to_csv  # modin
-    _VDataFrame.to_csv.__doc__ = _doc_VDataFrame_to_csv
-    _VDataFrame.to_pandas = modin.pandas.DataFrame._to_pandas
-    _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
-    _VDataFrame.to_backend = lambda self: self
-    _VDataFrame.to_backend.__doc__ = _doc_VDataFrame_to_pandas
-    # _VDataFrame.to_dict  # !modin
-    # _VDataFrame.to_excel  # !modin
-    # _VDataFrame.to_hdf  # !modin
-    # _VDataFrame.to_json  # !modin
-    # _VDataFrame.to_sql  # !modin
-    # _VDataFrame.to_orc  # !modin
-    # _VDataFrame.to_parquet  # !modin
-
-    # TODO: to... series
-
-    # Add-on and patch of original dataframes and series
-    _VDataFrame.apply_rows = _apply_rows
-    _VDataFrame.apply_rows.__doc__ = _doc_apply_rows
-    _VDataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, *args, **kwargs)
-    _VDataFrame.map_partitions.__doc__ = _VSeries.map.__doc__
-    _VDataFrame.compute = lambda self, **kwargs: self
-    _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
-    _VDataFrame.visualize = lambda self: visualize(self)
-    _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
-
-    _VSeries.map_partitions = lambda self, func, *args, **kwargs: self.map(func, *args, *kwargs)
-    _VSeries.map_partitions.__doc__ = _VSeries.map.__doc__
-    _VSeries.compute = lambda self, **kwargs: self
-    _VSeries.compute.__doc__ = _doc_VSeries_compute
-    _VSeries.visualize = lambda self: visualize(self)
-    _VSeries.visualize.__doc__ = _doc_VSeries_visualize
-    _VSeries.to_pandas = modin.pandas.Series._to_pandas
-    _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
-    _VSeries.to_backend = lambda self: self
-    _VSeries.to_backend.__doc__ = _doc_VSeries_to_pandas
-    _VDataFrame.categorize = lambda self: self
-    _VDataFrame.categorize.__doc__ = _doc_categorize
 
 # %%
 if VDF_MODE == Mode.pandas:
@@ -881,38 +879,46 @@ if VDF_MODE == Mode.pandas:
 
     visualize.__doc__ = _doc_visualize
 
-
-    def _to_csv(self, path_or_buf, **kwargs):
-        if "*" in str(path_or_buf):
-            path_or_buf = path_or_buf.replace("*", "")
-        return self._old_to_csv(path_or_buf, **kwargs)
-
-
     delayed: Any = _delayed
     delayed.__doc__ = _doc_delayed
     concat: Any = pandas.concat
 
-    # from_dict = FrontEnd.from_dict  # !pandas
     from_pandas = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
-    # from_arrow = FrontEnd.from_arrow  # !pandas, !dask
     from_backend = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
 
     from_pandas.__doc__ = _doc_from_pandas
     from_backend.__doc__ = _doc_from_backend
 
-    read_csv = FrontEnd.read_csv  # pandas
-    read_excel = _warn(FrontEnd.read_excel, "cudf, dask or dask_cudf")  # pandas
-    read_fwf = _warn(FrontEnd.read_fwf,"cudf")  # pandas
-    read_hdf = FrontEnd.read_hdf  # pandas
-    read_json = FrontEnd.read_json  # pandas
+    read_csv = _patch_read(FrontEnd, "read_csv")  # pandas
+    read_excel = _patch_read(FrontEnd, "read_excel", "cudf, dask or dask_cudf")  # pandas
+    read_fwf = _patch_read(FrontEnd, "read_fwf", "cudf and dask_cudf")  # pandas
+    read_hdf = _patch_read(FrontEnd, "read_hdf", "dask_cudf")  # pandas
+    read_json = _patch_read(FrontEnd, "read_json")  # pandas
     read_orc = FrontEnd.read_orc  # pandas
     read_parquet = FrontEnd.read_parquet  # pandas
-    read_sql = _warn(FrontEnd.read_sql,"cudf")  # pandas
-    read_sql_query = _warn(FrontEnd.read_sql_query,"cudf")  # pandas
-    read_sql_table = _warn(FrontEnd.read_sql_table,"cudf")  # pandas
-    read_table = _warn(FrontEnd.read_table,"cudf")  # pandas
+    read_sql = _warn(FrontEnd.read_sql, "cudf and dask_cudf")  # pandas
 
     # Add-on and patch of original dataframes and series
+    _extra_params = ["single_file",
+                     "name_function",
+                     "compute",
+                     "scheduler",
+                     "header_first_partition_only",
+                     "compute_kwargs"]
+    _patch_to(_VDataFrame, "to_csv", _extra_params)
+    _patch_to(_VDataFrame, "to_excel", _extra_params, "cudf, dask and dask_cudf")
+    _VDataFrame.to_fwf = _not_implemented
+    _patch_to(_VDataFrame, "to_hdf", _extra_params)
+    _patch_to(_VDataFrame, "to_json", _extra_params)
+    _VDataFrame.to_orc = _not_implemented
+    _patch_to(_VDataFrame, "to_parquet", _extra_params)
+    _patch_to(_VDataFrame, "to_sql", _extra_params)
+
+    _VDataFrame.to_pandas = lambda self: self
+    _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
+    _VDataFrame.to_backend = lambda self: self
+    _VDataFrame.to_backend.__doc__ = _doc_VDataFrame_to_pandas
+
     _VDataFrame.apply_rows = _apply_rows
     _VDataFrame.apply_rows.__doc__ = _doc_apply_rows
     _VDataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, *args, **kwargs)
@@ -921,14 +927,6 @@ if VDF_MODE == Mode.pandas:
     _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
     _VDataFrame.visualize = lambda self: visualize(self)
     _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
-    _VDataFrame.to_pandas = lambda self: self
-    _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
-    _VDataFrame.to_backend = lambda self: self
-    _VDataFrame.to_backend.__doc__ = _doc_VDataFrame_to_pandas
-    if "_old_to_csv" not in _VDataFrame.__dict__:
-        _VDataFrame._old_to_csv = _VDataFrame.to_csv
-    _VDataFrame.to_csv = _remove_to_csv(_to_csv)
-    _VDataFrame.to_csv.__doc__ = _doc_VDataFrame_to_csv
     _VDataFrame.categorize = lambda self: self
     _VDataFrame.categorize.__doc__ = _doc_categorize
 
@@ -1000,5 +998,7 @@ __all__: List[str] = ['VDF_MODE', 'Mode',
                       'VDataFrame', 'VSeries',
                       'delayed', 'compute',
                       'BackEnd', 'BackEndDataFrame', 'BackEndSeries',
-                      'FrontEnd'
+                      'FrontEnd',
+                      'read_csv', 'read_excel', 'read_fwf', 'read_hdf', 'read_json', 'read_orc', 'read_parquet',
+                      'read_sql',
                       ]
