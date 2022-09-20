@@ -108,7 +108,9 @@ To connect to a cluster, use `VDF_CLUSTER` with protocol, host and optionaly, th
 | cudf       | -     | -                | No scheduler     |
 | modin      | -     | -                | No scheduler     |
 | dask       | Yes   | -                | synchronous      |
-| dask       | No    | -                | processes        |
+| dask       | No    | -                | thread           |
+| dask       | No    | threads          | thread           |
+| dask       | No    | processes        | processes        |
 | dask       | No    | dask://localhost | LocalCluster     |
 | dask_modin | No    | -                | LocalCluster     |
 | dask_modin | No    | dask://localhost | LocalCluster     |
@@ -182,6 +184,16 @@ $ pip install "virtual_dataframe@git+https://github.com/pprados/virtual-datafram
 | vdf.@delayed                           | Delayed function (do nothing or dask.delayed)   |
 | vdf.concat(...)                        | Merge VDataFrame                                |
 | vdf.read_csv(...)                      | Read VDataFrame from CSVs *glob* files          |
+| vdf.read_excel(...)<sup>*</sup>        | Read VDataFrame from CSVs *glob* files          |
+| vdf.read_fwf(...)<sup>*</sup>          | Read VDataFrame from CSVs *glob* files          |
+| vdf.read_hdf(...)                      | Read VDataFrame from CSVs *glob* files          |
+| vdf.read_json(...)                     | Read VDataFrame from CSVs *glob* files          |
+| vdf.read_orc(...)                      | Read VDataFrame from CSVs *glob* files          |
+| vdf.read_parquet(...)                  | Read VDataFrame from CSVs *glob* files          |
+| vdf.read_sql(...)<sup>*</sup>          | Read VDataFrame from CSVs *glob* files          |
+| vdf.read_sql_query(...)<sup>*</sup>    | Read VDataFrame from CSVs *glob* files          |
+| vdf.read_sql_table(...)<sup>*</sup>    | Read VDataFrame from CSVs *glob* files          |
+| vdf.read_table(...)<sup>*</sup>        | Read VDataFrame from CSVs *glob* files          |
 | vdf.from_pandas(pdf, npartitions=...)  | Create Virtual Dataframe from Pandas DataFrame  |
 | vdf.from_backend(vdf, npartitions=...) | Create Virtual Dataframe from backend dataframe |
 | vdf.compute([...])                     | Compute multiple @delayed functions             |
@@ -206,6 +218,9 @@ $ pip install "virtual_dataframe@git+https://github.com/pprados/virtual-datafram
 | VClient(...)                           | The connexion with the cluster                  |
 | VDF_MODE                               | The current mode                                |
 | Mode                                   | The enumeration of differents mode              |
+
+<sup>*</sup> some frameworks do not implement it, see below
+
 
 You can read a sample notebook [here](https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo.ipynb)
 for an exemple of all API.
@@ -248,6 +263,24 @@ This project is just a wrapper. So, it inherits limitations and bugs from other 
 | Categories with strings not implemented                                                         |
 
 To be compatible with all framework, you must only use the common features.
+
+| read_...       | pandas | cudf | modin | dask   | dask_cudf |
+|----------------|--------|------|-------|--------|-----------|
+| read_csv       | ✓      | ✓    | ✓     | ✓      | ✓         |
+| read_excel     | ✓      |      | ✓     |        |           |
+| read_fwf       | ✓      |      | ✓     | ✓      | ✓         |
+| read_hdf       | ✓      | ✓    | ✓     | ✓      | ✓         |
+| read_json      | ✓      | ✓    | ✓     | ✓      | ✓         |
+| read_orc       | ✓      | ✓    | ✓     | ✓      | ✓         |
+| read_parquet   | ✓      | ✓    | ✓     | ✓      | ✓         |
+| read_sql       | ✓      |      | ✓     | ✓      | ✓         |
+| read_sql_query | ✓      |      | ✓     | ✓      | ✓         |
+| read_sql_table | ✓      |      | ✓     | ✓      | ✓         |
+| read_table     | ✓      |      | ✓     | ✓      | ✓         |
+
+
+
+
 
 |       | small data         | middle data      | big data                        |
 |-------|--------------------|------------------|---------------------------------|

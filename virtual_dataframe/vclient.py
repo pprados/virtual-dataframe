@@ -95,6 +95,10 @@ def _new_VClient(mode: Mode,
         if DEBUG:
             dask.config.set(scheduler='synchronous')  # type: ignore
             LOGGER.warning("Use synchronous scheduler for debuging")
+        elif host == 'threads':
+            dask.config.set(scheduler='threads')  # type: ignore
+        elif host == 'processes':
+            dask.config.set(scheduler='processes')  # type: ignore
         else:
             if host in ("localhost", "127.0.0.1"):
                 if mode == Mode.dask_cudf:
