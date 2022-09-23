@@ -94,12 +94,13 @@
     </ul>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Contribute</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="contribute/">contribute</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="commands/">Commands</a>
-                  </li>
+                <li class="toctree-l1"><a class="reference internal" href="contribute/">Contribute</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="commands/">Commands</a>
+                </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="CHANGELOG/">Changelog</a>
@@ -137,17 +138,21 @@
 Do you want to be able to choose the best framework after simply performing performance measurements?
 This framework unifies multiple Panda-compatible components, to allow the writing of a single code, compatible with all.</p>
 <h2 id="synopsis">Synopsis</h2>
-<p>With some parameters and Virtual classes, it's possible to write a code, and execute this code:
-- With or without multicore
-- With or without cluster (multi nodes)
-- With or without GPU</p>
+<p>With some parameters and Virtual classes, it's possible to write a code, and execute this code:</p>
+<ul>
+<li>With or without multicore</li>
+<li>With or without cluster (multi nodes)</li>
+<li>With or without GPU</li>
+</ul>
 <p>To do that, we create some virtual classes, add some methods in others classes, etc.</p>
 <p>It's difficult to use a combinaison of framework, with the same classe name, with similare semantic, etc.
-For example, if you want to use in the same program, Dask, cudf, pandas and modin, you must manage:
-- <code>pandas.DataFrame</code>, <code>pandas,Series</code>
-- <code>modin.pandas.DataFrame</code>, <code>modin.pandas.Series</code>
-- <code>cudf.DataFrame</code>, <code>cudf.Series</code>
-- <code>dask.DataFrame</code>, <code>dask.Series</code></p>
+For example, if you want to use in the same program, Dask, cudf, pandas and modin, you must manage:</p>
+<ul>
+<li><code>pandas.DataFrame</code>, <code>pandas,Series</code></li>
+<li><code>modin.pandas.DataFrame</code>, <code>modin.pandas.Series</code></li>
+<li><code>cudf.DataFrame</code>, <code>cudf.Series</code></li>
+<li><code>dask.DataFrame</code>, <code>dask.Series</code></li>
+</ul>
 <p>With <code>cudf</code>, the code must call <code>.to_pandas()</code>. With dask, the code must call <code>.compute()</code>, can use <code>@delayed</code> or
 <code>dask.distributed.Client</code>. etc.</p>
 <p>We propose to replace all these classes and scenarios, with a <em>uniform model</em>,
@@ -162,7 +167,7 @@ of the selected framework.</p>
 <p>With some parameters, the real classes may be <code>pandas.DataFrame</code>, <code>modin.pandas.DataFrame</code>,
 <code>cudf.DataFrame</code>, <code>dask.dataframe.DataFrame</code> with Pandas or
 <code>dask.dataframe.DataFrame</code> with cudf (with Pandas or cudf for each partition).</p>
-<p>To manage the initialisation of a Dask or Ray cluster, you must use the <code>VClient()</code>. This alias, can be automatically
+<p>To manage the initialisation of a Dask, you must use the <code>VClient()</code>. This alias, can be automatically
 initialized with some environment variables.</p>
 <pre><code class="language-python"># Sample of code, compatible Pandas, cudf, modin, dask and dask_cudf
 from virtual_dataframe import *
@@ -213,7 +218,7 @@ with (VClient()):
 <td>Dask with single thread and pandas</td>
 </tr>
 <tr>
-<td>VDF_MODE=dask-cudf<br />DEBUG=True</td>
+<td>VDF_MODE=dask_cudf<br />DEBUG=True</td>
 <td>Dask with single thread and cuDF</td>
 </tr>
 <tr>
@@ -221,7 +226,7 @@ with (VClient()):
 <td>Dask with local cluster and pandas</td>
 </tr>
 <tr>
-<td>VDF_MODE=dask-cudf<br />VDF_CLUSTER=dask://localhost</td>
+<td>VDF_MODE=dask_cudf<br />VDF_CLUSTER=dask://localhost</td>
 <td>Dask with local cuda cluster and cuDF</td>
 </tr>
 <tr>
@@ -229,24 +234,16 @@ with (VClient()):
 <td>Dask with remote cluster and Pandas</td>
 </tr>
 <tr>
-<td>VDF_MODE=dask-cudf<br />VDF_CLUSTER=dask://...:ppp</td>
+<td>VDF_MODE=dask_cudf<br />VDF_CLUSTER=dask://...:ppp</td>
 <td>Dask with remote cluster and cuDF</td>
 </tr>
 <tr>
-<td>VDF_MODE=dask-modin<br />VDF_CLUSTER=dask://localhost</td>
+<td>VDF_MODE=dask_modin<br />VDF_CLUSTER=dask://localhost</td>
 <td>Dask with local cluster and modin</td>
 </tr>
 <tr>
-<td>VDF_MODE=ray-modin<br />VDF_CLUSTER=ray://localhost</td>
-<td>Ray with local cluster and modin</td>
-</tr>
-<tr>
-<td>VDF_MODE=dask-modin<br />VDF_CLUSTER=dask://...:ppp</td>
+<td>VDF_MODE=dask_modin<br />VDF_CLUSTER=dask://...:ppp</td>
 <td>Dask with remote cluster and modin</td>
-</tr>
-<tr>
-<td>VDF_MODE=ray-modin<br />VDF_CLUSTER=ray://...:ppp</td>
-<td>Ray with remote cluster and modin</td>
 </tr>
 </tbody>
 </table>
@@ -258,13 +255,15 @@ But, you must use, only the common feature with all frameworks.
 After this effort, it's possible to compare the performance about the differents technologies,
 or propose a component, compatible with differents scenario.</p>
 <p>For the deployment of your project, you can select the best framework for your process (in a dockerfile?),
-with only one ou two environment variable.</p>
+with only one ou two environment variables.</p>
 <h2 id="cluster">Cluster</h2>
-<p>To connect to a cluster, use <code>VDF_CLUSTER</code> with protocol, host and optionaly, the port.
-- dask://locahost:8787
-- ray://locahost:10001
-- ray:auto
-- or alternativelly, use <code>DASK_SCHEDULER_SERVICE_HOST</code> and <code>DASK_SCHEDULER_SERVICE_PORT</code></p>
+<p>To connect to a cluster, use <code>VDF_CLUSTER</code> with protocol, host and optionaly, the port.</p>
+<ul>
+<li>dask://locahost:8787</li>
+<li>ray://locahost:10001</li>
+<li>ray:auto</li>
+<li>or alternativelly, use <code>DASK_SCHEDULER_SERVICE_HOST</code> and <code>DASK_SCHEDULER_SERVICE_PORT</code></li>
+</ul>
 <table>
 <thead>
 <tr>
@@ -380,9 +379,6 @@ with (VClient())
     # Now, use the scheduler
 </code></pre>
 <h2 id="installation">Installation</h2>
-<blockquote>
-<p>Warning: At this time, the packages are not published in pip or conda repositories</p>
-</blockquote>
 <h3 id="installing-with-conda-recommended">Installing with Conda (recommended)</h3>
 <pre><code class="language-shell">$ conda install -q -y \
     -c rapidsai -c nvidia -c conda-forge \
@@ -398,8 +394,11 @@ $ conda install -q -y \
 <h3 id="installing-with-pip">Installing with pip</h3>
 <p>With PIP, it's not possible to install <a href="https://developer.nvidia.com/rapids">NVidia Rapids</a> to use
 the GPU. A limited list of dependencies is possible.</p>
-<p>NOW: use</p>
-<pre><code class="language-shell">$ pip install git+https://github.com/pprados/virtual_dataframe.git#all
+<blockquote>
+<p>:warning: <strong>Warning: At this time, the packages are not published in pip or conda repositories</strong>
+Use</p>
+</blockquote>
+<pre><code class="language-shell">$ pip install &quot;virtual_dataframe[all]@git+https://github.com/pprados/virtual-dataframe&quot;
 </code></pre>
 <p>When the project were published, use</p>
 <pre><code class="language-shell">$ pip install &quot;virtual_dataframe[all]&quot;
@@ -619,16 +618,18 @@ $ pip install &quot;virtual_dataframe[$VDF_MODE]@git+https://github.com/pprados/
 <p><sup>*</sup> some frameworks do not implement it, see below</p>
 <p>You can read a sample notebook <a href="https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo.ipynb">here</a>
 for an exemple of all API.</p>
-<p>Each API propose a specific version for each framework. For example:
-- the  <code>toPandas()</code> with Panda, return <code>self</code>
-- <code>@delayed</code> use the dask <code>@delayed</code> or do nothing, and apply the code when the function was called.
+<p>Each API propose a specific version for each framework. For example:</p>
+<ul>
+<li>the  <code>toPandas()</code> with Panda, return <code>self</code></li>
+<li><code>@delayed</code> use the dask <code>@delayed</code> or do nothing, and apply the code when the function was called.
 In the first case, the function return a part of the graph. In the second case, the function return immediately
-the result.
-- <code>read_csv("file*.csv")</code> read each file in parallele with dask by each worker,
-and read sequencially each file, and combine each dataframe, with a framework without distribution (pandas, cudf)
-- <code>save_csv("file*.csv")</code> write each file in parallele with dask, and write one file <code>"file.csv"</code> (without the star)
-with a framework without distribution (pandas, cudf)
-- ...</p>
+the result.</li>
+<li><code>read_csv("file*.csv")</code> read each file in parallele with dask by each worker,
+and read sequencially each file, and combine each dataframe, with a framework without distribution (pandas, cudf)</li>
+<li><code>save_csv("file*.csv")</code> write each file in parallele with dask, and write one file <code>"file.csv"</code> (without the star)
+with a framework without distribution (pandas, cudf)</li>
+<li>...</li>
+</ul>
 <h2 id="compatibility">Compatibility</h2>
 <p>This project is just a wrapper. So, it inherits limitations and bugs from other projects. Sorry for that.</p>
 <table>
@@ -1038,7 +1039,7 @@ Each cell is strongly compatible with the upper left part.</p>
 </table>
 <p>and accept all the limitations.</p>
 <h2 id="best-practices">Best practices</h2>
-<p>For write a code, optimized with all frameworks, you must use some <em>best practices</em>."</p>
+<p>For write a code, optimized with all frameworks, you must use some <em>best practices</em>.</p>
 <h3 id="use-read-file">Use <em>read file</em></h3>
 <p>It's not a good idea to use the constructor of <code>VDataFrame</code> or <code>VSeries</code> because, all the datas
 must be in memory in the driver. If the dataframe is big, an <em>out of memory</em> can happen.
@@ -1064,52 +1065,11 @@ def f()-&gt; int:
 real_result,=compute(f())  # Warning, compute return a tuple. The comma is important.
 a,b = compute(f(),f())
 </code></pre>
-<h1 id="contribute">Contribute</h1>
-<h2 id="the-latest-version">The latest version</h2>
-<p>Clone the git repository</p>
-<pre><code class="language-bash">$ git clone --recurse-submodules https://github.com/pprados/virtual-dataframe.git
-</code></pre>
-<h2 id="installation_1">Installation</h2>
-<p>Go inside the directory and</p>
-<pre><code class="language-bash">$ make configure
-$ conda activate virtual_dataframe
-$ make test
-</code></pre>
-<h2 id="tests">Tests</h2>
-<p>To test the project</p>
-<pre><code class="language-bash">$ make test
-</code></pre>
-<p>To validate the typing</p>
-<pre><code class="language-bash">$ make typing
-</code></pre>
-<p>To validate all the project</p>
-<pre><code class="language-bash">$ make validate
-</code></pre>
-<h2 id="project-organization">Project Organization</h2>
-<pre><code>├── Makefile                    &lt;- Makefile with commands like `make data` or `make train`
-├── README.md                   &lt;- The top-level README for developers using this project.
-├── data
-├── docs                        &lt;- A default Sphinx project; see sphinx-doc.org for details
-├── conda_recipe                &lt;- Script to build the conda package
-│
-├── notebooks                   &lt;- Jupyter notebooks. Naming convention is a number (for ordering),
-│   │                              the creator's initials, and a short `-` delimited description, e.g.
-│   │                              `1.0-jqp-initial-data-exploration`.
-│   └── demo.ipynb              &lt;- A demo for all API
-│
-├── setup.py                    &lt;- makes project pip installable (pip install -e .[tests])
-│                                  so sources can be imported and dependencies installed
-├── virtual_dataframe           &lt;- Source code for use in this project
-│   ├── __init__.py             &lt;- Makes src a Python module
-│   └── *.py                    &lt;- Framework codes
-│
-└── tests                       &lt;- Unit and integrations tests ((Mark directory as a sources root).
-</code></pre>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="contribute/" class="btn btn-neutral float-right" title="contribute">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="contribute/" class="btn btn-neutral float-right" title="Contribute">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -1156,5 +1116,5 @@ $ make test
 
 <!--
 MkDocs version : 1.3.1
-Build Date UTC : 2022-09-23 11:59:38.255517+00:00
+Build Date UTC : 2022-09-23 12:22:35.331505+00:00
 -->
