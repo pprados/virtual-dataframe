@@ -149,7 +149,8 @@ For example, if you want to use in the same program, Dask, cudf, pandas and modi
 <p>We propose to replace all these classes and scenarios, with a <em>uniform model</em>,
 inspired by <a href="https://www.dask.org/">dask</a> (the more complex API).
 Then, it is possible to write one code, and use it in differents environnements and frameworks.</p>
-<p>This project is essentially a back-port of <em>Dask+Cudf</em> to others frameworks.</p>
+<p>This project is essentially a back-port of <em>Dask+Cudf</em> to others frameworks.
+We try to normalize the API of all frameworks.</p>
 <p>To reduce the confusion, you must use the classes <code>VDataFrame</code> and <code>VSeries</code> (The prefix <code>V</code> is for <em>Virtual</em>).
 These classes propose the methods <code>.to_pandas()</code> and <code>.compute()</code> for each version, but are the <em>real</em> classes
 of the selected framework.</p>
@@ -298,6 +299,18 @@ with only one ou two environment variable.</p>
 <td>dask</td>
 <td>No</td>
 <td>-</td>
+<td>thread</td>
+</tr>
+<tr>
+<td>dask</td>
+<td>No</td>
+<td>threads</td>
+<td>thread</td>
+</tr>
+<tr>
+<td>dask</td>
+<td>No</td>
+<td>processes</td>
 <td>processes</td>
 </tr>
 <tr>
@@ -381,6 +394,10 @@ $ conda install -q -y \
 <h3 id="installing-with-pip">Installing with pip</h3>
 <p>With PIP, it's not possible to install <a href="https://developer.nvidia.com/rapids">NVidia Rapids</a> to use
 the GPU. A limited list of dependencies is possible.</p>
+<p>NOW: use</p>
+<pre><code class="language-shell">$ pip install git+https://github.com/pprados/virtual_dataframe.git#all
+</code></pre>
+<p>When the project were published, use</p>
 <pre><code class="language-shell">$ pip install &quot;virtual_dataframe[all]&quot;
 </code></pre>
 <p>or, for a selected framework</p>
@@ -422,6 +439,34 @@ $ pip install &quot;virtual_dataframe[$VDF_MODE]@git+https://github.com/pprados/
 <td>Read VDataFrame from CSVs <em>glob</em> files</td>
 </tr>
 <tr>
+<td>vdf.read_excel(...)<sup>*</sup></td>
+<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.read_fwf(...)<sup>*</sup></td>
+<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.read_hdf(...)<sup>*</sup></td>
+<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.read_json(...)</td>
+<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.read_orc(...)</td>
+<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.read_parquet(...)</td>
+<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.read_sql_table(...)<sup>*</sup></td>
+<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+</tr>
+<tr>
 <td>vdf.from_pandas(pdf, npartitions=...)</td>
 <td>Create Virtual Dataframe from Pandas DataFrame</td>
 </tr>
@@ -458,6 +503,14 @@ $ pip install &quot;virtual_dataframe[$VDF_MODE]@git+https://github.com/pprados/
 <td>Compute the virtual dataframe</td>
 </tr>
 <tr>
+<td>VDataFrame.persist()</td>
+<td>Persist the dataframe in memory</td>
+</tr>
+<tr>
+<td>VDataFrame.repartition()</td>
+<td>Rebalance the dataframe</td>
+</tr>
+<tr>
 <td>VDataFrame.visualize()</td>
 <td>Create an image with the graph</td>
 </tr>
@@ -468,6 +521,34 @@ $ pip install &quot;virtual_dataframe[$VDF_MODE]@git+https://github.com/pprados/
 <tr>
 <td>VDataFrame.to_csv()</td>
 <td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_excel()<sup>*</sup></td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_feather()<sup>*</sup></td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_hdf()<sup>*</sup></td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_json()</td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_orc()</td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_parquet()</td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_sql()<sup>*</sup></td>
+<td>Save to sql table</td>
 </tr>
 <tr>
 <td>VDataFrame.to_numpy()</td>
@@ -492,6 +573,18 @@ $ pip install &quot;virtual_dataframe[$VDF_MODE]@git+https://github.com/pprados/
 <tr>
 <td>VSeries.compute()</td>
 <td>Compute the virtual series</td>
+</tr>
+<tr>
+<td>VSeries.persist()</td>
+<td>Persist the dataframe in memory</td>
+</tr>
+<tr>
+<td>VSeries.repartition()</td>
+<td>Rebalance the dataframe</td>
+</tr>
+<tr>
+<td>VSeries.visualize()</td>
+<td>Create an image with the graph</td>
 </tr>
 <tr>
 <td>VSeries.to_pandas()</td>
@@ -519,6 +612,7 @@ $ pip install &quot;virtual_dataframe[$VDF_MODE]@git+https://github.com/pprados/
 </tr>
 </tbody>
 </table>
+<p><sup>*</sup> some frameworks do not implement it, see below</p>
 <p>You can read a sample notebook <a href="https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo.ipynb">here</a>
 for an exemple of all API.</p>
 <p>Each API propose a specific version for each framework. For example:
@@ -599,7 +693,207 @@ with a framework without distribution (pandas, cudf)
 </tr>
 </tbody>
 </table>
-<p>To be compatible with all framework, you must only use the common features.</p>
+<p>To be compatible with all framework, you must only use the common features.
+We accept some function to read or write files, but we write a warning
+if you use a function not compatible with others frameworks.</p>
+<table>
+<thead>
+<tr>
+<th>read_... / to_...</th>
+<th align="center">pandas</th>
+<th align="center">cudf</th>
+<th align="center">modin</th>
+<th align="center">dask</th>
+<th align="center">dask_cudf</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>vdf.read_csv</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>VDataFrame.to_csv</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>VSeries.to_csv</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>vdf.read_excel</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VDataFrame.to_excel</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VSeries.to_excel</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>vdf.read_feather</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VDataFrame.to_feather</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>vdf.read_fwf</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VDataFrame.to_fwf</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>vdf.read_hdf</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VDataFrame.to_hdf</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VSeries.to_hdf</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>vdf.read_json</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>VDataFrame.to_json</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>VSeries.to_json</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>vdf.read_orc</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>VDataFrame.to_orc</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>vdf.read_parquet</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>VDataFrame.to_parquet</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>vdf.read_sql_table</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VDataFrame.to_sql</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VSeries.to_sql</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
 <table>
 <thead>
 <tr>
@@ -856,5 +1150,5 @@ $ make test
 
 <!--
 MkDocs version : 1.3.1
-Build Date UTC : 2022-09-15 11:50:48.550222+00:00
+Build Date UTC : 2022-09-23 11:55:46.272594+00:00
 -->
