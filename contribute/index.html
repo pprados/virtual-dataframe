@@ -100,7 +100,7 @@
 <p>Go inside the directory and</p>
 <pre><code class="language-bash">$ make configure
 $ conda activate virtual_dataframe
-$ make test
+$ make
 </code></pre>
 <h2 id="tests">Tests</h2>
 <p>To test the project</p>
@@ -115,15 +115,9 @@ $ make test
 <h2 id="project-organization">Project Organization</h2>
 <pre><code>├── Makefile                    &lt;- Makefile with commands like `make data` or `make train`
 ├── README.md                   &lt;- The top-level README for developers using this project.
-├── data
-├── docs                        &lt;- A default Sphinx project; see sphinx-doc.org for details
+├── docs                        &lt;- A default mkdocs
 ├── conda_recipe                &lt;- Script to build the conda package
-│
 ├── notebooks                   &lt;- Jupyter notebooks. Naming convention is a number (for ordering),
-│   │                              the creator's initials, and a short `-` delimited description, e.g.
-│   │                              `1.0-jqp-initial-data-exploration`.
-│   └── demo.ipynb              &lt;- A demo for all API
-│
 ├── setup.py                    &lt;- makes project pip installable (pip install -e .[tests])
 │                                  so sources can be imported and dependencies installed
 ├── virtual_dataframe           &lt;- Source code for use in this project
