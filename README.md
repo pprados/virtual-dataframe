@@ -11,6 +11,7 @@ This framework unifies multiple Panda-compatible components, to allow the writin
 ## Synopsis
 
 With some parameters and Virtual classes, it's possible to write a code, and execute this code:
+
 - With or without multicore
 - With or without cluster (multi nodes)
 - With or without GPU
@@ -19,6 +20,7 @@ To do that, we create some virtual classes, add some methods in others classes, 
 
 It's difficult to use a combinaison of framework, with the same classe name, with similare semantic, etc.
 For example, if you want to use in the same program, Dask, cudf, pandas and modin, you must manage:
+
 - `pandas.DataFrame`, `pandas,Series`
 - `modin.pandas.DataFrame`, `modin.pandas.Series`
 - `cudf.DataFrame`, `cudf.Series`
@@ -44,7 +46,7 @@ With some parameters, the real classes may be `pandas.DataFrame`, `modin.pandas.
 `cudf.DataFrame`, `dask.dataframe.DataFrame` with Pandas or
 `dask.dataframe.DataFrame` with cudf (with Pandas or cudf for each partition).
 
-To manage the initialisation of a Dask or Ray cluster, you must use the `VClient()`. This alias, can be automatically
+To manage the initialisation of a Dask, you must use the `VClient()`. This alias, can be automatically
 initialized with some environment variables.
 
 ```python
@@ -74,15 +76,13 @@ With this framework, you can select your environment, to run or debug your code.
 | VDF_MODE=dask                                         | Dask with local multiple process and pandas |
 | VDF_MODE=dask-cudf                                    | Dask with local multiple process and cuDF   |
 | VDF_MODE=dask<br />DEBUG=True                         | Dask with single thread and pandas          |
-| VDF_MODE=dask-cudf<br />DEBUG=True                    | Dask with single thread and cuDF            |
+| VDF_MODE=dask_cudf<br />DEBUG=True                    | Dask with single thread and cuDF            |
 | VDF_MODE=dask<br />VDF_CLUSTER=dask://localhost       | Dask with local cluster and pandas          |
-| VDF_MODE=dask-cudf<br />VDF_CLUSTER=dask://localhost  | Dask with local cuda cluster and cuDF       |
+| VDF_MODE=dask_cudf<br />VDF_CLUSTER=dask://localhost  | Dask with local cuda cluster and cuDF       |
 | VDF_MODE=dask<br />VDF_CLUSTER=dask://...:ppp         | Dask with remote cluster and Pandas         |
-| VDF_MODE=dask-cudf<br />VDF_CLUSTER=dask://...:ppp    | Dask with remote cluster and cuDF           |
-| VDF_MODE=dask-modin<br />VDF_CLUSTER=dask://localhost | Dask with local cluster and modin           |
-| VDF_MODE=ray-modin<br />VDF_CLUSTER=ray://localhost   | Ray with local cluster and modin            |
-| VDF_MODE=dask-modin<br />VDF_CLUSTER=dask://...:ppp   | Dask with remote cluster and modin          |
-| VDF_MODE=ray-modin<br />VDF_CLUSTER=ray://...:ppp     | Ray with remote cluster and modin           |
+| VDF_MODE=dask_cudf<br />VDF_CLUSTER=dask://...:ppp    | Dask with remote cluster and cuDF           |
+| VDF_MODE=dask_modin<br />VDF_CLUSTER=dask://localhost | Dask with local cluster and modin           |
+| VDF_MODE=dask_modin<br />VDF_CLUSTER=dask://...:ppp   | Dask with remote cluster and modin          |
 
 The real compatibilty between the differents simulation of Pandas, depends on the implement of the modin, cudf or dask.
 Sometime, you can use the `VDF_MODE` variable, to update some part of code, between the selected backend.
@@ -94,10 +94,11 @@ After this effort, it's possible to compare the performance about the differents
 or propose a component, compatible with differents scenario.
 
 For the deployment of your project, you can select the best framework for your process (in a dockerfile?),
-with only one ou two environment variable.
+with only one ou two environment variables.
 
 ## Cluster
 To connect to a cluster, use `VDF_CLUSTER` with protocol, host and optionaly, the port.
+
 - dask://locahost:8787
 - ray://locahost:10001
 - ray:auto
@@ -132,7 +133,6 @@ with (VClient())
 ```
 
 ## Installation
-> Warning: At this time, the packages are not published in pip or conda repositories
 ### Installing with Conda (recommended)
 ```shell
 $ conda install -q -y \
@@ -152,9 +152,10 @@ The package `virtual_dataframe` (without suffix) has no *framework* dependencies
 With PIP, it's not possible to install [NVidia Rapids](https://developer.nvidia.com/rapids) to use
 the GPU. A limited list of dependencies is possible.
 
-NOW: use
+> :warning: **Warning: At this time, the packages are not published in pip or conda repositories**
+Use
 ```shell
-$ pip install git+https://github.com/pprados/virtual_dataframe.git#all
+$ pip install "virtual_dataframe[all]@git+https://github.com/pprados/virtual-dataframe"
 ```
 When the project were published, use
 ```shell
@@ -242,6 +243,7 @@ You can read a sample notebook [here](https://github.com/pprados/virtual-datafra
 for an exemple of all API.
 
 Each API propose a specific version for each framework. For example:
+
 - the  `toPandas()` with Panda, return `self`
 - `@delayed` use the dask `@delayed` or do nothing, and apply the code when the function was called.
 In the first case, the function return a part of the graph. In the second case, the function return immediately
@@ -278,6 +280,7 @@ This project is just a wrapper. So, it inherits limitations and bugs from other 
 | See cudf and dask.                                                                              |
 | Categories with strings not implemented                                                         |
 
+### File format compatibility
 To be compatible with all framework, you must only use the common features.
 We accept some function to read or write files, but we write a warning
 if you use a function not compatible with others frameworks.
@@ -310,7 +313,7 @@ if you use a function not compatible with others frameworks.
 
 
 
-
+### Cross framework compatibility
 
 |       | small data         | middle data      | big data                        |
 |-------|--------------------|------------------|---------------------------------|
@@ -365,7 +368,7 @@ and accept all the limitations.
 
 ## Best practices
 
-For write a code, optimized with all frameworks, you must use some *best practices*."
+For write a code, optimized with all frameworks, you must use some *best practices*.
 
 ### Use *read file*
 It's not a good idea to use the constructor of `VDataFrame` or `VSeries` because, all the datas
@@ -399,62 +402,4 @@ def f()-> int:
 real_result,=compute(f())  # Warning, compute return a tuple. The comma is important.
 a,b = compute(f(),f())
 ```
-
-# Contribute
-
-## The latest version
-
-Clone the git repository
-
-```bash
-$ git clone --recurse-submodules https://github.com/pprados/virtual-dataframe.git
-```
-
-## Installation
-
-Go inside the directory and
-```bash
-$ make configure
-$ conda activate virtual_dataframe
-$ make test
-```
-
-## Tests
-
-To test the project
-```bash
-$ make test
-```
-
-To validate the typing
-```bash
-$ make typing
-```
-
-To validate all the project
-```bash
-$ make validate
-```
-
-## Project Organization
-
-    ├── Makefile                    <- Makefile with commands like `make data` or `make train`
-    ├── README.md                   <- The top-level README for developers using this project.
-    ├── data
-    ├── docs                        <- A default Sphinx project; see sphinx-doc.org for details
-    ├── conda_recipe                <- Script to build the conda package
-    │
-    ├── notebooks                   <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │   │                              the creator's initials, and a short `-` delimited description, e.g.
-    │   │                              `1.0-jqp-initial-data-exploration`.
-    │   └── demo.ipynb              <- A demo for all API
-    │
-    ├── setup.py                    <- makes project pip installable (pip install -e .[tests])
-    │                                  so sources can be imported and dependencies installed
-    ├── virtual_dataframe           <- Source code for use in this project
-    │   ├── __init__.py             <- Makes src a Python module
-    │   └── *.py                    <- Framework codes
-    │
-    └── tests                       <- Unit and integrations tests ((Mark directory as a sources root).
-
 

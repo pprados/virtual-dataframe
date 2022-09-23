@@ -4,8 +4,7 @@ repo_url: https://github.com/pprados/virtual_dataframe
 theme: readthedocs
 nav:
     - Home: README.md
-    - Contribute:
-      - contribute: contribute.md
-      - Commands: commands.md
+    - Contribute: 'contribute.md'
+    - Commands: 'commands.md'
     - Changelog: 'CHANGELOG.md'
 
