@@ -44,12 +44,44 @@ def test_visualize(vclient):
     assert vdf.visualize(f(42), f(50))
 
 
-def test_concat():
-    vdf.VClient()
+def test_concat(vclient):
     rc = list(vdf.concat([
         vdf.VDataFrame([1]),
         vdf.VDataFrame([2])]).to_pandas()[0])
     assert rc == [1, 2]
+
+
+def test_persist(vclient):
+    df1 = vdf.VDataFrame([1])
+    df2 = vdf.VDataFrame([2])
+
+    rc1,rc2 = vdf.persist(df1,df2)
+    assert rc1.to_pandas().equals(df1.to_pandas())
+    assert rc2.to_pandas().equals(df2.to_pandas())
+
+
+def test_dataframe_persist(vclient):
+    df = vdf.VDataFrame([1])
+    rc = df.persist()
+    assert rc.to_pandas().equals(df.to_pandas())
+
+
+def test_serie_persist(vclient):
+    s = vdf.VSeries([1])
+    rc = s.persist()
+    assert rc.to_pandas().equals(s.to_pandas())
+
+
+def test_dataframe_repartition(vclient):
+    df = vdf.VDataFrame([1])
+    rc = df.repartition(npartitions=1)
+    assert rc.to_pandas().equals(df.to_pandas())
+
+
+def test_serie_repartition(vclient):
+    s = vdf.VSeries([1])
+    rc = s.repartition(npartitions=1)
+    assert rc.to_pandas().equals(s.to_pandas())
 
 
 def test_from_pandas():

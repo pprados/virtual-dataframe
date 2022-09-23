@@ -7,7 +7,7 @@ import os
 import sys
 import warnings
 from functools import wraps
-from typing import Any, List, Tuple, Optional, Union, Callable, Dict, Type, Iterator
+from typing import Any, List, Tuple, Optional, Union, Callable, Dict, Type, Iterator, Iterable
 
 from pandas._typing import Axes, Dtype
 
@@ -134,7 +134,11 @@ _doc_VSeries_to_pandas = '''Convert VSeries to Pandas DataFrame'''
 _doc_VDataFrame_to_numpy = '''Convert VDataFrame to Numpy array'''
 _doc_VSeries_to_numpy = '''Convert VSeries to Numpy array'''
 _doc_VDataFrame_compute = '''Fake compute(). Return self.'''
+_doc_VDataFrame_persist = '''Fake persist(). Return self.'''
+_doc_VDataFrame_repartition = '''Fake repartition(). Return self.'''
 _doc_VSeries_compute = '''Fake compute(). Return self.'''
+_doc_VSeries_persist = '''Fake persist(). Return self.'''
+_doc_VSeries_repartition = '''Fake repartition(). Return self.'''
 _doc_VSeries_visualize = '''Fake visualize(). Return self.'''
 _doc_VDataFrame_visualize = '''Fake visualize(). Return self.'''
 _doc_VDataFrame_map_partitions = '''Apply Python function on each DataFrame partition.
@@ -291,6 +295,9 @@ if VDF_MODE in (Mode.pandas, Mode.cudf, Mode.modin, Mode.dask_modin):
 
             return decorate
 
+    def _persist(*collections, traverse=True, optimize_graph=True, scheduler=None,**kwargs):
+        return collections
+
 # %%
 # if VDF_MODE in (Mode.modin, Mode.dask_modin, Mode.ray_modin):
 if VDF_MODE in (Mode.modin, Mode.dask_modin):
@@ -394,6 +401,7 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
     visualize.__doc__ = _doc_visualize
 
     concat: Any = modin.pandas.concat
+    persist = _persist
 
     from_pandas: Any = lambda data, npartitions=1, chuncksize=None, sort=True, name=None: \
         modin.pandas.DataFrame(data) if isinstance(data, pandas.DataFrame) else modin.pandas.Series(data)
@@ -430,6 +438,10 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
     _VDataFrame.map_partitions.__doc__ = _doc_VDataFrame_map_partitions
     _VDataFrame.compute = lambda self, **kwargs: self
     _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
+    _VDataFrame.persist = lambda self, **kwargs: self
+    _VDataFrame.persist.__doc__ = _doc_VDataFrame_persist
+    _VDataFrame.repartition = lambda self, **kwargs: self
+    _VDataFrame.repartition.__doc__ = _doc_VDataFrame_persist
     _VDataFrame.visualize = lambda self: visualize(self)
     _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
     _VDataFrame.categorize = lambda self: self
@@ -440,6 +452,10 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
     _VSeries.map_partitions.__doc__ = _VSeries.map.__doc__
     _VSeries.compute = lambda self, **kwargs: self
     _VSeries.compute.__doc__ = _doc_VSeries_compute
+    _VSeries.persist = lambda self, **kwargs: self
+    _VSeries.persist.__doc__ = _doc_VSeries_persist
+    _VSeries.repartition = lambda self, **kwargs: self
+    _VSeries.repartition.__doc__ = _doc_VSeries_repartition
     _VSeries.visualize = lambda self: visualize(self)
     _VSeries.visualize.__doc__ = _doc_VSeries_visualize
     _VSeries.to_pandas = modin.pandas.Series._to_pandas
@@ -473,10 +489,11 @@ if VDF_MODE == Mode.dask_cudf:
     _from_back: Any = dask_cudf.from_cudf
 
     # High level functions
-    delayed: Any = dask.delayed
     compute: Any = dask.compute
-    visualize: Any = dask.visualize
     concat: _VDataFrame = dask.dataframe.multi.concat  # FIXME
+    delayed: Any = dask.delayed
+    persist: Iterable[_VDataFrame] = dask.persist
+    visualize: Any = dask.visualize
 
 
     def _from_pandas(df, npartitions=1):
@@ -607,10 +624,11 @@ if VDF_MODE == Mode.dask:
     # apply_chunck? (https://docs.rapids.ai/api/cudf/nightly/api_docs/api/cudf.DataFrame.apply_chunks.html)
 
     # High level functions
-    delayed: Any = dask.delayed
     compute: Any = dask.compute
-    visualize: Any = dask.visualize
     concat: _VDataFrame = FrontEnd.multi.concat
+    delayed: Any = dask.delayed
+    persist: Iterable[_VDataFrame] = dask.persist
+    visualize: Any = dask.visualize
 
     from_pandas: _VDataFrame = FrontEnd.from_pandas
     from_backend: _VDataFrame = FrontEnd.from_pandas
@@ -673,10 +691,6 @@ if VDF_MODE == Mode.dask:
     _VSeries.to_numpy = lambda self: self.compute().to_numpy()
     _VSeries.to_numpy.__doc__ = _doc_VSeries_to_numpy
 
-    # TODO set_index parameters https://docs.dask.org/en/latest/generated/dask.dataframe.DataFrame.set_index.html#dask.dataframe.DataFrame.set_index
-    # TODO client.persist(df)
-    # TODO: df.persist()
-    # TODO df.repartition
 # %%
 if VDF_MODE == Mode.cudf:
     import cudf
@@ -741,6 +755,8 @@ if VDF_MODE == Mode.cudf:
 
     visualize.__doc__ = _doc_visualize
 
+    persist = _persist
+
     concat: Any = cudf.concat
 
     from_pandas: _VDataFrame = _remove_dask_parameters(cudf.from_pandas)
@@ -786,6 +802,10 @@ if VDF_MODE == Mode.cudf:
     _VDataFrame.to_backend.__doc__ = _VDataFrame.to_pandas.__doc__
     _VDataFrame.compute = lambda self, **kwargs: self
     _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
+    _VDataFrame.persist = lambda self, **kwargs: self
+    _VDataFrame.persist.__doc__ = _doc_VDataFrame_persist
+    _VDataFrame.repartition = lambda self, **kwargs: self
+    _VDataFrame.repartition.__doc__ = _doc_VDataFrame_repartition
     _VDataFrame.visualize = lambda self: visualize(self)
     _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
     _VDataFrame.categorize = lambda self: self
@@ -797,6 +817,10 @@ if VDF_MODE == Mode.cudf:
     _VSeries.to_backend.__doc__ = _VSeries.to_pandas.__doc__
     _VSeries.compute = lambda self, **kwargs: self
     _VSeries.compute.__doc__ = _doc_VSeries_compute
+    _VSeries.persist = lambda self, **kwargs: self
+    _VSeries.persist.__doc__ = _doc_VSeries_persist
+    _VSeries.repartition = lambda self, **kwargs: self
+    _VSeries.repartition.__doc__ = _doc_VSeries_repartition
     _VSeries.visualize = lambda self: visualize(self)
     _VSeries.visualize.__doc__ = _doc_VSeries_visualize
 
@@ -904,6 +928,7 @@ if VDF_MODE == Mode.pandas:
     delayed: Any = _delayed
     delayed.__doc__ = _doc_delayed
     concat: Any = pandas.concat
+    persist: Iterable[_VDataFrame] = _persist
 
     from_pandas = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
     from_backend = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
@@ -950,6 +975,10 @@ if VDF_MODE == Mode.pandas:
     _VDataFrame.map_partitions.__doc__ = _VSeries.map.__doc__
     _VDataFrame.compute = lambda self, **kwargs: self
     _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
+    _VDataFrame.persist = lambda self, **kwargs: self
+    _VDataFrame.persist.__doc__ = _doc_VDataFrame_persist
+    _VDataFrame.repartition = lambda self, **kwargs: self
+    _VDataFrame.repartition.__doc__ = _doc_VDataFrame_repartition
     _VDataFrame.visualize = lambda self: visualize(self)
     _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
     _VDataFrame.categorize = lambda self: self
@@ -959,6 +988,10 @@ if VDF_MODE == Mode.pandas:
     _VSeries.map_partitions.__doc__ = _VSeries.map.__doc__
     _VSeries.compute = lambda self, **kwargs: self
     _VSeries.compute.__doc__ = _doc_VSeries_compute
+    _VSeries.persist = lambda self, **kwargs: self
+    _VSeries.persist.__doc__ = _doc_VSeries_persist
+    _VSeries.repartition = lambda self, **kwargs: self
+    _VSeries.repartition.__doc__ = _doc_VSeries_repartition
     _VSeries.visualize = lambda self: visualize(self)
     _VSeries.visualize.__doc__ = _doc_VSeries_visualize
     _VSeries.to_pandas = lambda self: self
@@ -1021,7 +1054,7 @@ class VSeries(_VSeries):
 # %%
 __all__: List[str] = ['VDF_MODE', 'Mode',
                       'VDataFrame', 'VSeries',
-                      'delayed', 'compute',
+                      'delayed', 'compute', 'persist',
                       'BackEnd', 'BackEndDataFrame', 'BackEndSeries',
                       'FrontEnd',
                       'read_csv', 'read_excel', 'read_feather', 'read_fwf',

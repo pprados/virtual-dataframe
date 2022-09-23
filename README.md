@@ -197,7 +197,7 @@ $ pip install "virtual_dataframe@git+https://github.com/pprados/virtual-datafram
 | vdf.read_json(...)                     | Read VDataFrame from CSVs *glob* files          |
 | vdf.read_orc(...)                      | Read VDataFrame from CSVs *glob* files          |
 | vdf.read_parquet(...)                  | Read VDataFrame from CSVs *glob* files          |
-| vdf.read_sql(...)<sup>*</sup>          | Read VDataFrame from CSVs *glob* files          |
+| vdf.read_sql_table(...)<sup>*</sup>    | Read VDataFrame from CSVs *glob* files          |
 | vdf.from_pandas(pdf, npartitions=...)  | Create Virtual Dataframe from Pandas DataFrame  |
 | vdf.from_backend(vdf, npartitions=...) | Create Virtual Dataframe from backend dataframe |
 | vdf.compute([...])                     | Compute multiple @delayed functions             |
@@ -207,16 +207,27 @@ $ pip install "virtual_dataframe@git+https://github.com/pprados/virtual-datafram
 | BackEndSeries                          | The class of dask/ray backend series            |
 | BackEnd                                | The backend framework                           |
 | VDataFrame.compute()                   | Compute the virtual dataframe                   |
+| VDataFrame.persist()                   | Persist the dataframe in memory                 |
+| VDataFrame.repartition()               | Rebalance the dataframe                         |
 | VDataFrame.visualize()                 | Create an image with the graph                  |
 | VDataFrame.to_pandas()                 | Convert to pandas dataframe                     |
 | VDataFrame.to_csv()                    | Save to *glob* files                            |
-| TODO                                   | Save to *glob* files                            |
+| VDataFrame.to_excel()<sup>*</sup>      | Save to *glob* files                            |
+| VDataFrame.to_feather()<sup>*</sup>    | Save to *glob* files                            |
+| VDataFrame.to_hdf()<sup>*</sup>        | Save to *glob* files                            |
+| VDataFrame.to_json()                   | Save to *glob* files                            |
+| VDataFrame.to_orc()                    | Save to *glob* files                            |
+| VDataFrame.to_parquet()                | Save to *glob* files                            |
+| VDataFrame.to_sql()<sup>*</sup>        | Save to sql table                               |
 | VDataFrame.to_numpy()                  | Convert to numpy array                          |
 | VDataFrame.to_backend()                | Convert to backend dataframe                    |
 | VDataFrame.categorize()                | Detect all categories                           |
 | VDataFrame.apply_rows()                | Apply rows, GPU template                        |
 | VDataFrame.map_partitions()            | Apply function for each parttions               |
 | VSeries.compute()                      | Compute the virtual series                      |
+| VSeries.persist()                      | Persist the dataframe in memory                 |
+| VSeries.repartition()                  | Rebalance the dataframe                         |
+| VSeries.visualize()                    | Create an image with the graph                  |
 | VSeries.to_pandas()                    | Convert to pandas series                        |
 | VSeries.to_backend()                   | Convert to backend series                       |
 | VSeries.to_numpy()                     | Convert to numpy array                          |
