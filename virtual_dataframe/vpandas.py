@@ -208,24 +208,24 @@ _printed_warning = set()
 
 def _warn(func: Callable, scope: str,
           ) -> Callable:
-    def _warn_fn(*args, **kwargs):
+    def _wrapper(*args, **kwargs):
         if func.__name__ not in _printed_warning:
             _printed_warning.add(func.__name__)
             warnings.warn(f"Function '{func.__name__}' not implemented in mode {scope}",
                           RuntimeWarning, stacklevel=0)
         return func(*args, **kwargs)
 
-    return _warn_fn
+    return _wrapper
 
 
-def _rm_to(func):  # FIXME
+def _rm_to(func):
     return _remove_parameters(func,
                               ["single_file",
                                "name_function",
                                "compute",
                                "scheduler",
                                "header_first_partition_only",
-                               "compute_kwargs"])
+                               "compute_kwargs", ])
 
 
 def _patch_to(clazz, func, rm_params, scope=None):
@@ -238,7 +238,7 @@ def _patch_to(clazz, func, rm_params, scope=None):
             path_or_buf = path_or_buf.replace("*", "")
         for k in rm_params:
             kwargs.pop(k, None)
-        # FIXME: via la clausure, eviter le _old
+        # FIXME: via la clausure, eviter le _old, et utiliser fn et non str
         return getattr(self, "_old_" + func)(path_or_buf, *args, **kwargs)
 
     _patch.__name__ = func
@@ -247,7 +247,7 @@ def _patch_to(clazz, func, rm_params, scope=None):
 
 
 def _patch_read(front, func, scope=None):
-    def _patch(filepath_or_buffer, *args, **kwargs) -> Union[_VDataFrame, Iterator[_VDataFrame]]:
+    def _wrapper(filepath_or_buffer, *args, **kwargs) -> Union[_VDataFrame, Iterator[_VDataFrame]]:
         if scope:
             if func not in _printed_warning:
                 _printed_warning.add(func)
@@ -259,8 +259,8 @@ def _patch_read(front, func, scope=None):
                 (getattr(front, func)(f, *args[1:], **kwargs) for f in sorted(glob.glob(filepath_or_buffer))))
         return getattr(front, func)(filepath_or_buffer, *args[1:], **kwargs)
 
-    _patch.__name__ = func
-    return _patch
+    _wrapper.__name__ = func
+    return _wrapper
 
 
 if VDF_MODE in (Mode.pandas, Mode.cudf, Mode.modin, Mode.dask_modin):
@@ -405,19 +405,21 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
     # modin
     read_csv = FrontEnd.read_csv
     read_excel = _patch_read(FrontEnd, "read_excel", "cudf, dask and dask_cudf")
+    read_feather = _patch_read(FrontEnd, "read_feather", "dask and dask_cudf")
     read_fwf = _patch_read(FrontEnd, "read_fwf", "cudf and dask_cudf")
     read_hdf = _patch_read(FrontEnd, "read_hdf", "dask_cudf")
     read_json = FrontEnd.read_json
     read_orc = _patch_read(FrontEnd, "read_orc")
     read_parquet = FrontEnd.read_parquet
-    read_sql = _warn(FrontEnd.read_sql, "cudf and dask_cudf")
+    read_sql_table = _warn(FrontEnd.read_sql_table, "cudf and dask_cudf")
 
     # Add-on and patch of original dataframes and series
     _VDataFrame.to_orc = _not_implemented
 
-    _patch_to(_VDataFrame, "to_excel", [], "cudf, dask, dask_cudf")
+    _patch_to(_VDataFrame, "to_excel", [], "cudf, dask and dask_cudf")
+    _patch_to(_VDataFrame, "to_feather", [], "dask and dask_cudf")
     _patch_to(_VDataFrame, "to_hdf", [], "dask_cudf")
-    _VDataFrame.to_sql = _warn(_VDataFrame.to_sql, "cudf, dask_cudf")
+    _VDataFrame.to_sql = _warn(_VDataFrame.to_sql, "cudf and dask_cudf")
 
     _VDataFrame.to_backend = lambda self: self
     _VDataFrame.to_backend.__doc__ = _doc_VDataFrame_to_pandas
@@ -449,7 +451,6 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
 if VDF_MODE == Mode.dask_cudf:
     import pandas
     import dask
-    import dask_cudf  # FIXME: a virer, c'est pour le typing local
     import dask.dataframe
     import dask.distributed
 
@@ -477,11 +478,14 @@ if VDF_MODE == Mode.dask_cudf:
     visualize: Any = dask.visualize
     concat: _VDataFrame = dask.dataframe.multi.concat  # FIXME
 
+
     def _from_pandas(df, npartitions=1):
         return dask_cudf.from_cudf(cudf.from_pandas(df), npartitions=npartitions)
 
+
     from_pandas = _from_pandas
     from_backend = dask_cudf.from_cudf
+
 
     def _patch_read_json(path_or_buf, **kwargs):
         if os.path.isdir(path_or_buf):
@@ -492,14 +496,16 @@ if VDF_MODE == Mode.dask_cudf:
     # dask_cudf
     read_csv = FrontEnd.read_csv
     read_excel = _not_implemented
+    read_feather = _not_implemented
     read_fwf = _not_implemented
     read_hdf = _not_implemented
     read_json = _patch_read_json
     read_orc = FrontEnd.read_orc
     read_parquet = FrontEnd.read_parquet
-    read_sql = _not_implemented
+    read_sql_table = _not_implemented
 
     _VDataFrame.to_excel = _not_implemented
+    _VDataFrame.to_feather = _not_implemented
     _VDataFrame.to_fwf = _not_implemented
     _VDataFrame.to_hdf = _not_implemented
     _VDataFrame.to_sql = _not_implemented
@@ -619,14 +625,16 @@ if VDF_MODE == Mode.dask:
     # dask
     read_csv = FrontEnd.read_csv
     read_excel = _not_implemented
+    read_feather = _not_implemented
     read_fwf = _warn(FrontEnd.read_fwf, "cudf and dask_cudf")
     read_hdf = _warn(FrontEnd.read_hdf, "dask_cudf")
     read_json = _patch_read_json
     read_orc = FrontEnd.read_orc
     read_parquet = FrontEnd.read_parquet
-    read_sql = _warn(FrontEnd.read_sql, "dask_cudf")
+    read_sql_table = _warn(FrontEnd.read_sql_table, "dask_cudf")
 
     _VDataFrame.to_excel = _not_implemented
+    _VDataFrame.to_feather = _not_implemented
     _VDataFrame.to_fwf = _not_implemented
 
     BackEndDataFrame.to_pandas = lambda self: self
@@ -645,6 +653,18 @@ if VDF_MODE == Mode.dask:
     _VDataFrame.to_backend.__doc__ = _doc_VDataFrame_to_pandas
     _VDataFrame.to_numpy = lambda self: self.compute().to_numpy()
     _VDataFrame.to_numpy.__doc__ = _doc_VDataFrame_to_numpy
+
+
+    def _patch_to_sql(f):
+        def _to_sql(self, *p, **kwargs):
+            if "con" in kwargs:
+                kwargs["uri"] = kwargs.pop("con", None)
+            return f(self, *p, **kwargs)
+
+        return _to_sql
+
+
+    _VDataFrame.to_sql = _patch_to_sql(_VDataFrame.to_sql)
 
     _VSeries.to_pandas = lambda self: self.compute()
     _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
@@ -732,12 +752,13 @@ if VDF_MODE == Mode.cudf:
     # cudf
     read_csv = _patch_read(FrontEnd, "read_csv")
     read_excel = _not_implemented
+    read_feather = _patch_read(FrontEnd, "read_feather", "dask and dask_cudf")
     read_fwf = _not_implemented
     read_hdf = _patch_read(FrontEnd, "read_hdf", "dask_cudf")
     read_json = _patch_read(FrontEnd, "read_json")
     read_orc = FrontEnd.read_orc
     read_parquet = FrontEnd.read_parquet
-    read_sql = _not_implemented
+    read_sql_table = _not_implemented
 
     _extra_params = ["single_file",
                      "name_function",
@@ -747,6 +768,7 @@ if VDF_MODE == Mode.cudf:
                      "compute_kwargs"]
     _patch_to(_VDataFrame, "to_csv", _extra_params)
     _VDataFrame.to_excel = _not_implemented
+    _patch_to(_VDataFrame, "to_feather", _extra_params, "dask and dask_cudf")
     _VDataFrame.to_fwf = _not_implemented
     _patch_to(_VDataFrame, "to_hdf", _extra_params)
     _patch_to(_VDataFrame, "to_json", _extra_params)
@@ -889,14 +911,16 @@ if VDF_MODE == Mode.pandas:
     from_pandas.__doc__ = _doc_from_pandas
     from_backend.__doc__ = _doc_from_backend
 
-    read_csv = _patch_read(FrontEnd, "read_csv")  # pandas
-    read_excel = _patch_read(FrontEnd, "read_excel", "cudf, dask or dask_cudf")  # pandas
-    read_fwf = _patch_read(FrontEnd, "read_fwf", "cudf and dask_cudf")  # pandas
-    read_hdf = _patch_read(FrontEnd, "read_hdf", "dask_cudf")  # pandas
-    read_json = _patch_read(FrontEnd, "read_json")  # pandas
-    read_orc = FrontEnd.read_orc  # pandas
-    read_parquet = FrontEnd.read_parquet  # pandas
-    read_sql = _warn(FrontEnd.read_sql, "cudf and dask_cudf")  # pandas
+    # pandas
+    read_csv = _patch_read(FrontEnd, "read_csv")
+    read_excel = _patch_read(FrontEnd, "read_excel", "cudf, dask or dask_cudf")
+    read_feather = _patch_read(FrontEnd, "read_feather", "dask and dask_cudf")
+    read_fwf = _patch_read(FrontEnd, "read_fwf", "cudf and dask_cudf")
+    read_hdf = _patch_read(FrontEnd, "read_hdf", "dask_cudf")
+    read_json = _patch_read(FrontEnd, "read_json")
+    read_orc = FrontEnd.read_orc
+    read_parquet = FrontEnd.read_parquet
+    read_sql_table = _warn(FrontEnd.read_sql_table, "cudf and dask_cudf")
 
     # Add-on and patch of original dataframes and series
     _extra_params = ["single_file",
@@ -907,6 +931,7 @@ if VDF_MODE == Mode.pandas:
                      "compute_kwargs"]
     _patch_to(_VDataFrame, "to_csv", _extra_params)
     _patch_to(_VDataFrame, "to_excel", _extra_params, "cudf, dask and dask_cudf")
+    _patch_to(_VDataFrame, "to_feather", _extra_params, "dask and dask_cudf")
     _VDataFrame.to_fwf = _not_implemented
     _patch_to(_VDataFrame, "to_hdf", _extra_params)
     _patch_to(_VDataFrame, "to_json", _extra_params)
@@ -999,6 +1024,8 @@ __all__: List[str] = ['VDF_MODE', 'Mode',
                       'delayed', 'compute',
                       'BackEnd', 'BackEndDataFrame', 'BackEndSeries',
                       'FrontEnd',
-                      'read_csv', 'read_excel', 'read_fwf', 'read_hdf', 'read_json', 'read_orc', 'read_parquet',
-                      'read_sql',
+                      'read_csv', 'read_excel', 'read_feather', 'read_fwf',
+                      'read_hdf', 'read_json', 'read_orc',
+                      'read_parquet',
+                      'read_sql_table',
                       ]

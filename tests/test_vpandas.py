@@ -58,7 +58,7 @@ def test_from_pandas():
     assert df.to_pandas().equals(pdf)
 
 
-def test_from_backend():  # FIXME: le test n'est pas correct
+def test_from_backend():
     odf = vdf.VDataFrame({"a": [1, 2]}, npartitions=2)
     assert vdf.from_backend(odf.to_backend(), npartitions=2).to_pandas().equals(
         vdf.VDataFrame({"a": [1, 2]}).to_pandas())
@@ -69,6 +69,7 @@ def test_DataFrame_to_from_pandas():
     pdf = pandas.DataFrame({'a': [0.0, 1.0, 2.0, 3.0], 'b': [0.1, 0.2, None, 0.3]})
     df = vdf.from_pandas(pdf, npartitions=2)
     assert df.to_pandas().equals(pandas.DataFrame({'a': [0.0, 1.0, 2.0, 3.0], 'b': [0.1, 0.2, None, 0.3]}))
+
 
 def test_Series_to_from_pandas():
     ps = pandas.Series([1, 2, 3, None, 4])
@@ -114,7 +115,7 @@ def test_DataFrame_to_read_csv():
 def test_DataFrame_to_read_excel():
     d = tempfile.mkdtemp()
     try:
-        filename = f"{d}/test.xlsx"  # FIXME
+        filename = f"{d}/test*.xlsx"
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df.to_excel(filename, index=False)
         df2 = vdf.read_excel(filename, dtype=int)
@@ -123,9 +124,22 @@ def test_DataFrame_to_read_excel():
         shutil.rmtree(d)
 
 
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.dask_cudf), reason="Incompatible mode")
+def test_DataFrame_to_read_feather():
+    d = tempfile.mkdtemp()
+    try:
+        filename = f"{d}/test*.feather"
+        df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
+        df.to_feather(filename)
+        df2 = vdf.read_feather(filename)
+        assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+    finally:
+        shutil.rmtree(d)
+
+
 @pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
 def test_DataFrame_read_fwf():
-    filename = f"tests/test.fwf"  # FIXME *
+    filename = f"tests/test*.fwf"
     df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
     df2 = vdf.read_fwf(filename, dtype=int)
     assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
@@ -147,7 +161,7 @@ def test_DataFrame_to_read_hdf():
 def test_DataFrame_to_read_json():
     d = tempfile.mkdtemp()
     try:
-        filename = f"{d}/test.json"  # FIXME *
+        filename = f"{d}/test*.json"
         df = vdf.VDataFrame({'a': list(range(0, 10000)), 'b': list(range(0, 10000))}, npartitions=2)
         df.to_json(filename)
         df2 = vdf.read_json(filename)
@@ -184,37 +198,26 @@ def test_DataFrame_to_read_parquet():
         shutil.rmtree(d)
 
 
-@pytest.mark.skip("Not implemented now")
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf,), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
 def test_DataFrame_to_read_sql():
     d = tempfile.mkdtemp()
     try:
         import sqlalchemy
-        db_uri = f'sqlite:///{d}/test.db'
-        engine = sqlalchemy.create_engine(db_uri)
-        import sqlite3
         filename = f"{d}/test.db"
-        conn = sqlite3.connect(filename)
-        c = conn.cursor()
-        c.execute('CREATE TABLE IF NOT EXISTS test (a number)')
-        conn.commit()
-        with engine.connect() as conn:
-            df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
-            # if vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.dask_cudf)
-            df.to_sql('test',
-                      uri=db_uri,  # For dask and dask_cudf
-                      # con=conn,
-                      if_exists='replace',
-                      index=True)
-            # else:
-            #     df.to_sql('test', con= conn, if_exists='replace', index=False)
-            df2 = vdf.read_sql("SELECT * FROM test",
-                               con=db_uri,
-                               # con=conn,
-                               index_col='a',
-                               )
-            df2 = df2.drop("index", axis=1)
-            assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+        filename = f"/tmp/test.db"
+        db_uri = f'sqlite://{filename}'
+        df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
+        df = df.set_index("a")
+        df.to_sql('test',
+                  con=db_uri,
+                  index_label="a",
+                  if_exists='replace',
+                  index=True)
+        df2 = vdf.read_sql_table("test",
+                                 con=db_uri,
+                                 index_col='a',  # For dask and dask_cudf
+                                 )
+        assert df.to_pandas().equals(df2.to_pandas())
     finally:
         # shutil.rmtree(d)
         pass

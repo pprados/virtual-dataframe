@@ -8,9 +8,9 @@ from .vpandas import BackEndDataFrame, BackEndSeries, BackEnd, FrontEnd
 from .vpandas import VDataFrame, VSeries, visualize
 from .vpandas import delayed, compute, concat
 from .vpandas import from_pandas, from_backend
-from .vpandas import read_csv
-from .vpandas import read_excel, read_fwf, read_hdf, read_json, read_orc, read_parquet
-from .vpandas import read_sql
+from .vpandas import read_csv, read_excel, read_feather, read_fwf, read_hdf
+from .vpandas import read_json, read_orc, read_parquet, read_sql_table
+
 
 load_dotenv()
 
@@ -21,6 +21,6 @@ __all__: List[str] = [
     'BackEndDataFrame', 'BackEndSeries', 'BackEnd',
     'compute', 'delayed', 'concat', 'visualize',
     'from_pandas', 'from_backend',
-    'read_csv', 'read_excel', 'read_fwf', 'read_hdf', 'read_json', 'read_orc', 'read_parquet',
-    'read_sql',
+    'read_csv', 'read_excel', 'read_feather', 'read_fwf', 'read_hdf',
+    'read_json', 'read_orc', 'read_parquet', 'read_sql_table'
 ]

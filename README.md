@@ -277,6 +277,8 @@ if you use a function not compatible with others frameworks.
 | to_csv            |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
 | read_excel        |   ✓    |      |   ✓   |      |           |
 | to_excel          |   ✓    |      |   ✓   |      |           |
+| read_feather      |   ✓    |  ✓   |   ✓   |      |           |
+| to_feather        |   ✓    |  ✓   |   ✓   |      |           |
 | read_fwf          |   ✓    |      |   ✓   |  ✓   |           |
 | to_fwf            |        |      |       |      |           |
 | read_hdf          |   ✓    |  ✓   |   ✓   |  ✓   |           |
@@ -287,7 +289,7 @@ if you use a function not compatible with others frameworks.
 | to_orc            |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
 | read_parquet      |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
 | to_parquet        |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
-| read_sql          |   ✓    |      |   ✓   |  ✓   |           |
+| read_sql_table    |   ✓    |      |   ✓   |  ✓   |           |
 | to_sql            |   ✓    |      |   ✓   |  ✓   |           |
 
 
