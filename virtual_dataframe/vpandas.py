@@ -448,6 +448,10 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
     _VDataFrame.categorize.__doc__ = _doc_categorize
     _VDataFrame.to_pandas = _VDataFrame._to_pandas
 
+    _patch_to(_VSeries, "to_csv", [], "cudf, dask and dask_cudf")
+    _patch_to(_VSeries, "to_excel", [], "cudf, dask and dask_cudf")
+    _patch_to(_VSeries, "to_hdf", [], "dask_cudf")
+    _patch_to(_VSeries, "to_json", [], "dask_cudf")
     _VSeries.map_partitions = lambda df, func, *args, **kwargs: func(df, *args, **kwargs)
     _VSeries.map_partitions.__doc__ = _VSeries.map.__doc__
     _VSeries.compute = lambda self, **kwargs: self
@@ -683,6 +687,7 @@ if VDF_MODE == Mode.dask:
 
 
     _VDataFrame.to_sql = _patch_to_sql(_VDataFrame.to_sql)
+    _VSeries.to_sql = _patch_to_sql(_VDataFrame.to_sql)
 
     _VSeries.to_pandas = lambda self: self.compute()
     _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
@@ -823,6 +828,10 @@ if VDF_MODE == Mode.cudf:
     _VSeries.repartition.__doc__ = _doc_VSeries_repartition
     _VSeries.visualize = lambda self: visualize(self)
     _VSeries.visualize.__doc__ = _doc_VSeries_visualize
+    _VSeries.to_csv = _not_implemented
+    _VSeries.to_excel = _not_implemented
+    _patch_to(_VSeries, "to_hdf", [], "dask_cudf")
+    _patch_to(_VSeries, "to_json", [], "dask_cudf")
 
 # %%
 if VDF_MODE == Mode.pandas:
@@ -998,6 +1007,10 @@ if VDF_MODE == Mode.pandas:
     _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
     _VSeries.to_backend = lambda self: self
     _VSeries.to_backend.__doc__ = _doc_VSeries_to_pandas
+    _patch_to(_VSeries, "to_csv", [], "cudf, dask and dask_cudf")
+    _patch_to(_VSeries, "to_excel", [], "cudf, dask and dask_cudf")
+    _patch_to(_VSeries, "to_hdf", [], "dask_cudf")
+    _patch_to(_VSeries, "to_json", [], "dask_cudf")
 
 
 # %%

@@ -282,26 +282,31 @@ To be compatible with all framework, you must only use the common features.
 We accept some function to read or write files, but we write a warning
 if you use a function not compatible with others frameworks.
 
-| read_... / to_... | pandas | cudf | modin | dask | dask_cudf |
-|-------------------|:------:|:----:|:-----:|:----:|:---------:|
-| read_csv          |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
-| to_csv            |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
-| read_excel        |   ✓    |      |   ✓   |      |           |
-| to_excel          |   ✓    |      |   ✓   |      |           |
-| read_feather      |   ✓    |  ✓   |   ✓   |      |           |
-| to_feather        |   ✓    |  ✓   |   ✓   |      |           |
-| read_fwf          |   ✓    |      |   ✓   |  ✓   |           |
-| to_fwf            |        |      |       |      |           |
-| read_hdf          |   ✓    |  ✓   |   ✓   |  ✓   |           |
-| to_hdf            |   ✓    |  ✓   |   ✓   |  ✓   |           |
-| read_json         |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
-| to_json           |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
-| read_orc          |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
-| to_orc            |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
-| read_parquet      |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
-| to_parquet        |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
-| read_sql_table    |   ✓    |      |   ✓   |  ✓   |           |
-| to_sql            |   ✓    |      |   ✓   |  ✓   |           |
+| read_... / to_...     | pandas | cudf | modin | dask | dask_cudf |
+|-----------------------|:------:|:----:|:-----:|:----:|:---------:|
+| vdf.read_csv          |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| VDataFrame.to_csv     |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| VSeries.to_csv        |   ✓    |      |   ✓   |  ✓   |     ✓     |
+| vdf.read_excel        |   ✓    |      |   ✓   |      |           |
+| VDataFrame.to_excel   |   ✓    |      |   ✓   |      |           |
+| VSeries.to_excel      |   ✓    |      |   ✓   |      |           |
+| vdf.read_feather      |   ✓    |  ✓   |   ✓   |      |           |
+| VDataFrame.to_feather |   ✓    |  ✓   |   ✓   |      |           |
+| vdf.read_fwf          |   ✓    |      |   ✓   |  ✓   |           |
+| VDataFrame.to_fwf     |        |      |       |      |           |
+| vdf.read_hdf          |   ✓    |  ✓   |   ✓   |  ✓   |           |
+| VDataFrame.to_hdf     |   ✓    |  ✓   |   ✓   |  ✓   |           |
+| VSeries.to_hdf        |   ✓    |  ✓   |   ✓   |  ✓   |           |
+| vdf.read_json         |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| VDataFrame.to_json    |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| VSeries.to_json       |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| vdf.read_orc          |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| VDataFrame.to_orc     |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| vdf.read_parquet      |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| VDataFrame.to_parquet |   ✓    |  ✓   |   ✓   |  ✓   |     ✓     |
+| vdf.read_sql_table    |   ✓    |      |   ✓   |  ✓   |           |
+| VDataFrame.to_sql     |   ✓    |      |   ✓   |  ✓   |           |
+| VSeries.to_sql        |   ✓    |      |   ✓   |  ✓   |           |
 
 
 

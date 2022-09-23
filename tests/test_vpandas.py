@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+from pathlib import Path
 
 import numpy as np
 import pandas
@@ -232,11 +233,9 @@ def test_DataFrame_to_read_parquet():
 
 @pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
 def test_DataFrame_to_read_sql():
-    d = tempfile.mkdtemp()
+    filename = f"/{tempfile.gettempdir()}/test.db"
     try:
         import sqlalchemy
-        filename = f"{d}/test.db"
-        filename = f"/tmp/test.db"
         db_uri = f'sqlite://{filename}'
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df = df.set_index("a")
@@ -251,8 +250,68 @@ def test_DataFrame_to_read_sql():
                                  )
         assert df.to_pandas().equals(df2.to_pandas())
     finally:
-        # shutil.rmtree(d)
+        Path(filename).unlink()
         pass
+
+
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+def test_Serie_to_csv():
+    d = tempfile.mkdtemp()
+    try:
+        filename = f"{d}/test*.csv"
+        s = vdf.VSeries(list(range(0, 3)), npartitions=2)
+        s.to_csv(filename)
+    finally:
+        shutil.rmtree(d)
+
+
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+def test_Serie_to_excel():
+    d = tempfile.mkdtemp()
+    try:
+        filename = f"{d}/test*.xlsx"
+        s = vdf.VSeries(list(range(0, 3)), npartitions=2)
+        s.to_excel(filename)
+    finally:
+        shutil.rmtree(d)
+
+
+def test_Serie_to_hdf():
+    d = tempfile.mkdtemp()
+    try:
+        filename = f"{d}/test*.hdf"
+        s = vdf.VSeries(list(range(0, 3)), npartitions=2)
+        s.to_hdf(filename,key="a")
+    finally:
+        shutil.rmtree(d)
+
+
+def test_Serie_to_json():
+    d = tempfile.mkdtemp()
+    try:
+        filename = f"{d}/test*.json"
+        s = vdf.VSeries(list(range(0, 3)), npartitions=2)
+        s.to_json(filename)
+    finally:
+        shutil.rmtree(d)
+
+
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+def test_Serie_to_sql():
+    filename = f"/{tempfile.gettempdir()}/test.db"
+    try:
+        import sqlalchemy
+        db_uri = f'sqlite://{filename}'
+        s = vdf.VSeries(list(range(0, 3)), npartitions=2)
+        s.to_sql('test',
+                  con=db_uri,
+                  index_label="a",
+                  if_exists='replace',
+                  index=True)
+    finally:
+        Path(filename).unlink()
+        pass
+
 
 
 def test_DataFrame_to_from_numpy():
