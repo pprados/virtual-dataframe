@@ -192,13 +192,13 @@ $ pip install "virtual_dataframe@git+https://github.com/pprados/virtual-datafram
 | vdf.@delayed                           | Delayed function (do nothing or dask.delayed)   |
 | vdf.concat(...)                        | Merge VDataFrame                                |
 | vdf.read_csv(...)                      | Read VDataFrame from CSVs *glob* files          |
-| vdf.read_excel(...)<sup>*</sup>        | Read VDataFrame from CSVs *glob* files          |
-| vdf.read_fwf(...)<sup>*</sup>          | Read VDataFrame from CSVs *glob* files          |
-| vdf.read_hdf(...)<sup>*</sup>          | Read VDataFrame from CSVs *glob* files          |
-| vdf.read_json(...)                     | Read VDataFrame from CSVs *glob* files          |
-| vdf.read_orc(...)                      | Read VDataFrame from CSVs *glob* files          |
-| vdf.read_parquet(...)                  | Read VDataFrame from CSVs *glob* files          |
-| vdf.read_sql_table(...)<sup>*</sup>    | Read VDataFrame from CSVs *glob* files          |
+| vdf.read_excel(...)<sup>*</sup>        | Read VDataFrame from Excel *glob* files         |
+| vdf.read_fwf(...)<sup>*</sup>          | Read VDataFrame from Fwf *glob* files           |
+| vdf.read_hdf(...)<sup>*</sup>          | Read VDataFrame from HDFs *glob* files          |
+| vdf.read_json(...)                     | Read VDataFrame from Jsons *glob* files         |
+| vdf.read_orc(...)                      | Read VDataFrame from ORCs *glob* files          |
+| vdf.read_parquet(...)                  | Read VDataFrame from Parquets *glob* files      |
+| vdf.read_sql_table(...)<sup>*</sup>    | Read VDataFrame from SQL                        |
 | vdf.from_pandas(pdf, npartitions=...)  | Create Virtual Dataframe from Pandas DataFrame  |
 | vdf.from_backend(vdf, npartitions=...) | Create Virtual Dataframe from backend dataframe |
 | vdf.compute([...])                     | Compute multiple @delayed functions             |

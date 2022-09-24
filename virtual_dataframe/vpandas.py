@@ -232,22 +232,20 @@ def _rm_to(func):
                                "compute_kwargs", ])
 
 
-def _patch_to(clazz, func, rm_params, scope=None):
+def _patch_to(func, rm_params, scope=None):
     def _patch(self, path_or_buf, *args, **kwargs):
         if scope and func not in _printed_warning:
-            _printed_warning.add(func)
-            warnings.warn(f"Function '{func}' not implemented in mode {scope}",
+            _printed_warning.add(func.__name__)
+            warnings.warn(f"Function '{func.__name__}' not implemented in mode {scope}",
                           RuntimeWarning, stacklevel=0)
         if "*" in str(path_or_buf):
             path_or_buf = path_or_buf.replace("*", "")
         for k in rm_params:
             kwargs.pop(k, None)
-        # FIXME: via la clausure, eviter le _old, et utiliser fn et non str
-        return getattr(self, "_old_" + func)(path_or_buf, *args, **kwargs)
+        return func(self, path_or_buf, *args, **kwargs)
 
-    _patch.__name__ = func
-    setattr(clazz, "_old_" + func, getattr(clazz, func))
-    setattr(clazz, func, _patch)
+    _patch.__name__ = func.__name__
+    return _patch
 
 
 def _patch_read(front, func, scope=None):
@@ -295,7 +293,8 @@ if VDF_MODE in (Mode.pandas, Mode.cudf, Mode.modin, Mode.dask_modin):
 
             return decorate
 
-    def _persist(*collections, traverse=True, optimize_graph=True, scheduler=None,**kwargs):
+
+    def _persist(*collections, traverse=True, optimize_graph=True, scheduler=None, **kwargs):
         return collections
 
 # %%
@@ -424,9 +423,9 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
     # Add-on and patch of original dataframes and series
     _VDataFrame.to_orc = _not_implemented
 
-    _patch_to(_VDataFrame, "to_excel", [], "cudf, dask and dask_cudf")
-    _patch_to(_VDataFrame, "to_feather", [], "dask and dask_cudf")
-    _patch_to(_VDataFrame, "to_hdf", [], "dask_cudf")
+    _VDataFrame.to_excel = _patch_to(_VDataFrame.to_excel, [], "cudf, dask and dask_cudf")
+    _VDataFrame.to_feather = _patch_to(_VDataFrame.to_feather, [], "dask and dask_cudf")
+    _VDataFrame.to_hdf = _patch_to(_VDataFrame.to_hdf, [], "dask_cudf")
     _VDataFrame.to_sql = _warn(_VDataFrame.to_sql, "cudf and dask_cudf")
 
     _VDataFrame.to_backend = lambda self: self
@@ -448,10 +447,10 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
     _VDataFrame.categorize.__doc__ = _doc_categorize
     _VDataFrame.to_pandas = _VDataFrame._to_pandas
 
-    _patch_to(_VSeries, "to_csv", [], "cudf, dask and dask_cudf")
-    _patch_to(_VSeries, "to_excel", [], "cudf, dask and dask_cudf")
-    _patch_to(_VSeries, "to_hdf", [], "dask_cudf")
-    _patch_to(_VSeries, "to_json", [], "dask_cudf")
+    _VSeries.to_csv = _patch_to(_VSeries.to_csv, [], "cudf, dask and dask_cudf")
+    _VSeries.to_excel = _patch_to(_VSeries.to_excel, [], "cudf, dask and dask_cudf")
+    _VSeries.to_hdf = _patch_to(_VSeries.to_hdf, [], "dask_cudf")
+    _VSeries.to_json = _patch_to(_VSeries.to_json, [], "dask_cudf")
     _VSeries.map_partitions = lambda df, func, *args, **kwargs: func(df, *args, **kwargs)
     _VSeries.map_partitions.__doc__ = _VSeries.map.__doc__
     _VSeries.compute = lambda self, **kwargs: self
@@ -787,14 +786,14 @@ if VDF_MODE == Mode.cudf:
                      "scheduler",
                      "header_first_partition_only",
                      "compute_kwargs"]
-    _patch_to(_VDataFrame, "to_csv", _extra_params)
+    _VDataFrame.to_csv = _patch_to(_VDataFrame.to_csv, _extra_params)
     _VDataFrame.to_excel = _not_implemented
-    _patch_to(_VDataFrame, "to_feather", _extra_params, "dask and dask_cudf")
+    _VDataFrame.to_feather = _patch_to(_VDataFrame.to_feather, _extra_params, "dask and dask_cudf")
     _VDataFrame.to_fwf = _not_implemented
-    _patch_to(_VDataFrame, "to_hdf", _extra_params)
-    _patch_to(_VDataFrame, "to_json", _extra_params)
-    _patch_to(_VDataFrame, "to_orc", _extra_params)
-    _patch_to(_VDataFrame, "to_parquet", _extra_params)
+    _VDataFrame.to_hdf = _patch_to(_VDataFrame.to_hdf, _extra_params)
+    _VDataFrame.to_json = _patch_to(_VDataFrame.to_json, _extra_params)
+    _VDataFrame.to_orc = _patch_to(_VDataFrame.to_orc, _extra_params)
+    _VDataFrameto_parquet = _patch_to(_VDataFrame.to_parquet, _extra_params)
     _VDataFrame.to_sql = _not_implemented
 
     pandas.Series.to_pandas = lambda self: self
@@ -830,8 +829,8 @@ if VDF_MODE == Mode.cudf:
     _VSeries.visualize.__doc__ = _doc_VSeries_visualize
     _VSeries.to_csv = _not_implemented
     _VSeries.to_excel = _not_implemented
-    _patch_to(_VSeries, "to_hdf", [], "dask_cudf")
-    _patch_to(_VSeries, "to_json", [], "dask_cudf")
+    _VSeries.to_hdf = _patch_to(_VSeries.to_hdf, [], "dask_cudf")
+    _VSeries.to_json = _patch_to(_VSeries.to_json, [], "dask_cudf")
 
 # %%
 if VDF_MODE == Mode.pandas:
@@ -963,15 +962,15 @@ if VDF_MODE == Mode.pandas:
                      "scheduler",
                      "header_first_partition_only",
                      "compute_kwargs"]
-    _patch_to(_VDataFrame, "to_csv", _extra_params)
-    _patch_to(_VDataFrame, "to_excel", _extra_params, "cudf, dask and dask_cudf")
-    _patch_to(_VDataFrame, "to_feather", _extra_params, "dask and dask_cudf")
+    _VDataFrame.to_csv = _patch_to(_VDataFrame.to_csv, _extra_params)
+    _VDataFrame.to_excel = _patch_to(_VDataFrame.to_excel, _extra_params, "cudf, dask and dask_cudf")
+    _VDataFrame.to_feather = _patch_to(_VDataFrame.to_feather, _extra_params, "dask and dask_cudf")
     _VDataFrame.to_fwf = _not_implemented
-    _patch_to(_VDataFrame, "to_hdf", _extra_params)
-    _patch_to(_VDataFrame, "to_json", _extra_params)
+    _VDataFrame.to_hdf = _patch_to(_VDataFrame.to_hdf, _extra_params)
+    _VDataFrame.to_json = _patch_to(_VDataFrame.to_json, _extra_params)
     _VDataFrame.to_orc = _not_implemented
-    _patch_to(_VDataFrame, "to_parquet", _extra_params)
-    _patch_to(_VDataFrame, "to_sql", _extra_params)
+    _VDataFrame.to_parquet = _patch_to(_VDataFrame.to_parquet, _extra_params)
+    _VDataFrame.to_sql = _patch_to(_VDataFrame.to_sql, _extra_params)
 
     _VDataFrame.to_pandas = lambda self: self
     _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
@@ -1007,10 +1006,10 @@ if VDF_MODE == Mode.pandas:
     _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
     _VSeries.to_backend = lambda self: self
     _VSeries.to_backend.__doc__ = _doc_VSeries_to_pandas
-    _patch_to(_VSeries, "to_csv", [], "cudf, dask and dask_cudf")
-    _patch_to(_VSeries, "to_excel", [], "cudf, dask and dask_cudf")
-    _patch_to(_VSeries, "to_hdf", [], "dask_cudf")
-    _patch_to(_VSeries, "to_json", [], "dask_cudf")
+    _VSeries.to_csv = _patch_to(_VSeries.to_csv, [], "cudf, dask and dask_cudf")
+    _VSeries.to_excel = _patch_to(_VSeries.to_excel, [], "cudf, dask and dask_cudf")
+    _VSeries.to_hdf = _patch_to(_VSeries.to_hdf, [], "dask_cudf")
+    _VSeries.to_json = _patch_to(_VSeries.to_json, [], "dask_cudf")
 
 
 # %%

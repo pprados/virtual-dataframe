@@ -76,7 +76,6 @@ test_requirements = [
 ]
 
 # Package nécessaires aux builds mais pas au run
-# FIXME Ajoutez les dépendances nécessaire au build et au tests à ajuster suivant le projet
 dev_requirements = all_requirements.union([
     'pip',
     'twine',  # To publish package in Pypi
