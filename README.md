@@ -71,10 +71,10 @@ With this framework, you can select your environment, to run or debug your code.
 | env                                                   | Environement                                |
 |-------------------------------------------------------|---------------------------------------------|
 | VDF_MODE=pandas                                       | Only Python with classical pandas           |
-| VDF_MODE=modin                                        | Python with local modin                     |
+| VDF_MODE=modin                                        | Python with local multiple process          |
 | VDF_MODE=cudf                                         | Python with local cuDF (GPU)                |
 | VDF_MODE=dask                                         | Dask with local multiple process and pandas |
-| VDF_MODE=dask-cudf                                    | Dask with local multiple process and cuDF   |
+| VDF_MODE=dask_cudf                                    | Dask with local multiple process and cuDF   |
 | VDF_MODE=dask<br />DEBUG=True                         | Dask with single thread and pandas          |
 | VDF_MODE=dask_cudf<br />DEBUG=True                    | Dask with single thread and cuDF            |
 | VDF_MODE=dask<br />VDF_CLUSTER=dask://localhost       | Dask with local cluster and pandas          |
@@ -104,24 +104,24 @@ To connect to a cluster, use `VDF_CLUSTER` with protocol, host and optionaly, th
 - ray:auto
 - or alternativelly, use `DASK_SCHEDULER_SERVICE_HOST` and `DASK_SCHEDULER_SERVICE_PORT`
 
-| VDF_MODE   | DEBUG | VDF_CLUSTER      | Scheduler        |
-|------------|-------|------------------|------------------|
-| pandas     | -     | -                | No scheduler     |
-| cudf       | -     | -                | No scheduler     |
-| modin      | -     | -                | No scheduler     |
-| dask       | Yes   | -                | synchronous      |
-| dask       | No    | -                | thread           |
-| dask       | No    | threads          | thread           |
-| dask       | No    | processes        | processes        |
-| dask       | No    | dask://localhost | LocalCluster     |
-| dask_modin | No    | -                | LocalCluster     |
-| dask_modin | No    | dask://localhost | LocalCluster     |
-| dask_modin | No    | dask://<host>    | Dask cluster     |
-| ray_modin  | No    | ray:auto         | Dask cluster     |
-| ray_modin  | No    | ray://localhost  | Dask cluster     |
-| ray_modin  | No    | ray://<host>     | Dask cluster     |
-| dask-cudf  | No    | dask://localhost | LocalCUDACluster |
-| dask-cudf  | No    | dask://<host>    | Dask cluster     |
+| VDF_MODE   | DEBUG | VDF_CLUSTER                 | Scheduler        |
+|------------|-------|-----------------------------|------------------|
+| pandas     | -     | -                           | No scheduler     |
+| cudf       | -     | -                           | No scheduler     |
+| modin      | -     | -                           | No scheduler     |
+| dask       | Yes   | -                           | synchronous      |
+| dask       | No    | -                           | thread           |
+| dask       | No    | threads                     | thread           |
+| dask       | No    | processes                   | processes        |
+| dask       | No    | dask://localhost            | LocalCluster     |
+| dask_modin | No    | -                           | LocalCluster     |
+| dask_modin | No    | dask://localhost            | LocalCluster     |
+| dask_modin | No    | dask://&lt;host>:&lt;port>  | Dask cluster     |
+| ray_modin  | No    | ray:auto                    | Dask cluster     |
+| ray_modin  | No    | ray://localhost             | Dask cluster     |
+| ray_modin  | No    | ray://&lt;host>:&lt;port>   | Dask cluster     |
+| dask_cudf  | No    | dask://localhost            | LocalCUDACluster |
+| dask_cudf  | No    | dask://&lt;host>:&lt;port>  | Dask cluster     |
 
 
 Sample:
@@ -276,7 +276,7 @@ This project is just a wrapper. So, it inherits limitations and bugs from other 
 | <br />**[dask](https://distributed.dask.org/en/stable/limitations.html)**                       |
 |  transpose() and MultiIndex are not implemented                                                 |
 | Column assignment doesn't support type list                                                     |
-| <br />**dask-cudf**                                                                             |
+| <br />**dask_cudf**                                                                             |
 | See cudf and dask.                                                                              |
 | Categories with strings not implemented                                                         |
 
@@ -373,8 +373,9 @@ For write a code, optimized with all frameworks, you must use some *best practic
 ### Use *read file*
 It's not a good idea to use the constructor of `VDataFrame` or `VSeries` because, all the datas
 must be in memory in the driver. If the dataframe is big, an *out of memory* can happen.
-To partitionning the job, create multiple files, and use `read_csv("filename*.csv")` or other
-file format. Then, each worker can read directly a partition.
+To partitionning the job, create multiple files, and use `read_csv("filename*.csv")`,
+use a big file and the *auto partitioning* proposed by dask
+or other file format. Then, each worker can read directly a partition.
 
 The constructor for `VDataFrame` and `VSeries` are present, only to help to write some unit test,
 but may not be used in production.
@@ -387,7 +388,7 @@ The code used in `apply`, will be compiled to CPU or GPU, before using, with som
 
 ## FAQ
 
-### The code run with dask, but not with modin, pandas or cudf ?
+### The code run with X, but not with Y ?
 You must use only the similare functionality, and only a subpart of Pandas.
 Develop for *dask_cudf*. it's easier to be compatible with others frameworks.
 

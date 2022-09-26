@@ -493,7 +493,7 @@ if VDF_MODE == Mode.dask_cudf:
 
     # High level functions
     compute: Any = dask.compute
-    concat: _VDataFrame = dask.dataframe.multi.concat  # FIXME
+    concat: _VDataFrame = dask.dataframe.multi.concat
     delayed: Any = dask.delayed
     persist: Iterable[_VDataFrame] = dask.persist
     visualize: Any = dask.visualize
@@ -621,10 +621,6 @@ if VDF_MODE == Mode.dask:
                                    }
                                    )
 
-
-    # TODO: Implements CUDA specific method? (use cuda.threadIdx and cuda.blockDim)
-    # apply_grouped. https://docs.rapids.ai/api/cudf/stable/user_guide/guide-to-udfs.html
-    # apply_chunck? (https://docs.rapids.ai/api/cudf/nightly/api_docs/api/cudf.DataFrame.apply_chunks.html)
 
     # High level functions
     compute: Any = dask.compute

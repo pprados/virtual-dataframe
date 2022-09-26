@@ -1,6 +1,7 @@
+import ctypes
 import logging
 import os
-from enum import Enum
+
 from typing import List
 
 LOGGER: logging.Logger = logging.getLogger(__name__)
@@ -10,10 +11,12 @@ _yes: List[str] = ["true", "y", "yes"]
 # To use a synchronous scheduler, set DEBUG=y
 DEBUG: bool = os.environ.get("DEBUG", "").lower() in _yes
 
-
 # If GPU detected, set to True
 # If GPU detected and USE_GPU=No, set to False,
 # else set to False
+from enum import Enum
+
+
 class Mode(Enum):
     pandas = "pandas"
     cudf = "cudf"
@@ -24,36 +27,24 @@ class Mode(Enum):
     dask_cudf = "dask_cudf"
 
 
-class _CHECK_CUDA(Enum):
-    File = 0
-    DLL = 1
-    GPUtil = 2
+def _check_cuda() -> bool:
+    if 'microsoft-standard' in os.uname().release:
+        os.environ["LD_LIBRARY_PATH"] = f"/usr/lib/wsl/lib/:{os.environ['LD_LIBRARY_PATH']}"
+    else:
+        os.environ["LD_LIBRARY_PATH"] = f"/usr/local/cuda/lib64:{os.environ['LD_LIBRARY_PATH']}"
+    libnames = ('libcuda.so', 'libcuda.dylib', 'cuda.dll')
+    for libname in libnames:
+        try:
+            cuda = ctypes.CDLL(libname)
+            result = cuda.cuInit(0)
+            if not result:
+                return True
+        except OSError:
+            continue
+        else:
+            break
+    return False
 
-
-_CHECK_CUDA_USE = _CHECK_CUDA.DLL  # FIXME: select strategy to detect cuda
-
-if _CHECK_CUDA_USE == _CHECK_CUDA.File:
-    def _check_cuda() -> bool:
-        return os.path.exists("/proc/driver/nvidia")
-elif _CHECK_CUDA_USE == _CHECK_CUDA.DLL:
-    def _check_cuda() -> bool:
-        import ctypes
-        libnames = ('libcuda.so', 'libcuda.dylib', 'cuda.dll')
-        for libname in libnames:
-            try:
-                cuda = ctypes.CDLL(libname)
-                result = cuda.cuInit(0)
-                if not result:
-                    return True
-            except OSError:
-                continue
-            else:
-                break
-        return False
-# elif _CHECK_CUDA_USE == _CHECK_CUDA.GPUtil:
-#     def _check_cuda() -> bool:
-#         import GPUtil
-#         return len(GPUtil.getAvailable()) > 0
 
 USE_GPU = _check_cuda()
 
