@@ -766,7 +766,7 @@ check-twine: bdist
 ifeq ($(OFFLINE),True)
 	@echo -e "$(red)Can not check-twine in offline mode$(normal)"
 else
-	$(VALIDATE_VENV)
+	@$(VALIDATE_VENV)
 	twine check \
 		$(shell find dist -type f \( -name "*.whl" -or -name '*.gz' \) -and ! -iname "*dev*" )
 endif
@@ -780,7 +780,7 @@ test-twine: bdist
 ifeq ($(OFFLINE),True)
 	@echo -e "$(red)Can not test-twine in offline mode$(normal)"
 else
-	$(VALIDATE_VENV)
+	@$(VALIDATE_VENV)
 	rm -f dist/*.asc
 	twine upload --sign --repository-url https://test.pypi.org/legacy/ \
 		$(shell find dist -type f \( -name "*.whl" -or -name '*.gz' \) -and ! -iname "*dev*" )
