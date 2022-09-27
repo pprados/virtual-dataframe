@@ -31,19 +31,24 @@ def _check_cuda() -> bool:
     if 'microsoft-standard' in os.uname().release:
         os.environ["LD_LIBRARY_PATH"] = f"/usr/lib/wsl/lib/:{os.environ['LD_LIBRARY_PATH']}"
     else:
-        os.environ["LD_LIBRARY_PATH"] = f"/usr/local/cuda/lib64:{os.environ['LD_LIBRARY_PATH']}"
-    libnames = ('libcuda.so', 'libcuda.dylib', 'cuda.dll')
-    for libname in libnames:
-        try:
-            cuda = ctypes.CDLL(libname)
-            result = cuda.cuInit(0)
-            if not result:
-                return True
-        except OSError:
-            continue
-        else:
-            break
-    return False
+        os.environ["LD_LIBRARY_PATH"] = f"/usr/local/cuda/compat:" \
+                                        f"/usr/local/cuda/lib64:" \
+                                        f"{os.environ['LD_LIBRARY_PATH']}"
+    import GPUtil
+    return len(GPUtil.getAvailable()) > 0
+
+    # libnames = ('libcuda.so', 'libcuda.dylib', 'cuda.dll')
+    # for libname in libnames:
+    #     try:
+    #         cuda = ctypes.CDLL(libname)
+    #         result = cuda.cuInit(0)
+    #         if not result:
+    #             return True
+    #     except (OSError, RuntimeError):
+    #         continue
+    #     else:
+    #         break
+    # return False
 
 
 USE_GPU = _check_cuda()

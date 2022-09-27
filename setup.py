@@ -42,8 +42,7 @@ pandas_requirements = [
 ]
 
 modin_requirements = [
-#    'modin>=0.15'
-    'modin'
+   'modin>=0.15'
 ]
 dask_requirements = \
     [
@@ -93,6 +92,9 @@ dev_requirements = all_requirements.union([
     'jupyterlab-git',
     'mkdocs',
     'sqlalchemy',
+    'tables',
+    'openpyxl',
+    'mkl',
 ])
 
 

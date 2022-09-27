@@ -388,11 +388,11 @@ ifeq ($(USE_GPU),-gpu)
 	$(CONDA) env update \
 		-q $(CONDA_ARGS) \
 		--file environment.yml
+endif
 	$(CONDA) env update \
 		-q $(CONDA_ARGS) \
 		--file environment-dev.yml
 	touch $(CONDA_PACKAGE)
-endif
 
 
 .PHONY: requirements dependencies
@@ -413,7 +413,7 @@ dependencies: requirements
 
 # Download dependencies for offline usage
 ~/.mypypi: setup.py
-	pip download '.[dev,test]' --dest ~/.mypypi
+	@pip download '.[dev,test]' --dest ~/.mypypi
 # Download modules and packages before going offline
 offline: ~/.mypypi
 ifeq ($(OFFLINE),True)
@@ -524,7 +524,7 @@ notebooks/phases: $(sort $(subst notebooks/,notebooks/.make-,$(wildcard notebook
 
 ## Invoke all notebooks in lexical order from notebooks/<% dir>
 nb-run-%: $(JUPYTER_DATA_DIR)/kernels/$(KERNEL)
-	VENV=$(VENV) $(MAKE) --no-print-directory notebooks/.make-$*
+	@VENV=$(VENV) $(MAKE) --no-print-directory notebooks/.make-$*
 
 
 # ---------------------------------------------------------------------------------------
@@ -536,7 +536,7 @@ nb-run-%: $(JUPYTER_DATA_DIR)/kernels/$(KERNEL)
 # L'ordre alphabétique est utilisé. Il est conseillé de préfixer chaque script d'un numéro.
 .PHONY: run-*
 scripts/.make-%: $(REQUIREMENTS)
-	$(VALIDATE_VENV)
+	@$(VALIDATE_VENV)
 	time ls scripts/$*/*.py | grep -v __ | sed 's/\.py//g; s/\//\./g' | \
 		xargs -L 1 -t python -O -m
 	@date >scripts/.make-$*
@@ -546,19 +546,19 @@ scripts/phases: $(sort $(subst scripts/,scripts/.make-,$(wildcard scripts/*)))
 
 ## Invoke all script in lexical order from scripts/<% dir>
 run-%:
-	$(MAKE) --no-print-directory scripts/.make-$*
+	@$(MAKE) --no-print-directory scripts/.make-$*
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour valider le code avec flake8 et pylint
 .PHONY: lint
 .pylintrc:
-	pylint --generate-rcfile > .pylintrc
+	@pylint --generate-rcfile > .pylintrc
 
 .make-lint: $(REQUIREMENTS) $(PYTHON_SRC) | .pylintrc
-	$(VALIDATE_VENV)
-	@echo -e "$(cyan)Check lint...$(normal)"
-	@echo "---------------------- FLAKE"
-	@flake8 $(PRJ_PACKAGE)
+	@$(VALIDATE_VENV)
+	echo -e "$(cyan)Check lint...$(normal)"
+	echo "---------------------- FLAKE"
+	flake8 $(PRJ_PACKAGE)
 	touch .make-lint
 
 ## Lint the code
@@ -577,7 +577,7 @@ pytype.cfg: $(CONDA_PREFIX)/bin/pytype
 .PHONY: typing
 .make-typing: $(REQUIREMENTS) $(CONDA_PREFIX)/bin/pytype pytype.cfg $(PYTHON_SRC)
 ifneq ($(USE_GPU),-gpu)
-	echo -e "$(red)Ignore typing without GPU$(normal)"
+	@echo -e "$(red)Ignore typing without GPU$(normal)"
 else
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Check typing...$(normal)"
@@ -671,7 +671,7 @@ CONDA_TOKEN?=""
 CONDA_BUILD_TARGET=${CONDA_BLD_DIR}/noarch/${PRJ}-*.tar.bz2
 
 $(CONDA_PREFIX)/bin/conda-build:
-	$(CONDA) install conda-build conda-verify -y
+	@$(CONDA) install conda-build conda-verify -y
 
 $(CONDA_BLD_DIR):
 	@mkdir -p $(CONDA_BLD_DIR)
@@ -680,7 +680,7 @@ $(CONDA_BLD_DIR):
 ${CONDA_BUILD_TARGET}: clean-build conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl $(CONDA_BLD_DIR) $(CONDA_PREFIX)/bin/conda-build \
 		conda-recipe/meta.yaml conda-recipe/conda_build_config.yaml setup.*
 	@$(VALIDATE_VENV)
-	@$(CHECK_GIT_STATUS)
+	$(CHECK_GIT_STATUS)
 	cp -f --reflink=auto dist/*.whl conda-recipe/
 	export GIT_DESCRIBE_TAG=$(shell python setup.py --version 2>/dev/null)
 	export WHEEL=$(subst -,_,$(PRJ_PACKAGE))-*.whl
@@ -707,7 +707,7 @@ conda-build: ${CONDA_BUILD_TARGET}
 ## Purge the conda build process
 conda-purge:
 	@$(VALIDATE_VENV)
-	@$(CONDA) build purge \
+	$(CONDA) build purge \
 		--output-folder ${CONDA_BLD_DIR}
 	rm -f conda-recipe/*.whl conda-recipe/setup.*
 	echo -e "$(cyan)Conda cleaned$(normal)"
@@ -742,7 +742,7 @@ conda-install: ${CONDA_BUILD_TARGET}
 
 ## Install a specific version of conda package
 conda-install-%: ${CONDA_BUILD_TARGET}
-	$(CHECK_GIT_STATUS)
+	@$(CHECK_GIT_STATUS)
 	$(CONDA) install \
 		-c file://${PWD}/${CONDA_BLD_DIR} $(CONDA_CHANNELS) ${CONDA_ARGS} \
 		-y \
@@ -834,7 +834,7 @@ $(DATA)/raw:
 # Convert all notebooks to python scripts
 # jupyter nbconvert --to python --ExecutePreprocessor.kernel_name=virtual_dataframe --template /tmp/make-XhsSM --TemplateExporter.extra_template_basedirs=/home/pprados/miniconda3/envs/virtual_dataframe/share/jupyter/nbconvert/templates --stdout "notebooks/demo.ipynb"
 _nbconvert:  $(JUPYTER_DATA_DIR)/kernels/$(KERNEL)
-	echo -e "Convert all notebooks..."
+	@echo -e "Convert all notebooks..."
 	notebook_path=notebooks
 	script_path=scripts
 	tmpdir=$$(mktemp -d -t make-XXXXX)
@@ -873,7 +873,7 @@ _nbconvert:  $(JUPYTER_DATA_DIR)/kernels/$(KERNEL)
 ## Convert all notebooks to python scripts
 nb-convert: _nbconvert
 	@find -L scripts/ -type f -iname "*.py" -exec git add "{}" \;
-	@find -L scripts/ -type f -iname "*.py" -exec git update-index --chmod=+x  "{}" \;
+	find -L scripts/ -type f -iname "*.py" -exec git update-index --chmod=+x  "{}" \;
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour nettoyer tous les fichiers générés par le compilateur Python.
@@ -881,7 +881,7 @@ nb-convert: _nbconvert
 # Clean pre-compiled files
 clean-pyc:
 	@/usr/bin/find -L . -type f -name "*.py[co]" -delete
-	@/usr/bin/find -L . -type d -name "__pycache__" -delete
+	/usr/bin/find -L . -type d -name "__pycache__" -delete
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour nettoyer les fichiers de builds (package et docs).
@@ -889,8 +889,8 @@ clean-pyc:
 # Remove build artifacts and docs
 clean-build:
 	@/usr/bin/find -L . -type f -name ".make-*" -delete
-	@rm -fr build/ dist/* *.egg-info .eggs .repository conda-recipe/*.whl
-	@echo -e "$(cyan)Build cleaned$(normal)"
+	rm -fr build/ dist/* *.egg-info .eggs .repository conda-recipe/*.whl
+	echo -e "$(cyan)Build cleaned$(normal)"
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour nettoyer tous les notebooks
@@ -898,7 +898,7 @@ clean-build:
 ## Remove all results in notebooks
 clean-notebooks: $(REQUIREMENTS)
 	@[ -e notebooks ] && find -L notebooks -name '*.ipynb' -exec jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace {} \;
-	@echo -e "$(cyan)Notebooks cleaned$(normal)"
+	echo -e "$(cyan)Notebooks cleaned$(normal)"
 
 # ---------------------------------------------------------------------------------------
 .PHONY: clean-pip
@@ -913,8 +913,8 @@ clean-pip:
 .PHONY: clean-venv clean-$(VENV)
 clean-$(VENV): remove-venv
 	@$(CONDA) create -y -q -n $(VENV) $(CONDA_ARGS) $(CONDA_CHANNELS)
-	@touch setup.py
-	@echo -e "$(yellow)Warning: Conda virtualenv $(VENV) is empty.$(normal)"
+	touch setup.py
+	echo -e "$(yellow)Warning: Conda virtualenv $(VENV) is empty.$(normal)"
 # Set the current VENV empty
 clean-venv : clean-$(VENV)
 
@@ -923,6 +923,7 @@ clean-venv : clean-$(VENV)
 .PHONY: clean
 ## Clean current environment
 clean: clean-pyc clean-build clean-notebooks conda-purge
+	@rm -Rf dask-worker-space
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour faire le ménage du projet
@@ -978,14 +979,15 @@ unit-test: .make-unit-test
 		-k $(KERNEL) \
 		--log-level ERROR \
 		--no-report-mode \
+		-p mode $* \
 		notebooks/demo.ipynb \
-		-p mode $(VDF_MODE) /dev/null 2>&1 | grep -v -e "the file is not specified with any extension" -e " *warnings.warn("
+		/dev/null 2>&1 | grep -v -e "the file is not specified with any extension" -e " *warnings.warn("
 	date >.make-notebooks-test-$*
 
 .PHONY: notebooks-test-*
 ## Run notebooks test with a specific *mode*
 notebooks-test-%: $(REQUIREMENTS)
-	@VDF_MODE=$* $(MAKE) --no-print-directory .make-notebooks-test-$*
+	@$(MAKE) --no-print-directory .make-notebooks-test-$*
 
 ifneq ($(USE_GPU),-gpu)
 .make-notebooks-test-cudf:
@@ -996,7 +998,7 @@ ifneq ($(USE_GPU),-gpu)
 endif
 
 .PHONY: notebooks-test-all
-.make-notebooks-test: $(foreach ext,$(VDF_MODES),notebooks-test-$(ext))
+.make-notebooks-test: $(foreach ext,$(VDF_MODES),.make-notebooks-test-$(ext))
 	@date >.make-notebooks-test
 
 ## Run notebook test for all *mode*
@@ -1054,11 +1056,11 @@ install: $(CONDA_PREFIX)/bin/$(PRJ)
 
 ## Install the tools in conda env with 'develop' link
 develop:
-	python $(PYTHON_ARGS) setup.py develop
+	@python $(PYTHON_ARGS) setup.py develop
 
 ## Uninstall the tools from the conda env
 uninstall: $(CONDA_PREFIX)/bin/$(PRJ)
-	rm $(CONDA_PREFIX)/bin/$(PRJ)
+	@rm $(CONDA_PREFIX)/bin/$(PRJ)
 
 
 ## Publish the distribution in a local repository

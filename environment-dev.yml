@@ -1,2 +1,4 @@
 dependencies:
   - pytables
+  - graphviz
+  - conda-build

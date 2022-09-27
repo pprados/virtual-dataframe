@@ -5,7 +5,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - cudatoolkit>=11.7
-  - dask-cuda>=22.07
-  - dask-cudf>=22.07
-  - conda-build
+  - cudatoolkit>=11.6.0
+  - dask-cuda>=22.2.0
+  - dask-cudf>=22.2.0
+
