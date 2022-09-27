@@ -57,7 +57,7 @@ endif
 # SNIPPET pour détecter la présence d'un GPU afin de modifier le nom du projet
 # et ses dépendances si nécessaire.
 ifndef USE_GPU
-# FIXME: https://stackoverflow.com/questions/66611439/how-to-check-if-nvidia-gpu-is-available-using-bash-script
+# https://stackoverflow.com/questions/66611439/how-to-check-if-nvidia-gpu-is-available-using-bash-script
 ifneq ("$(wildcard /proc/driver/nvidia)","")
 USE_GPU:=-gpu
 else ifdef CUDA_HOME
@@ -974,7 +974,7 @@ unit-test: .make-unit-test
 .make-notebooks-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC) $(JUPYTER_DATA_DIR)/kernels/$(KERNEL) \
 	# notebooks/demo.ipynb
 	@$(VALIDATE_VENV)
-	echo -e "$(cyan)Run notebook tests for mode=$(VDF_MODE)...$(normal)"
+	echo -e "$(cyan)Run notebook tests for mode=$*...$(normal)"
 	python $(PYTHON_ARGS) -m papermill \
 		-k $(KERNEL) \
 		--log-level ERROR \
