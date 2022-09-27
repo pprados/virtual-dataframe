@@ -85,7 +85,7 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#faq">FAQ</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#the-code-run-with-dask-but-not-with-modin-pandas-or-cudf">The code run with dask, but not with modin, pandas or cudf ?</a>
+    <li class="toctree-l3"><a class="reference internal" href="#the-code-run-with-x-but-not-with-y">The code run with X, but not with Y ?</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#compute-is-not-defined-with-pandas-cudf">.compute() is not defined with pandas, cudf ?</a>
     </li>
@@ -199,7 +199,7 @@ with (VClient()):
 </tr>
 <tr>
 <td>VDF_MODE=modin</td>
-<td>Python with local modin</td>
+<td>Python with local multiple process</td>
 </tr>
 <tr>
 <td>VDF_MODE=cudf</td>
@@ -210,7 +210,7 @@ with (VClient()):
 <td>Dask with local multiple process and pandas</td>
 </tr>
 <tr>
-<td>VDF_MODE=dask-cudf</td>
+<td>VDF_MODE=dask_cudf</td>
 <td>Dask with local multiple process and cuDF</td>
 </tr>
 <tr>
@@ -337,7 +337,7 @@ with only one ou two environment variables.</p>
 <tr>
 <td>dask_modin</td>
 <td>No</td>
-<td>dask://<host></td>
+<td>dask://&lt;host&gt;:&lt;port&gt;</td>
 <td>Dask cluster</td>
 </tr>
 <tr>
@@ -355,19 +355,19 @@ with only one ou two environment variables.</p>
 <tr>
 <td>ray_modin</td>
 <td>No</td>
-<td>ray://<host></td>
+<td>ray://&lt;host&gt;:&lt;port&gt;</td>
 <td>Dask cluster</td>
 </tr>
 <tr>
-<td>dask-cudf</td>
+<td>dask_cudf</td>
 <td>No</td>
 <td>dask://localhost</td>
 <td>LocalCUDACluster</td>
 </tr>
 <tr>
-<td>dask-cudf</td>
+<td>dask_cudf</td>
 <td>No</td>
-<td>dask://<host></td>
+<td>dask://&lt;host&gt;:&lt;port&gt;</td>
 <td>Dask cluster</td>
 </tr>
 </tbody>
@@ -443,31 +443,31 @@ $ pip install &quot;virtual_dataframe[$VDF_MODE]@git+https://github.com/pprados/
 </tr>
 <tr>
 <td>vdf.read_excel(...)<sup>*</sup></td>
-<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+<td>Read VDataFrame from Excel <em>glob</em> files</td>
 </tr>
 <tr>
 <td>vdf.read_fwf(...)<sup>*</sup></td>
-<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+<td>Read VDataFrame from Fwf <em>glob</em> files</td>
 </tr>
 <tr>
 <td>vdf.read_hdf(...)<sup>*</sup></td>
-<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+<td>Read VDataFrame from HDFs <em>glob</em> files</td>
 </tr>
 <tr>
 <td>vdf.read_json(...)</td>
-<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+<td>Read VDataFrame from Jsons <em>glob</em> files</td>
 </tr>
 <tr>
 <td>vdf.read_orc(...)</td>
-<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+<td>Read VDataFrame from ORCs <em>glob</em> files</td>
 </tr>
 <tr>
 <td>vdf.read_parquet(...)</td>
-<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+<td>Read VDataFrame from Parquets <em>glob</em> files</td>
 </tr>
 <tr>
 <td>vdf.read_sql_table(...)<sup>*</sup></td>
-<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+<td>Read VDataFrame from SQL</td>
 </tr>
 <tr>
 <td>vdf.from_pandas(pdf, npartitions=...)</td>
@@ -688,7 +688,7 @@ with a framework without distribution (pandas, cudf)</li>
 <td>Column assignment doesn't support type list</td>
 </tr>
 <tr>
-<td><br /><strong>dask-cudf</strong></td>
+<td><br /><strong>dask_cudf</strong></td>
 </tr>
 <tr>
 <td>See cudf and dask.</td>
@@ -1043,8 +1043,9 @@ Each cell is strongly compatible with the upper left part.</p>
 <h3 id="use-read-file">Use <em>read file</em></h3>
 <p>It's not a good idea to use the constructor of <code>VDataFrame</code> or <code>VSeries</code> because, all the datas
 must be in memory in the driver. If the dataframe is big, an <em>out of memory</em> can happen.
-To partitionning the job, create multiple files, and use <code>read_csv("filename*.csv")</code> or other
-file format. Then, each worker can read directly a partition.</p>
+To partitionning the job, create multiple files, and use <code>read_csv("filename*.csv")</code>,
+use a big file and the <em>auto partitioning</em> proposed by dask
+or other file format. Then, each worker can read directly a partition.</p>
 <p>The constructor for <code>VDataFrame</code> and <code>VSeries</code> are present, only to help to write some unit test,
 but may not be used in production.</p>
 <h3 id="no-loop">No loop</h3>
@@ -1052,7 +1053,7 @@ but may not be used in production.</p>
 It's better to use <code>apply()</code> or <code>apply_rows()</code> to distribute the code in the cluster and GPU.
 The code used in <code>apply</code>, will be compiled to CPU or GPU, before using, with some frameworks.</p>
 <h2 id="faq">FAQ</h2>
-<h3 id="the-code-run-with-dask-but-not-with-modin-pandas-or-cudf">The code run with dask, but not with modin, pandas or cudf ?</h3>
+<h3 id="the-code-run-with-x-but-not-with-y">The code run with X, but not with Y ?</h3>
 <p>You must use only the similare functionality, and only a subpart of Pandas.
 Develop for <em>dask_cudf</em>. it's easier to be compatible with others frameworks.</p>
 <h3 id="compute-is-not-defined-with-pandas-cudf"><code>.compute()</code> is not defined with pandas, cudf ?</h3>
@@ -1116,5 +1117,5 @@ a,b = compute(f(),f())
 
 <!--
 MkDocs version : 1.3.1
-Build Date UTC : 2022-09-23 12:26:40.739036+00:00
+Build Date UTC : 2022-09-27 08:56:01.172885+00:00
 -->
