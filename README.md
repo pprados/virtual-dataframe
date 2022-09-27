@@ -104,24 +104,24 @@ To connect to a cluster, use `VDF_CLUSTER` with protocol, host and optionaly, th
 - ray:auto
 - or alternativelly, use `DASK_SCHEDULER_SERVICE_HOST` and `DASK_SCHEDULER_SERVICE_PORT`
 
-| VDF_MODE   | DEBUG | VDF_CLUSTER                 | Scheduler        |
-|------------|-------|-----------------------------|------------------|
-| pandas     | -     | -                           | No scheduler     |
-| cudf       | -     | -                           | No scheduler     |
-| modin      | -     | -                           | No scheduler     |
-| dask       | Yes   | -                           | synchronous      |
-| dask       | No    | -                           | thread           |
-| dask       | No    | threads                     | thread           |
-| dask       | No    | processes                   | processes        |
-| dask       | No    | dask://localhost            | LocalCluster     |
-| dask_modin | No    | -                           | LocalCluster     |
-| dask_modin | No    | dask://localhost            | LocalCluster     |
-| dask_modin | No    | dask://&lt;host>:&lt;port>  | Dask cluster     |
-| ray_modin  | No    | ray:auto                    | Dask cluster     |
-| ray_modin  | No    | ray://localhost             | Dask cluster     |
-| ray_modin  | No    | ray://&lt;host>:&lt;port>   | Dask cluster     |
-| dask_cudf  | No    | dask://localhost            | LocalCUDACluster |
-| dask_cudf  | No    | dask://&lt;host>:&lt;port>  | Dask cluster     |
+| VDF_MODE   | DEBUG | VDF_CLUSTER                | Scheduler        |
+|------------|-------|----------------------------|------------------|
+| pandas     | -     | -                          | No scheduler     |
+| cudf       | -     | -                          | No scheduler     |
+| modin      | -     | -                          | No scheduler     |
+| dask       | Yes   | -                          | synchronous      |
+| dask       | No    | -                          | thread           |
+| dask       | No    | dask://threads             | thread           |
+| dask       | No    | dask://processes           | processes        |
+| dask       | No    | dask://localhost           | LocalCluster     |
+| dask_modin | No    | -                          | LocalCluster     |
+| dask_modin | No    | dask://localhost           | LocalCluster     |
+| dask_modin | No    | dask://&lt;host>:&lt;port> | Dask cluster     |
+| ray_modin  | No    | ray:auto                   | Dask cluster     |
+| ray_modin  | No    | ray://localhost            | Dask cluster     |
+| ray_modin  | No    | ray://&lt;host>:&lt;port>  | Dask cluster     |
+| dask_cudf  | No    | dask://localhost           | LocalCUDACluster |
+| dask_cudf  | No    | dask://&lt;host>:&lt;port> | Dask cluster     |
 
 
 Sample:

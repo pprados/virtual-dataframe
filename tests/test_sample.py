@@ -12,7 +12,7 @@ def sample_function(data: TestDF) -> TestDF:
 
 
 def test_sample():
-    with (VClient()):
+    with (VClient()) as client:
         vdf = vpd.VDataFrame({"data": [1, 2]})
         rc = sample_function(vdf).compute()
         assert rc.equals(vpd.VDataFrame({"data": [1, 2]}).compute())

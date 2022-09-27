@@ -9,15 +9,13 @@ import pytest
 import virtual_dataframe as vdf
 
 
-# def setup_module(module):
-#     vdf.VClient()
-#
-# def teardown_module(module):
-#     pass
-#
 @pytest.fixture(scope="session")
 def vclient():
-    return vdf.VClient()
+    client = vdf.VClient()
+    client.__enter__()
+    yield client
+    client.__exit__(None,None,None)
+    client.shutdown()
 
 
 # %%
@@ -85,6 +83,7 @@ def test_serie_repartition(vclient):
     assert rc.to_pandas().equals(s.to_pandas())
 
 
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
 def test_from_pandas():
     pdf = pandas.DataFrame({"a": [1, 2]})
     df = vdf.from_pandas(pdf, npartitions=2)
@@ -98,12 +97,14 @@ def test_from_backend():
 
 
 # %%
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
 def test_DataFrame_to_from_pandas():
     pdf = pandas.DataFrame({'a': [0.0, 1.0, 2.0, 3.0], 'b': [0.1, 0.2, None, 0.3]})
     df = vdf.from_pandas(pdf, npartitions=2)
     assert df.to_pandas().equals(pandas.DataFrame({'a': [0.0, 1.0, 2.0, 3.0], 'b': [0.1, 0.2, None, 0.3]}))
 
 
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
 def test_Series_to_from_pandas():
     ps = pandas.Series([1, 2, 3, None, 4])
     s = vdf.from_pandas(ps, npartitions=2)
@@ -132,6 +133,9 @@ def test_Series_visualize():
     assert result.visualize()
 
 
+@pytest.mark.filterwarnings("ignore:.*is a new feature!")
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
+@pytest.mark.filterwarnings("ignore:.*will be removed in a future version")
 def test_DataFrame_to_read_csv():
     d = tempfile.mkdtemp()
     try:
@@ -145,6 +149,10 @@ def test_DataFrame_to_read_csv():
 
 
 @pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.filterwarnings("ignore:Function ")
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
+@pytest.mark.filterwarnings("ignore:.*is a new feature!")
 def test_DataFrame_to_read_excel():
     d = tempfile.mkdtemp()
     try:
@@ -158,6 +166,10 @@ def test_DataFrame_to_read_excel():
 
 
 @pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.filterwarnings("ignore:Function ")
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
+@pytest.mark.filterwarnings("ignore:.*this may be GPU accelerated in the future")
 def test_DataFrame_to_read_feather():
     d = tempfile.mkdtemp()
     try:
@@ -171,6 +183,8 @@ def test_DataFrame_to_read_feather():
 
 
 @pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.filterwarnings("ignore:Function ")
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_DataFrame_read_fwf():
     filename = f"tests/test*.fwf"
     df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
@@ -179,6 +193,10 @@ def test_DataFrame_read_fwf():
 
 
 @pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask_cudf,), reason="Incompatible mode")
+@pytest.mark.filterwarnings("ignore:Function ")
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
+@pytest.mark.filterwarnings("ignore:.*this may be GPU accelerated in the future")
 def test_DataFrame_to_read_hdf():
     d = tempfile.mkdtemp()
     try:
@@ -191,6 +209,10 @@ def test_DataFrame_to_read_hdf():
         shutil.rmtree(d)
 
 
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
+@pytest.mark.filterwarnings("ignore:.*this may be GPU accelerated in the future")
+@pytest.mark.filterwarnings("ignore:.*will be removed in a future version")
 def test_DataFrame_to_read_json():
     d = tempfile.mkdtemp()
     try:
@@ -207,6 +229,8 @@ def test_DataFrame_to_read_json():
                                      vdf.Mode.dask_cudf,
                                      vdf.Mode.modin,
                                      vdf.Mode.dask_modin), reason="Incompatible mode")
+@pytest.mark.filterwarnings("ignore:Function ")
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_DataFrame_to_read_orc():
     d = tempfile.mkdtemp()
     try:
@@ -219,6 +243,8 @@ def test_DataFrame_to_read_orc():
         shutil.rmtree(d)
 
 
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_DataFrame_to_read_parquet():
     d = tempfile.mkdtemp()
     try:
@@ -232,6 +258,8 @@ def test_DataFrame_to_read_parquet():
 
 
 @pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.filterwarnings("ignore:Function ")
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_DataFrame_to_read_sql():
     filename = f"/{tempfile.gettempdir()}/test.db"
     try:
@@ -255,6 +283,8 @@ def test_DataFrame_to_read_sql():
 
 
 @pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.filterwarnings("ignore:Function ")
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_Serie_to_csv():
     d = tempfile.mkdtemp()
     try:
@@ -266,6 +296,9 @@ def test_Serie_to_csv():
 
 
 @pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.filterwarnings("ignore:Function ")
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
 def test_Serie_to_excel():
     d = tempfile.mkdtemp()
     try:
@@ -276,6 +309,10 @@ def test_Serie_to_excel():
         shutil.rmtree(d)
 
 
+@pytest.mark.filterwarnings("ignore:Function ")
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
+@pytest.mark.filterwarnings("ignore:.*this may be GPU accelerated in the future")
 def test_Serie_to_hdf():
     d = tempfile.mkdtemp()
     try:
@@ -286,6 +323,10 @@ def test_Serie_to_hdf():
         shutil.rmtree(d)
 
 
+@pytest.mark.filterwarnings("ignore:Function ")
+@pytest.mark.filterwarnings("ignore:Using CPU via Pandas")
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
 def test_Serie_to_json():
     d = tempfile.mkdtemp()
     try:
@@ -297,6 +338,8 @@ def test_Serie_to_json():
 
 
 @pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.filterwarnings("ignore:Function ")
+@pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_Serie_to_sql():
     filename = f"/{tempfile.gettempdir()}/test.db"
     try:
@@ -314,6 +357,7 @@ def test_Serie_to_sql():
 
 
 
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
 def test_DataFrame_to_from_numpy():
     df = vdf.VDataFrame({'a': [0.0, 1.0, 2.0, 3.0]}, npartitions=2)
     n = df.to_numpy()
@@ -321,6 +365,7 @@ def test_DataFrame_to_from_numpy():
     assert df.compute().equals(df2.compute())
 
 
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
 def test_Series_to_from_numpy():
     s = vdf.VSeries([0.0, 1.0, 2.0, 3.0], npartitions=2)
     n = s.to_numpy()

@@ -60,29 +60,33 @@ else:
     EnvDict = Dict[str, str]
 
 
+class _FakeClient:
+    def cancel(self, futures, asynchronous=None, force=False) -> None:
+        pass
+
+    def close(self, timeout='__no_default__') -> None:
+        pass
+
+    def __enter__(self) -> Any:
+        return self
+
+    def __exit__(self, type: None, value: None, traceback: None) -> None:
+        pass
+
+    def __str__(self) -> str:
+        return "<Client: in-process scheduler>"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def shutdown(self) -> None:
+        pass
+
+
 def _new_VClient(mode: Mode,
                  env: EnvDict,
                  **kwargs) -> Any:
     if mode in (Mode.pandas, Mode.cudf, Mode.modin):
-        class _FakeClient:
-            def cancel(self, futures, asynchronous=None, force=False) -> None:
-                pass
-
-            def close(self, timeout='__no_default__') -> None:
-                pass
-
-            def __enter__(self) -> Any:
-                return self
-
-            def __exit__(self, type: None, value: None, traceback: None) -> None:
-                pass
-
-            def __str__(self) -> str:
-                return "<Client: in-process scheduler>"
-
-            def __repr__(self) -> str:
-                return self.__str__()
-
         return _FakeClient()
 
     vdf_cluster, host, port = _analyse_cluster_url(mode, env)
@@ -97,8 +101,10 @@ def _new_VClient(mode: Mode,
             LOGGER.warning("Use synchronous scheduler for debuging")
         elif host == 'threads':
             dask.config.set(scheduler='threads')  # type: ignore
+            return _FakeClient()
         elif host == 'processes':
             dask.config.set(scheduler='processes')  # type: ignore
+            return _FakeClient()
         else:
             if host in ("localhost", "127.0.0.1"):
                 if mode == Mode.dask_cudf:
