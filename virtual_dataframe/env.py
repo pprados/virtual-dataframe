@@ -37,19 +37,6 @@ def _check_cuda() -> bool:
     import GPUtil
     return len(GPUtil.getAvailable()) > 0
 
-    # libnames = ('libcuda.so', 'libcuda.dylib', 'cuda.dll')
-    # for libname in libnames:
-    #     try:
-    #         cuda = ctypes.CDLL(libname)
-    #         result = cuda.cuInit(0)
-    #         if not result:
-    #             return True
-    #     except (OSError, RuntimeError):
-    #         continue
-    #     else:
-    #         break
-    # return False
-
 
 USE_GPU = _check_cuda()
 
