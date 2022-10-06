@@ -5,7 +5,7 @@
     <option name="PARENT_ENVS" value="true" />
     <envs>
       <env name="VDF_MODE" value="dask_cudf" />
-      <env name="VDF_CLUSTER" value="dask://" />
+      <env name="XVDF_CLUSTER" value="dask://" />
     </envs>
     <option name="SDK_HOME" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />

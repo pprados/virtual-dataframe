@@ -22,11 +22,9 @@ def test_cudf():
 
 @pytest.mark.skipif(not VDF_MODE.name.startswith("dask"), reason="Invalid mode")
 def test_dask_debug():
-    from distributed import LocalCluster
 
     with (vclient._new_VClient(mode=Mode.dask, env=dict(DEBUG="True"))) as client:
-        assert isinstance(client.cluster, LocalCluster)
-        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
+        assert repr(client).startswith('<Client: in-process scheduler>')
         client.shutdown()
 
 
@@ -41,10 +39,8 @@ def test_dask_cluster_gpu():
 
 @pytest.mark.skipif(VDF_MODE != Mode.dask_cudf, reason="Invalid mode")
 def test_dask_no_cluster_gpu():
-    from dask_cuda import LocalCUDACluster
     with (vclient._new_VClient(mode=Mode.dask_cudf, env=dict())) as client:
-        assert isinstance(client.cluster, LocalCUDACluster)
-        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
+        assert repr(client).startswith('<Client: in-process scheduler>')
         client.shutdown()
 
 

@@ -1,11 +1,10 @@
-#name: virtual_dataframe
 channels:
   - rapidsai
   - nvidia
   - conda-forge
   - defaults
 dependencies:
-  - cudatoolkit>=11.6.0
-  - dask-cuda>=22.2.0
-  - dask-cudf>=22.2.0
+  - cudf==22.8.*
+  - dask-cuda==22.8.*
+  - dask-cudf>=22.8.*
 

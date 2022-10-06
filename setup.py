@@ -8,6 +8,7 @@ from setuptools import setup
 
 PYTHON_VERSION = "3.8"
 
+
 # USE_GPU="-gpu" ou "" si le PC possède une carte NVidia
 # ou suivant la valeur de la variable d'environnement GPU (export GPU=yes)
 def _check_gpu() -> bool:
@@ -28,44 +29,47 @@ def _check_gpu() -> bool:
 
 USE_GPU: str = "-gpu" if _check_gpu() else ""
 
+# Mutual compatible versions
+modin_ver = '==0.13.*'
+panda_ver = '==1.4.*'
+dask_ver = '==2022.9.*'
+
 # Run package dependencies
 requirements = [
     'python-dotenv>=0.20',
-    'pandas>=1.3',
-    'numba>=0.55',
-    'numpy>=1.21',
     'GPUtil',
-    ]
+]
 
 pandas_requirements = [
-    'pandas>=1.4'
+    f'pandas{panda_ver}'
 ]
 
 modin_requirements = [
-   'modin>=0.15'
+    f'modin{modin_ver}'
 ]
 dask_requirements = \
     [
-        'dask>=2022.2', 'distributed>=2022.2',
+        f'dask{dask_ver}',
+        f'distributed{dask_ver}',
     ]
-#dask_modin_requirements = ['modin[dask]>=0.15']
-dask_modin_requirements = ['modin[dask]']
-#ray_modin_requirements = ['modin[ray]>=0.15']
+dask_modin_requirements = [f'modin{modin_ver}'] + dask_requirements
+# ray_modin_requirements = ['modin[ray]{modin_ver}']
 
 all_requirements = set(pandas_requirements +
-                                 dask_modin_requirements +
-                                 # ray_modin_requirements +
-                                 dask_requirements
-                                 )
+                       dask_modin_requirements +
+                       # ray_modin_requirements +
+                       dask_requirements
+                       )
 
-setup_requirements = ["pytest-runner", "setuptools_scm"]
+setup_requirements = [
+    "pytest-runner",
+    "setuptools_scm"
+]
 
 # Packages for tests
 test_requirements = [
     'pytest>=2.8',
-    # 'pytest-openfiles', # For tests
     'pytest-xdist',
-    # 'pytest-httpbin>=0.0.7',
     'pytest-mock',
     'pytest-cov>=3.0.0',
 
@@ -78,23 +82,23 @@ test_requirements = [
 dev_requirements = all_requirements.union([
     'pip',
     'twine',  # To publish package in Pypi
-    'sphinx', 'sphinx-execute-code', 'sphinx_rtd_theme', 'recommonmark', 'nbsphinx',  # To generate doc
     'flake8', 'pylint',  # For lint
     'daff',
     'pytype', 'mypy',
+    'pandas-stubs',
+    'mkdocs',
+
     'jupyterlab',
+    'jupyterlab-git',
     'dask-labextension',
     'voila',
-    'pandas-stubs',
-    # For Dask
+
+    # Extension
     'graphviz',
-    'bokeh>=2.1.1',
-    'jupyterlab-git',
-    'mkdocs',
+    #    'bokeh>=2.1.1',
     'sqlalchemy',
     'tables',
     'openpyxl',
-    'mkl',
 ])
 
 

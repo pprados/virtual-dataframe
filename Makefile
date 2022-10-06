@@ -126,7 +126,7 @@ PRJ_URL=$(REMOTE_GIT_URL:.git=)
 PRJ_DOC_URL=$(PRJ_URL)
 GIT_DESCRIBE_TAG=$(shell git describe --tags --exact-match 2>/dev/null || git symbolic-ref -q --short HEAD)
 PRJ_PACKAGE:=$(PRJ)
-PYTHON_VERSION?=3.8
+PYTHON_VERSION?=3.9
 PYTHON_VERSION_MAX:=3.9
 PYTHONWARNINGS=ignore
 PYTHON_PARAMS?=
@@ -139,7 +139,7 @@ export DATA?=data
 
 # Conda environment
 # To optimize conda, use mamba
-CONDA:=mamba
+CONDA?=mamba
 export MAMBA_NO_BANNER=1
 CONDA_BASE:=$(shell conda info --base)
 CONDA_PACKAGE:=$(CONDA_PREFIX)/lib/python$(PYTHON_VERSION)/site-packages
@@ -160,7 +160,7 @@ JUPYTER_LABEXTENSIONS_DIR:=$(CONDA_PREFIX)/share/jupyter/labextensions
 _JUPYTER_LABEXTENSIONS:=$(foreach ext,$(JUPYTER_LABEXTENSIONS),$(JUPYTER_LABEXTENSIONS_DIR)/$(ext))
 
 # Project variable
-export VDF_MODES=pandas cudf modin dask dask_cudf dask_modin
+export VDF_MODES=pandas cudf modin dask dask_modin dask_cudf
 
 CHECK_GIT_STATUS=[[ `git status --porcelain` ]] && echo "$(yellow)Warning: All files are not commited$(normal)"
 
@@ -975,6 +975,8 @@ unit-test: .make-unit-test
 	# notebooks/demo.ipynb
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Run notebook tests for mode=$*...$(normal)"
+	unset DASK_SCHEDULER_SERVICE_PORT
+	unset DASK_SCHEDULER_SERVICE_HOST
 	python $(PYTHON_ARGS) -m papermill \
 		-k $(KERNEL) \
 		--log-level ERROR \
@@ -1071,3 +1073,8 @@ local-repository:
 	echo -e "$(green)export PIP_EXTRA_INDEX_URL=http://localhost:8888/simple$(normal)"
 	echo -e "or use $(green)pip install --index-url http://localhost:8888/simple/$(normal)"
 	pypi-server -p 8888 .repository/
+
+docker-run:
+	docker run -i -v /home/pprados/workspace.bda/virtual_dataframe:/virtual_dataframe \
+		--runtime=nvidia \
+		-t conda/miniconda3 /bin/bash

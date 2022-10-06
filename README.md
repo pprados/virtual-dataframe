@@ -100,8 +100,6 @@ with only one ou two environment variables.
 To connect to a cluster, use `VDF_CLUSTER` with protocol, host and optionaly, the port.
 
 - dask://locahost:8787
-- ray://locahost:10001
-- ray:auto
 - or alternativelly, use `DASK_SCHEDULER_SERVICE_HOST` and `DASK_SCHEDULER_SERVICE_PORT`
 
 | VDF_MODE   | DEBUG | VDF_CLUSTER                | Scheduler        |
@@ -117,9 +115,6 @@ To connect to a cluster, use `VDF_CLUSTER` with protocol, host and optionaly, th
 | dask_modin | No    | -                          | LocalCluster     |
 | dask_modin | No    | dask://localhost           | LocalCluster     |
 | dask_modin | No    | dask://&lt;host>:&lt;port> | Dask cluster     |
-| ray_modin  | No    | ray:auto                   | Dask cluster     |
-| ray_modin  | No    | ray://localhost            | Dask cluster     |
-| ray_modin  | No    | ray://&lt;host>:&lt;port>  | Dask cluster     |
 | dask_cudf  | No    | dask://localhost           | LocalCUDACluster |
 | dask_cudf  | No    | dask://&lt;host>:&lt;port> | Dask cluster     |
 
@@ -204,8 +199,8 @@ $ pip install "virtual_dataframe@git+https://github.com/pprados/virtual-datafram
 | vdf.compute([...])                     | Compute multiple @delayed functions             |
 | VDataFrame(data, npartitions=...)      | Create DataFrame in memory (only for test)      |
 | VSeries(data, npartitions=...)         | Create Series in memory (only for test)         |
-| BackEndDataFrame                       | The class of dask/ray backend dataframe         |
-| BackEndSeries                          | The class of dask/ray backend series            |
+| BackEndDataFrame                       | The class of dask backend dataframe         |
+| BackEndSeries                          | The class of dask backend series            |
 | BackEnd                                | The backend framework                           |
 | VDataFrame.compute()                   | Compute the virtual dataframe                   |
 | VDataFrame.persist()                   | Persist the dataframe in memory                 |

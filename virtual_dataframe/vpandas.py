@@ -334,7 +334,7 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
 
 
     # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
-    _cache = dict()  # type: Dict[Any, Any]
+    _cache = {}  # type: ignore
 
 
     def _compile(func: Callable, cache_key: Optional[str]):
@@ -755,7 +755,7 @@ if VDF_MODE == Mode.cudf:
 
     visualize.__doc__ = _doc_visualize
 
-    persist = _persist
+    persist = _persist  # type: ignore
 
     concat: Any = cudf.concat
 
@@ -867,7 +867,7 @@ if VDF_MODE == Mode.pandas:
     _read_csv.__doc__ = pandas.read_csv.__doc__
 
     # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
-    _cache = dict()  # type: Dict[Any, Any]
+    _cache = {}  # type: ignore
 
 
     def _compile(func: Callable, cache_key: Optional[str]):
@@ -929,10 +929,10 @@ if VDF_MODE == Mode.pandas:
 
     visualize.__doc__ = _doc_visualize
 
-    delayed: Any = _delayed
+    delayed = _delayed
     delayed.__doc__ = _doc_delayed
-    concat: Any = pandas.concat
-    persist: Iterable[_VDataFrame] = _persist
+    concat = pandas.concat
+    persist = _persist  # type: ignore
 
     from_pandas = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
     from_backend = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df

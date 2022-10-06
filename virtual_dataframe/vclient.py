@@ -33,7 +33,7 @@ def _analyse_cluster_url(mode: Mode, env) -> Tuple[ParseResult, Optional[str], i
         vdf_cluster = env.get("VDF_CLUSTER", None)
     if not vdf_cluster:
         if mode in (Mode.dask, Mode.dask_modin, Mode.dask_cudf):
-            vdf_cluster = "dask://localhost"
+            vdf_cluster = "dask://threads"
         # elif mode == Mode.ray_modin:
         #     vdf_cluster = "ray://"
         else:
@@ -61,6 +61,9 @@ else:
 
 
 class _FakeClient:
+    def __init__(self, cluster):
+        self.cluster=cluster
+
     def cancel(self, futures, asynchronous=None, force=False) -> None:
         pass
 
@@ -87,7 +90,7 @@ def _new_VClient(mode: Mode,
                  env: EnvDict,
                  **kwargs) -> Any:
     if mode in (Mode.pandas, Mode.cudf, Mode.modin):
-        return _FakeClient()
+        return _FakeClient("")
 
     vdf_cluster, host, port = _analyse_cluster_url(mode, env)
 
@@ -99,12 +102,12 @@ def _new_VClient(mode: Mode,
         if DEBUG:
             dask.config.set(scheduler='synchronous')  # type: ignore
             LOGGER.warning("Use synchronous scheduler for debuging")
-        elif host == 'threads':
+        elif host in ('threads', '', None):
             dask.config.set(scheduler='threads')  # type: ignore
-            return _FakeClient()
+            return _FakeClient("threads")
         elif host == 'processes':
             dask.config.set(scheduler='processes')  # type: ignore
-            return _FakeClient()
+            return _FakeClient("processes")
         else:
             if host in ("localhost", "127.0.0.1"):
                 if mode == Mode.dask_cudf:

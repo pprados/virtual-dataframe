@@ -28,12 +28,13 @@ class Mode(Enum):
 
 
 def _check_cuda() -> bool:
-    if 'microsoft-standard' in os.uname().release:
-        os.environ["LD_LIBRARY_PATH"] = f"/usr/lib/wsl/lib/:{os.environ['LD_LIBRARY_PATH']}"
-    else:
-        os.environ["LD_LIBRARY_PATH"] = f"/usr/local/cuda/compat:" \
-                                        f"/usr/local/cuda/lib64:" \
-                                        f"{os.environ['LD_LIBRARY_PATH']}"
+    # if 'microsoft-standard' in os.uname().release:
+    #     os.environ["LD_LIBRARY_PATH"] = f"/usr/lib/wsl/lib/:{os.environ.get('LD_LIBRARY_PATH','')}"
+    # else:
+    #     os.environ["LD_LIBRARY_PATH"] = f"/usr/local/cuda/compat:" \
+    #                                     f"/usr/local/cuda/lib64:" \
+    #                                     f"{os.environ.get('LD_LIBRARY_PATH','')}"
+    # assert 'LD_LIBRARY_PATH' in os.environ, "LD_LIBRARY_PATH must be set Nvidia .so files"
     import GPUtil
     return len(GPUtil.getAvailable()) > 0
 
