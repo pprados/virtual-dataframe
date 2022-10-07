@@ -40,7 +40,7 @@ def test_dask_cluster_gpu():
 @pytest.mark.skipif(VDF_MODE != Mode.dask_cudf, reason="Invalid mode")
 def test_dask_no_cluster_gpu():
     with (vclient._new_VClient(mode=Mode.dask_cudf, env=dict())) as client:
-        assert repr(client).startswith('<Client: in-process scheduler>')
+        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
         client.shutdown()
 
 

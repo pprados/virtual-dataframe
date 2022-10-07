@@ -128,11 +128,23 @@ with (VClient())
 ```
 
 ## Installation
+
+### Dependencies
+It's difficulte to use all the *pandas like* framework at the same time, in the same projet.
+Each framework need some dependencies, differents of the others. But, with a specific selection
+of versions of each framework, it's possible to merge all the frameworks.
+
+We declare this dependencies with the defaults version of **virtual_dataframe**. The, you can change only
+the environment variable `VDF_MODE` to test the differents frameworks.
+
+Else, it's possible to create on conda environement for each framework, with the last version of each one.
+Then you must activate the specific environement and set the corresponding `VDF_MODE` variable.
+
 ### Installing with Conda (recommended)
 ```shell
 $ conda install -q -y \
 	-c rapidsai -c nvidia -c conda-forge \
-	"virtual_dataframe-all"
+	'virtual_dataframe-all'
 ```
 or, for only one mode:
 ```shell

@@ -103,8 +103,17 @@ def _new_VClient(mode: Mode,
             dask.config.set(scheduler='synchronous')  # type: ignore
             LOGGER.warning("Use synchronous scheduler for debuging")
         elif host in ('threads', '', None):
-            dask.config.set(scheduler='threads')  # type: ignore
-            return _FakeClient("threads")
+            if mode != Mode.dask_cudf:
+                dask.config.set(scheduler='threads')  # type: ignore
+                return _FakeClient("threads")
+            else:
+                try:
+                    from dask_cuda import LocalCUDACluster
+                except ModuleNotFoundError:
+                    raise ValueError(
+                        "Please install dask-cuda via the rapidsai conda channel. "
+                        "See https://rapids.ai/start.html for instructions.")
+                return dask.distributed.Client(LocalCUDACluster())
         elif host == 'processes':
             dask.config.set(scheduler='processes')  # type: ignore
             return _FakeClient("processes")
