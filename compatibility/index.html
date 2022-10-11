@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/pprados/virtual_dataframe/compatibility/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Compatibility - virtual_dataframe</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Compatibility";
+        var mkdocs_page_input_path = "compatibility.md";
+        var mkdocs_page_url = "/pprados/virtual_dataframe/compatibility/";
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> virtual_dataframe
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../cluster/">Cluster</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../install/">Install</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Compatibility</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#file-format-compatibility">File format compatibility</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#cross-framework-compatibility">Cross framework compatibility</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#no-need-of-gpu">No need of GPU?</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#no-need-of-big-data">No need of big data?</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#need-all-possibility">Need all possibility?</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../api/">API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="" href="../best_practice.md">Best Practice</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../faq/">FAQ</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Contribute</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../contribute/">Contribute</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../commands/">Commands</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../CHANGELOG/">Changelog</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">virtual_dataframe</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+      <li>Compatibility</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/pprados/virtual_dataframe/edit/master/docs/compatibility.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="compatibility">Compatibility</h2>
+<p>This project is just a wrapper. So, it inherits limitations and bugs from other projects. Sorry for that.</p>
+<table>
+<thead>
+<tr>
+<th>Limitations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><br /><strong>pandas</strong></td>
+</tr>
+<tr>
+<td>All data must be in DRAM</td>
+</tr>
+<tr>
+<td><br /><strong>modin</strong></td>
+</tr>
+<tr>
+<td><a href="https://modin.readthedocs.io/en/stable/getting_started/why_modin/pandas.html">Read this</a></td>
+</tr>
+<tr>
+<td><br /><strong><a href="https://docs.rapids.ai/api/cudf/nightly/user_guide/pandas-comparison.html">cudf</a></strong></td>
+</tr>
+<tr>
+<td>All data must be in VRAM</td>
+</tr>
+<tr>
+<td>All data types in cuDF are nullable</td>
+</tr>
+<tr>
+<td>Iterating over a cuDF Series, DataFrame or Index is not supported.</td>
+</tr>
+<tr>
+<td>Join (or merge) and groupby operations in cuDF do not guarantee output ordering.</td>
+</tr>
+<tr>
+<td>The order of operations is not always deterministic</td>
+</tr>
+<tr>
+<td>Cudf does not support duplicate column names</td>
+</tr>
+<tr>
+<td>Cudf also supports .apply() it relies on Numba to JIT compile the UDF and execute it on the GPU</td>
+</tr>
+<tr>
+<td>.apply(result_type=...) not supported</td>
+</tr>
+<tr>
+<td><br /><strong><a href="https://distributed.dask.org/en/stable/limitations.html">dask</a></strong></td>
+</tr>
+<tr>
+<td> transpose() and MultiIndex are not implemented</td>
+</tr>
+<tr>
+<td>Column assignment doesn't support type list</td>
+</tr>
+<tr>
+<td><br /><strong>dask_cudf</strong></td>
+</tr>
+<tr>
+<td>See cudf and dask.</td>
+</tr>
+<tr>
+<td>Categories with strings not implemented</td>
+</tr>
+</tbody>
+</table>
+<h3 id="file-format-compatibility">File format compatibility</h3>
+<p>To be compatible with all framework, you must only use the common features.
+We accept some function to read or write files, but we write a warning
+if you use a function not compatible with others frameworks.</p>
+<table>
+<thead>
+<tr>
+<th>read_... / to_...</th>
+<th align="center">pandas</th>
+<th align="center">cudf</th>
+<th align="center">modin</th>
+<th align="center">dask</th>
+<th align="center">dask_modin</th>
+<th align="center">dask_cudf</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>vdf.read_csv</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>VDataFrame.to_csv</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>VSeries.to_csv</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>vdf.read_excel</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VDataFrame.to_excel</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VSeries.to_excel</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>vdf.read_feather</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VDataFrame.to_feather</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>vdf.read_fwf</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VDataFrame.to_fwf</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>vdf.read_hdf</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VDataFrame.to_hdf</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VSeries.to_hdf</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>vdf.read_json</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>VDataFrame.to_json</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>VSeries.to_json</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>vdf.read_orc</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>VDataFrame.to_orc</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>vdf.read_parquet</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>VDataFrame.to_parquet</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>vdf.read_sql_table</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VDataFrame.to_sql</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>VSeries.to_sql</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<h3 id="cross-framework-compatibility">Cross framework compatibility</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>small data</th>
+<th>middle data</th>
+<th>big data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-CPU</td>
+<td>pandas<br/>Limits:+</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>n-CPU</td>
+<td></td>
+<td>modin<br/>Limits+</td>
+<td>dask or dask_modin<br/>Limits:++</td>
+</tr>
+<tr>
+<td>GPU</td>
+<td>cudf<br/>Limits:++</td>
+<td></td>
+<td>dask_cudf<br/>Limits:+++</td>
+</tr>
+</tbody>
+</table>
+<p>To develop, you can choose the level to be compatible with others frameworks.
+Each cell is strongly compatible with the upper left part.</p>
+<h3 id="no-need-of-gpu">No need of GPU?</h3>
+<p>If you don't need to use a GPU, then develop for <code>dask</code> and use mode in <em>bold</em>.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>small data</th>
+<th>middle data</th>
+<th>big data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-CPU</td>
+<td><strong>pandas<br/>Limits:+</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>n-CPU</td>
+<td></td>
+<td><strong>modin<br/>Limits+</strong></td>
+<td><strong>dask or dask_modin<br/>Limits:++</strong></td>
+</tr>
+<tr>
+<td>GPU</td>
+<td>cudf<br/>Limits:++</td>
+<td></td>
+<td>dask_cudf<br/>Limits:+++</td>
+</tr>
+</tbody>
+</table>
+<p>You can ignore this API:</p>
+<ul>
+<li><code>VDataFrame.apply_rows()</code></li>
+</ul>
+<h3 id="no-need-of-big-data">No need of big data?</h3>
+<p>If you don't need to use big data, then develop for <code>cudf</code> and use mode in <em>bold</em>..</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>small data</th>
+<th>middle data</th>
+<th>big data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-CPU</td>
+<td><strong>pandas<br/>Limits:+</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>n-CPU</td>
+<td></td>
+<td><strong>modin<br/>Limits+</strong></td>
+<td>dask or dask_modin<br/>Limits:++</td>
+</tr>
+<tr>
+<td>GPU</td>
+<td><strong>cudf<br/>Limits:++</strong></td>
+<td></td>
+<td>dask_cudf<br/>Limits:+++</td>
+</tr>
+</tbody>
+</table>
+<p>You can ignore these API:</p>
+<ul>
+<li><code>@delayed</code></li>
+<li><code>map_partitions()</code></li>
+<li><code>categorize()</code></li>
+<li><code>compute()</code></li>
+<li><code>npartitions=...</code></li>
+</ul>
+<h3 id="need-all-possibility">Need all possibility?</h3>
+<p>To be compatible with all modes, develop for <code>dask_cudf</code> and use mode in <em>bold</em>..</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>small data</th>
+<th>middle data</th>
+<th>big data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-CPU</td>
+<td><strong>pandas<br/>Limits:+</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>n-CPU</td>
+<td></td>
+<td><strong>modin<br/>Limits+</strong></td>
+<td><strong>dask or dask_modin<br/>Limits:++</strong></td>
+</tr>
+<tr>
+<td>GPU</td>
+<td><strong>cudf<br/>Limits:++</strong></td>
+<td></td>
+<td><strong>dask_cudf<br/>Limits:+++</strong></td>
+</tr>
+</tbody>
+</table>
+<p>and accept all the limitations.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../install/" class="btn btn-neutral float-left" title="Install"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../api/" class="btn btn-neutral float-right" title="API">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/pprados/virtual_dataframe" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../install/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../api/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

@@ -3,18 +3,18 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/pprados/virtual_dataframe/contribute/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/pprados/virtual_dataframe/best_practices/" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Contribute - virtual_dataframe</title>
+    <title>Best practices - virtual_dataframe</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Contribute";
-        var mkdocs_page_input_path = "contribute.md";
-        var mkdocs_page_url = "/pprados/virtual_dataframe/contribute/";
+        var mkdocs_page_name = "Best practices";
+        var mkdocs_page_input_path = "best_practices.md";
+        var mkdocs_page_url = "/pprados/virtual_dataframe/best_practices/";
       </script>
     
     <script src="../js/jquery-3.6.0.min.js" defer></script>
@@ -69,18 +69,8 @@
                 </li>
               </ul>
               <p class="caption"><span class="caption-text">Contribute</span></p>
-              <ul class="current">
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Contribute</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#get-the-latest-version">Get the latest version</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#tests">Tests</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#project-organization">Project Organization</a>
-    </li>
-    </ul>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../contribute/">Contribute</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../commands/">Commands</a>
                   </li>
@@ -103,10 +93,9 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li>
-          <li>Contribute &raquo;</li>
-      <li>Contribute</li>
+      <li>Best practices</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/pprados/virtual_dataframe/edit/master/docs/contribute.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/pprados/virtual_dataframe/edit/master/docs/best_practices.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -114,48 +103,23 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="contribute">Contribute</h1>
-<h2 id="get-the-latest-version">Get the latest version</h2>
-<p>Clone the git repository</p>
-<pre><code class="language-bash">$ git clone --recurse-submodules https://github.com/pprados/virtual-dataframe.git
-</code></pre>
-<h2 id="installation">Installation</h2>
-<p>Go inside the directory and</p>
-<pre><code class="language-bash">$ make configure
-$ conda activate virtual_dataframe
-$ make
-</code></pre>
-<h2 id="tests">Tests</h2>
-<p>To test the project</p>
-<pre><code class="language-bash">$ make test
-</code></pre>
-<p>To validate the typing</p>
-<pre><code class="language-bash">$ make typing
-</code></pre>
-<p>To validate all the project</p>
-<pre><code class="language-bash">$ make validate
-</code></pre>
-<h2 id="project-organization">Project Organization</h2>
-<pre><code>├── Makefile                    &lt;- Makefile with commands like `make data` or `make train`
-├── README.md                   &lt;- The top-level README for developers using this project.
-├── docs                        &lt;- A default mkdocs
-├── conda_recipe                &lt;- Script to build the conda package
-├── notebooks                   &lt;- Jupyter notebooks. Naming convention is a number (for ordering),
-├── setup.py                    &lt;- makes project pip installable (pip install -e .[tests])
-│                                  so sources can be imported and dependencies installed
-├── virtual_dataframe           &lt;- Source code for use in this project
-│   ├── __init__.py             &lt;- Makes src a Python module
-│   └── *.py                    &lt;- Framework codes
-│
-└── tests                       &lt;- Unit and integrations tests ((Mark directory as a sources root).
-</code></pre>
+                <h2 id="best-practices">Best practices</h2>
+<p>For write a code, optimized with all frameworks, you must use some <em>best practices</em>.</p>
+<h3 id="use-read-file">Use <em>read file</em></h3>
+<p>It's not a good idea to use the constructor of <code>VDataFrame</code> or <code>VSeries</code> because, all the datas
+must be in memory in the driver. If the dataframe is big, an <em>out of memory</em> can happen.
+To partitionning the job, create multiple files, and use <code>read_csv("filename*.csv")</code>,
+use a big file and the <em>auto partitioning</em> proposed by dask
+or other file format. Then, each worker can read directly a partition.</p>
+<p>The constructor for <code>VDataFrame</code> and <code>VSeries</code> are present, only to help to write some unit test,
+but may not be used in production.</p>
+<h3 id="no-loop">No loop</h3>
+<p>It's not a good idea to iterate over row of DataFrame. Some framework are very slow with this approach.
+It's better to use <code>apply()</code> or <code>apply_rows()</code> to distribute the code in the cluster and GPU.
+The code used in <code>apply</code>, will be compiled to CPU or GPU, before using, with some frameworks.</p>
               
             </div>
           </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../faq/" class="btn btn-neutral float-left" title="FAQ"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../commands/" class="btn btn-neutral float-right" title="Commands">Next <span class="icon icon-circle-arrow-right"></span></a>
-    </div>
 
   <hr/>
 
@@ -181,10 +145,6 @@ $ make
         </span>
     
     
-      <span><a href="../faq/" style="color: #fcfcfc">&laquo; Previous</a></span>
-    
-    
-      <span><a href="../commands/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

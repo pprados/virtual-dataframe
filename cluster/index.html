@@ -3,18 +3,18 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/pprados/virtual_dataframe/contribute/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/pprados/virtual_dataframe/cluster/" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Contribute - virtual_dataframe</title>
+    <title>Cluster - virtual_dataframe</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Contribute";
-        var mkdocs_page_input_path = "contribute.md";
-        var mkdocs_page_url = "/pprados/virtual_dataframe/contribute/";
+        var mkdocs_page_name = "Cluster";
+        var mkdocs_page_input_path = "cluster.md";
+        var mkdocs_page_url = "/pprados/virtual_dataframe/cluster/";
       </script>
     
     <script src="../js/jquery-3.6.0.min.js" defer></script>
@@ -44,8 +44,10 @@
                 <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
                 </li>
               </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../cluster/">Cluster</a>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Cluster</a>
+    <ul class="current">
+    </ul>
                 </li>
               </ul>
               <ul>
@@ -69,18 +71,8 @@
                 </li>
               </ul>
               <p class="caption"><span class="caption-text">Contribute</span></p>
-              <ul class="current">
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Contribute</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#get-the-latest-version">Get the latest version</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#tests">Tests</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#project-organization">Project Organization</a>
-    </li>
-    </ul>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../contribute/">Contribute</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../commands/">Commands</a>
                   </li>
@@ -103,10 +95,9 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li>
-          <li>Contribute &raquo;</li>
-      <li>Contribute</li>
+      <li>Cluster</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/pprados/virtual_dataframe/edit/master/docs/contribute.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/pprados/virtual_dataframe/edit/master/docs/cluster.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -114,47 +105,133 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="contribute">Contribute</h1>
-<h2 id="get-the-latest-version">Get the latest version</h2>
-<p>Clone the git repository</p>
-<pre><code class="language-bash">$ git clone --recurse-submodules https://github.com/pprados/virtual-dataframe.git
+                <h2 id="cluster">Cluster</h2>
+<p>To connect to a cluster, use <code>VDF_CLUSTER</code> with protocol, host and optionaly, the port.</p>
+<ul>
+<li><code>dask://locahost:8787</code></li>
+<li>or alternativelly, use <code>DASK_SCHEDULER_SERVICE_HOST</code> and <code>DASK_SCHEDULER_SERVICE_PORT</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>VDF_MODE</th>
+<th>DEBUG</th>
+<th>VDF_CLUSTER</th>
+<th>Scheduler</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pandas</td>
+<td>-</td>
+<td>-</td>
+<td>No scheduler</td>
+</tr>
+<tr>
+<td>cudf</td>
+<td>-</td>
+<td>-</td>
+<td>No scheduler</td>
+</tr>
+<tr>
+<td>modin</td>
+<td>-</td>
+<td>-</td>
+<td>No scheduler</td>
+</tr>
+<tr>
+<td>dask</td>
+<td>Yes</td>
+<td>-</td>
+<td>synchronous</td>
+</tr>
+<tr>
+<td>dask</td>
+<td>No</td>
+<td>-</td>
+<td>thread</td>
+</tr>
+<tr>
+<td>dask</td>
+<td>No</td>
+<td>dask://threads</td>
+<td>thread</td>
+</tr>
+<tr>
+<td>dask</td>
+<td>No</td>
+<td>dask://processes</td>
+<td>processes</td>
+</tr>
+<tr>
+<td>dask</td>
+<td>No</td>
+<td>dask://.local</td>
+<td>LocalCluster</td>
+</tr>
+<tr>
+<td>dask_modin</td>
+<td>No</td>
+<td>-</td>
+<td>LocalCluster</td>
+</tr>
+<tr>
+<td>dask_modin</td>
+<td>No</td>
+<td>dask://.local</td>
+<td>LocalCluster</td>
+</tr>
+<tr>
+<td>dask_modin</td>
+<td>No</td>
+<td>dask://&lt;host&gt;:&lt;port&gt;</td>
+<td>Dask cluster</td>
+</tr>
+<tr>
+<td>dask_cudf</td>
+<td>No</td>
+<td>dask://.local</td>
+<td>LocalCUDACluster</td>
+</tr>
+<tr>
+<td>dask_cudf</td>
+<td>No</td>
+<td>dask://&lt;host&gt;:&lt;port&gt;</td>
+<td>Dask cluster</td>
+</tr>
+</tbody>
+</table>
+<p>The special <em>host name</em>, ends with <code>.local</code> can be use to start a <code>LocalCluster</code> ( or <code>LocalCUDACluster</code> ) when
+your program is started. An instance of local cluster is started and injected in the <code>Client</code>.
+Then, your code can not manage the local cluster.</p>
+<p>To update the parameters for the <em>implicit</em> <code>Local(CUDA)Cluster</code>, you can use the
+<a href="https://docs.dask.org/en/stable/configuration.html">Dask config file</a>.</p>
+<pre><code class="language-yaml">local:
+  scheduler-port: 0
+  device_memory_limit: 5G
 </code></pre>
-<h2 id="installation">Installation</h2>
-<p>Go inside the directory and</p>
-<pre><code class="language-bash">$ make configure
-$ conda activate virtual_dataframe
-$ make
+<p>or you can set some environment variables.</p>
+<pre><code class="language-shell">export DASK_LOCAL__SCHEDULER_PORT=0
+export DASK_LOCAL__DEVICE_MEMORY_LIMIT=5g
 </code></pre>
-<h2 id="tests">Tests</h2>
-<p>To test the project</p>
-<pre><code class="language-bash">$ make test
+<p>Sample:</p>
+<pre><code>from virtual_dataframe import VClient
+
+with (VClient())
+    # Now, use the scheduler
 </code></pre>
-<p>To validate the typing</p>
-<pre><code class="language-bash">$ make typing
-</code></pre>
-<p>To validate all the project</p>
-<pre><code class="language-bash">$ make validate
-</code></pre>
-<h2 id="project-organization">Project Organization</h2>
-<pre><code>├── Makefile                    &lt;- Makefile with commands like `make data` or `make train`
-├── README.md                   &lt;- The top-level README for developers using this project.
-├── docs                        &lt;- A default mkdocs
-├── conda_recipe                &lt;- Script to build the conda package
-├── notebooks                   &lt;- Jupyter notebooks. Naming convention is a number (for ordering),
-├── setup.py                    &lt;- makes project pip installable (pip install -e .[tests])
-│                                  so sources can be imported and dependencies installed
-├── virtual_dataframe           &lt;- Source code for use in this project
-│   ├── __init__.py             &lt;- Makes src a Python module
-│   └── *.py                    &lt;- Framework codes
-│
-└── tests                       &lt;- Unit and integrations tests ((Mark directory as a sources root).
+<p>If you want to manage the parameters of <code>Local(CUDA)Cluster</code>, use the alternative <code>VLocalCluster</code>.</p>
+<pre><code>from virtual_dataframe import VClient,VLocalCluster
+
+with (VClient(VLocalCluster()))
+    # Now, use the scheduler
 </code></pre>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../faq/" class="btn btn-neutral float-left" title="FAQ"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../commands/" class="btn btn-neutral float-right" title="Commands">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href=".." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../install/" class="btn btn-neutral float-right" title="Install">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -181,10 +258,10 @@ $ make
         </span>
     
     
-      <span><a href="../faq/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../commands/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../install/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

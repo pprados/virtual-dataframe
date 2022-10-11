@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/pprados/virtual_dataframe/api/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>API - virtual_dataframe</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "API";
+        var mkdocs_page_input_path = "api.md";
+        var mkdocs_page_url = "/pprados/virtual_dataframe/api/";
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> virtual_dataframe
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../cluster/">Cluster</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../install/">Install</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../compatibility/">Compatibility</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">API</a>
+    <ul class="current">
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="" href="../best_practice.md">Best Practice</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../faq/">FAQ</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Contribute</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../contribute/">Contribute</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../commands/">Commands</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../CHANGELOG/">Changelog</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">virtual_dataframe</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+      <li>API</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/pprados/virtual_dataframe/edit/master/docs/api.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="api">API</h2>
+<table>
+<thead>
+<tr>
+<th>api</th>
+<th>comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>vdf.@delayed</td>
+<td>Delayed function (do nothing or dask.delayed)</td>
+</tr>
+<tr>
+<td>vdf.concat(...)</td>
+<td>Merge VDataFrame</td>
+</tr>
+<tr>
+<td>vdf.read_csv(...)</td>
+<td>Read VDataFrame from CSVs <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.read_excel(...)<sup>*</sup></td>
+<td>Read VDataFrame from Excel <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.read_fwf(...)<sup>*</sup></td>
+<td>Read VDataFrame from Fwf <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.read_hdf(...)<sup>*</sup></td>
+<td>Read VDataFrame from HDFs <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.read_json(...)</td>
+<td>Read VDataFrame from Jsons <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.read_orc(...)</td>
+<td>Read VDataFrame from ORCs <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.read_parquet(...)</td>
+<td>Read VDataFrame from Parquets <em>glob</em> files</td>
+</tr>
+<tr>
+<td>vdf.read_sql_table(...)<sup>*</sup></td>
+<td>Read VDataFrame from SQL</td>
+</tr>
+<tr>
+<td>vdf.from_pandas(pdf, npartitions=...)</td>
+<td>Create Virtual Dataframe from Pandas DataFrame</td>
+</tr>
+<tr>
+<td>vdf.from_backend(vdf, npartitions=...)</td>
+<td>Create Virtual Dataframe from backend dataframe</td>
+</tr>
+<tr>
+<td>vdf.compute([...])</td>
+<td>Compute multiple @delayed functions</td>
+</tr>
+<tr>
+<td>VDataFrame(data, npartitions=...)</td>
+<td>Create DataFrame in memory (only for test)</td>
+</tr>
+<tr>
+<td>VSeries(data, npartitions=...)</td>
+<td>Create Series in memory (only for test)</td>
+</tr>
+<tr>
+<td>VLocalCluster(...)</td>
+<td>Create a dask Local (CUDA) Cluster</td>
+</tr>
+<tr>
+<td>BackEndDataFrame</td>
+<td>The class of dask backend dataframe</td>
+</tr>
+<tr>
+<td>BackEndSeries</td>
+<td>The class of dask backend series</td>
+</tr>
+<tr>
+<td>BackEnd</td>
+<td>The backend framework</td>
+</tr>
+<tr>
+<td>VDataFrame.compute()</td>
+<td>Compute the virtual dataframe</td>
+</tr>
+<tr>
+<td>VDataFrame.persist()</td>
+<td>Persist the dataframe in memory</td>
+</tr>
+<tr>
+<td>VDataFrame.repartition()</td>
+<td>Rebalance the dataframe</td>
+</tr>
+<tr>
+<td>VDataFrame.visualize()</td>
+<td>Create an image with the graph</td>
+</tr>
+<tr>
+<td>VDataFrame.to_pandas()</td>
+<td>Convert to pandas dataframe</td>
+</tr>
+<tr>
+<td>VDataFrame.to_csv()</td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_excel()<sup>*</sup></td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_feather()<sup>*</sup></td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_hdf()<sup>*</sup></td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_json()</td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_orc()</td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_parquet()</td>
+<td>Save to <em>glob</em> files</td>
+</tr>
+<tr>
+<td>VDataFrame.to_sql()<sup>*</sup></td>
+<td>Save to sql table</td>
+</tr>
+<tr>
+<td>VDataFrame.to_numpy()</td>
+<td>Convert to numpy array</td>
+</tr>
+<tr>
+<td>VDataFrame.to_backend()</td>
+<td>Convert to backend dataframe</td>
+</tr>
+<tr>
+<td>VDataFrame.categorize()</td>
+<td>Detect all categories</td>
+</tr>
+<tr>
+<td>VDataFrame.apply_rows()</td>
+<td>Apply rows, GPU template</td>
+</tr>
+<tr>
+<td>VDataFrame.map_partitions()</td>
+<td>Apply function for each parttions</td>
+</tr>
+<tr>
+<td>VSeries.compute()</td>
+<td>Compute the virtual series</td>
+</tr>
+<tr>
+<td>VSeries.persist()</td>
+<td>Persist the dataframe in memory</td>
+</tr>
+<tr>
+<td>VSeries.repartition()</td>
+<td>Rebalance the dataframe</td>
+</tr>
+<tr>
+<td>VSeries.visualize()</td>
+<td>Create an image with the graph</td>
+</tr>
+<tr>
+<td>VSeries.to_pandas()</td>
+<td>Convert to pandas series</td>
+</tr>
+<tr>
+<td>VSeries.to_backend()</td>
+<td>Convert to backend series</td>
+</tr>
+<tr>
+<td>VSeries.to_numpy()</td>
+<td>Convert to numpy array</td>
+</tr>
+<tr>
+<td>VClient(...)</td>
+<td>The connexion with the cluster</td>
+</tr>
+<tr>
+<td>VDF_MODE</td>
+<td>The current mode</td>
+</tr>
+<tr>
+<td>Mode</td>
+<td>The enumeration of differents mode</td>
+</tr>
+</tbody>
+</table>
+<p><sup>*</sup> some frameworks do not implement it, see below</p>
+<p>You can read a sample notebook <a href="https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo.ipynb">here</a>
+for an exemple of all API.</p>
+<p>Each API propose a specific version for each framework. For example:</p>
+<ul>
+<li>the  <code>toPandas()</code> with Panda, return <code>self</code></li>
+<li><code>@delayed</code> use the dask <code>@delayed</code> or do nothing, and apply the code when the function was called.
+In the first case, the function return a part of the graph. In the second case, the function return immediately
+the result.</li>
+<li><code>read_csv("file*.csv")</code> read each file in parallele with dask by each worker,
+and read sequencially each file, and combine each dataframe, with a framework without distribution (pandas, modin, cudf)</li>
+<li><code>save_csv("file*.csv")</code> write each file in parallele with dask, and write one file <code>"file.csv"</code> (without the star)
+with a framework without distribution (pandas, modin, cudf)</li>
+<li>...</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../compatibility/" class="btn btn-neutral float-left" title="Compatibility"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../faq/" class="btn btn-neutral float-right" title="FAQ">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/pprados/virtual_dataframe" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../compatibility/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../faq/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
