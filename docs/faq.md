@@ -21,6 +21,5 @@ It's a problem with Dask. You have not the privilege to ask the size of memory f
 To resolve that, add in dask [configuration files](https://docs.dask.org/en/stable/configuration.html):
 
 - the parameter `distributed:diagnostics:nvml = False`
-- the parameter `worker:diagnostics:nvml = False`
 - the parameter `local:device_memory_limit = 5g` or the parameter `--device-memory-limit 5g` when you start
 `dask-cuda-worker`
