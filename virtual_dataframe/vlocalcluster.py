@@ -40,7 +40,7 @@ def _new_VLocalCluster(
     if mode in (Mode.pandas, Mode.cudf, Mode.modin):
         return _LocalClusterDummy()
     elif mode in (Mode.dask, Mode.dask_modin):
-        from dask.distributed import LocalCluster
+        from distributed import LocalCluster
         # Purge kwargs
         for key in params_cuda_local_cluster:
             if key in kwargs:

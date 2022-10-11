@@ -22,4 +22,4 @@ To resolve that, add in dask [configuration files](https://docs.dask.org/en/stab
 
 - the parameter `distributed:diagnostics:nvml = False`
 - the parameter `local:device_memory_limit = 5g` or the parameter `--device-memory-limit 5g` when you start
-`dask-cuda-worker`
+`dask-cuda-worker` (update the size)

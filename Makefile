@@ -964,6 +964,8 @@ endif
 .make-_unit-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC)
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Run unit tests...$(normal)"
+	unset DASK_SCHEDULER_SERVICE_PORT
+	unset DASK_SCHEDULER_SERVICE_HOST
 	python $(PYTHON_ARGS)  -m pytest --rootdir=. -s tests $(PYTEST_ARGS) -m "not functional"
 	date >.make-_unit-test-$*
 
@@ -1028,6 +1030,8 @@ notebooks-test: .make-notebooks-test
 .make-functional-test: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC)
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Run functional tests...$(normal)"
+	unset DASK_SCHEDULER_SERVICE_PORT
+	unset DASK_SCHEDULER_SERVICE_HOST
 	python $(PYTHON_ARGS)  -m pytest --rootdir=. -s tests $(PYTEST_ARGS) -m "functional"
 	date >.make-functional-test
 # Run only functional tests
@@ -1035,6 +1039,8 @@ functional-test: .make-functional-test
 
 .make-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC)
 	@echo -e "$(cyan)Run all tests for $(VDF_MODE)...$(normal)"
+	unset DASK_SCHEDULER_SERVICE_PORT
+	unset DASK_SCHEDULER_SERVICE_HOST
 	python $(PYTHON_ARGS)  -m pytest --rootdir=. $(PYTEST_ARGS) -s tests
 	#python setup.py test
 	date >.make-test-$(VDF_MODE)
