@@ -30,9 +30,9 @@ def _check_gpu() -> bool:
 USE_GPU: str = "-gpu" if _check_gpu() else ""
 
 # Mutual compatible versions
-modin_ver = '==0.13.*'
-panda_ver = '==1.4.*'
-dask_ver = '==2022.9.*'
+modin_ver = '0.13'
+panda_ver = '1.4'
+dask_ver = '2022.9'
 
 # Run package dependencies
 requirements = [
@@ -41,26 +41,27 @@ requirements = [
 ]
 
 pandas_requirements = [
-    f'pandas{panda_ver}'
+    f'pandas>={panda_ver}'
 ]
 
 modin_requirements = [
-    f'modin{modin_ver}'
+    f'modin>={modin_ver}'
 ]
 dask_requirements = \
     [
-        f'dask{dask_ver}',
-        f'distributed{dask_ver}',
+        f'dask>={dask_ver}',
+        f'distributed>={dask_ver}',
     ]
-dask_modin_requirements = [f'modin{modin_ver}'] + dask_requirements
-# ray_modin_requirements = ['modin[ray]{modin_ver}']
+dask_modin_requirements = [f'modin>={modin_ver}'] + dask_requirements
+# ray_modin_requirements = ['modin[ray]>={modin_ver}']
 
-all_requirements = set(pandas_requirements +
-                       dask_modin_requirements +
-                       # ray_modin_requirements +
-                       dask_requirements
-                       )
-
+# Pinned set of multualy compatible versions
+all_requirements = [
+    "pandas==1.4.*",
+    "modin==0.13.*",
+    "dask==2022.7.*",
+    "distributed==2022.7.*",
+]
 setup_requirements = [
     "pytest-runner",
     "setuptools_scm"
@@ -79,7 +80,7 @@ test_requirements = [
 ]
 
 # Package nécessaires aux builds mais pas au run
-dev_requirements = all_requirements.union([
+dev_requirements = set(all_requirements).union([
     'pip',
     'twine',  # To publish package in Pypi
     'flake8', 'pylint',  # For lint
@@ -95,10 +96,9 @@ dev_requirements = all_requirements.union([
 
     # Extension
     'graphviz',
-    #    'bokeh>=2.1.1',
+    'openpyxl',
     'sqlalchemy',
     'tables',
-    'openpyxl',
 ])
 
 

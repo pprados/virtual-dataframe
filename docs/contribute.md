@@ -1,6 +1,6 @@
 # Contribute
 
-## The latest version
+## Get the latest version
 
 Clone the git repository
 

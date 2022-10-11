@@ -126,7 +126,7 @@ PRJ_URL=$(REMOTE_GIT_URL:.git=)
 PRJ_DOC_URL=$(PRJ_URL)
 GIT_DESCRIBE_TAG=$(shell git describe --tags --exact-match 2>/dev/null || git symbolic-ref -q --short HEAD)
 PRJ_PACKAGE:=$(PRJ)
-PYTHON_VERSION?=3.8
+PYTHON_VERSION?=3.9
 PYTHON_VERSION_MAX:=3.9
 PYTHONWARNINGS=ignore
 PYTHON_PARAMS?=
@@ -656,7 +656,7 @@ bdist: dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour créer une distribution des binaires au format conda.
-.PHONY:conda-build conda-install conda-debug conda-convert
+.PHONY:conda-build conda-install conda-debug conda-convert conda-create
 export PRJ
 export REMOTE_GIT_URL
 export PRJ_URL
@@ -701,11 +701,19 @@ ${CONDA_BUILD_TARGET}: clean-build conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-
 	echo -e "$(green)Conda package builded in dist/${CONDA_BLD_DIR}/noarch/${PRJ}*-$${GIT_DESCRIBE_TAG}*.tar.bz2$(normal)"
 	touch ${CONDA_BUILD_TARGET}
 
+# Remove alternative environment
+conda-remove-envs:
+	@$(VALIDATE_VENV)
+	for mode in $(VDF_MODES)
+	do
+		$(CONDA) env remove -n test-$$mode
+	done
+
 ## Build the conda packages
 conda-build: ${CONDA_BUILD_TARGET}
 
 ## Purge the conda build process
-conda-purge:
+conda-purge: conda-remove-envs
 	@$(VALIDATE_VENV)
 	$(CONDA) build purge \
 		--output-folder ${CONDA_BLD_DIR}
@@ -748,6 +756,17 @@ conda-install-%: ${CONDA_BUILD_TARGET}
 		-y \
 		${PRJ}-$*
 
+## Create all tests environments
+conda-create: # ${CONDA_BUILD_TARGET}
+	@$(VALIDATE_VENV)
+	for mode in $(VDF_MODES)
+	do
+		$(CONDA) create -y -n test-$$mode $(CONDA_ARGS) \
+		  -c file://${PWD}/${CONDA_BLD_DIR} $(CONDA_CHANNELS)\
+		  virtual_dataframe-$$mode
+		CONDA_PREFIX=$(CONDA_HOME)/envs/test-$$mode \
+		$(CONDA) env config vars set VDF_MODE=$$mode
+	done
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour créer une distribution des binaires au format whl.
 # Pour vérifier la version produite :

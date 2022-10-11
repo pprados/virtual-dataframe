@@ -11,10 +11,16 @@ import virtual_dataframe as vdf
 
 @pytest.fixture(scope="session")
 def vclient():
-    client = vdf.VClient()
+    local_cluster = vdf.VLocalCluster(
+        scheduler_port=0,
+        device_memory_limit="5g",
+    )
+    client = vdf.VClient(
+        address=local_cluster,
+    )
     client.__enter__()
     yield client
-    client.__exit__(None,None,None)
+    client.__exit__(None, None, None)
     client.shutdown()
 
 
@@ -54,7 +60,7 @@ def test_persist(vclient):
     df1 = vdf.VDataFrame([1])
     df2 = vdf.VDataFrame([2])
 
-    rc1,rc2 = vdf.persist(df1,df2)
+    rc1, rc2 = vdf.persist(df1, df2)
     assert rc1.to_pandas().equals(df1.to_pandas())
     assert rc2.to_pandas().equals(df2.to_pandas())
 
@@ -319,7 +325,7 @@ def test_Serie_to_hdf():
     try:
         filename = f"{d}/test*.hdf"
         s = vdf.VSeries(list(range(0, 3)), npartitions=2)
-        s.to_hdf(filename,key="a")
+        s.to_hdf(filename, key="a")
     finally:
         shutil.rmtree(d)
 
@@ -348,14 +354,13 @@ def test_Serie_to_sql():
         db_uri = f'sqlite:////{filename}'
         s = vdf.VSeries(list(range(0, 3)), npartitions=2)
         s.to_sql('test',
-                  con=db_uri,
-                  index_label="a",
-                  if_exists='replace',
-                  index=True)
+                 con=db_uri,
+                 index_label="a",
+                 if_exists='replace',
+                 index=True)
     finally:
         Path(filename).unlink(missing_ok=True)
         pass
-
 
 
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")

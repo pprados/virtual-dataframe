@@ -1,8 +1,9 @@
 import ctypes
 import logging
 import os
+import sys
 
-from typing import List
+from typing import List, Union, Dict
 
 LOGGER: logging.Logger = logging.getLogger(__name__)
 
@@ -10,6 +11,11 @@ _yes: List[str] = ["true", "y", "yes"]
 
 # To use a synchronous scheduler, set DEBUG=y
 DEBUG: bool = os.environ.get("DEBUG", "").lower() in _yes
+
+if sys.version_info.major == 3 and sys.version_info.minor >= 9:
+    EnvDict = Union[Dict[str, str], os._Environ[str]]
+else:
+    EnvDict = Dict[str, str]
 
 # If GPU detected, set to True
 # If GPU detected and USE_GPU=No, set to False,

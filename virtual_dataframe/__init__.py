@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 from .env import DEBUG, VDF_MODE, Mode
 from .vclient import VClient
+from .vlocalcluster import VLocalCluster
 from .vpandas import BackEndDataFrame, BackEndSeries, BackEnd, FrontEnd
 from .vpandas import VDataFrame, VSeries, visualize
 from .vpandas import compute, concat, delayed, persist
@@ -16,7 +17,7 @@ load_dotenv()
 
 __all__: List[str] = [
     'DEBUG', 'VDF_MODE', 'Mode',
-    'VDataFrame', 'VSeries', 'VClient',
+    'VDataFrame', 'VSeries', 'VClient', 'VLocalCluster',
     'FrontEnd',
     'BackEndDataFrame', 'BackEndSeries', 'BackEnd',
     'compute', 'concat', 'delayed', 'persist', 'visualize',
