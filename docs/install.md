@@ -8,7 +8,7 @@ $ conda install -q -y \
 ```
 or, for only one mode:
 ```shell
-$ VDF_MODE=...
+$ VDF_MODE=...  # pandas, modin, cudf, dask, dask_modin or dask_cudf
 $ conda install -q -y \
 	-c rapidsai -c nvidia -c conda-forge \
 	virtual_dataframe-$VDF_MODE
@@ -63,23 +63,29 @@ We declare this dependencies with the defaults version of **virtual_dataframe**.
 the environment variable `VDF_MODE` to test the differents frameworks.
 
 Else, it's possible to create a conda environement for each framework, with the last version of each one.
-Then you must activate the specific environment and set the corresponding `VDF_MODE` variable.
+Then you must activate the specific environment and set the corresponding `VDF_MODE` and
+`VDF_CLUSTER` variables.
 
 > :warning: **Warning: At this time, the packages are not published in pip or conda repositories**
 
+This [script](https://github.com/pprados/virtual_dataframe/blob/master/build-conda-vdf-envs.sh)
+create all combinaison of architecture, and set the corresponding environment variables.
+For each *dask* compatible framework, two version is proposed:
+One with a *local* cluster (set `VDF_CLUSTER=dask://.local`), and the other, without `VDF_CLUSTER`. You must
+set the corresponding value to use your cluster.
+
 ```shell
-#!/usr/bin/env bash
-# alias conda=mamba
-VDF_MODES=pandas modin cudf dask dask_modin dask_cudf
-for mode in $VDF_MODES
-do
-    conda create -y -n test-$mode \
-      virtual_dataframe-$mode
-    CONDA_PREFIX=$CONDA_HOME/envs/test-$mode \
-    conda env config vars set VDF_MODE=$mode
-done
+$ ./build-conda-vdf-envs.sh
+$ # or ./build-conda-vdf-envs.sh pandas cudf dask dask_cudf
 ```
 Then, you can activate the specific environment to test your code.
 ```shell
-$ conda activate test-cudf
+$ conda activate vdf-cudf
+$ conda activate vdf-dask_cudf-local
+$ ...
+```
+
+You can remove all versions with:
+```shell
+$ ./build-conda-vdf-envs.sh --remove
 ```

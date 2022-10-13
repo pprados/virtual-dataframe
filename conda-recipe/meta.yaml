@@ -50,8 +50,8 @@ requirements:
     {% endif %}
     {% if vdf_mode in ('all', 'dask', 'dask_cudf', 'dask_modin') %}
 #    - dask
-    - dask-core>=2022.9
-    - distributed>=2022.9
+    - dask-core>=2022.7
+    - distributed>=2022.7
     - bokeh>=2.1.1
     - cytoolz>=0.8.2
     - jinja2
