@@ -138,14 +138,14 @@ def _new_VClient(mode: Mode,
 
     if "address" in kwargs and isinstance(getattr(kwargs["address"], "scheduler_address", None), str):
         assert mode in (Mode.dask, Mode.dask_cudf, Mode.dask_modin), "Compatible with Dask frameworks"
-        import distributed
-        return distributed.Client(**kwargs)
+        import dask.distributed
+        return dask.distributed.Client(**kwargs)
     else:
         vdf_cluster, host, port = _analyse_cluster_url(mode, env)
 
         if mode in (Mode.dask, Mode.dask_cudf, Mode.dask_modin):
             import dask
-            import distributed
+            import dask.distributed
             assert vdf_cluster.scheme == Mode.dask.name
             if DEBUG:
                 dask.config.set(scheduler='synchronous')  # type: ignore
@@ -158,7 +158,7 @@ def _new_VClient(mode: Mode,
                     local_default_params = dask.config.global_config['local'] \
                         if 'local' in dask.config.global_config else {}
                     from dask_cuda import LocalCUDACluster
-                    client = distributed.Client(
+                    client = dask.distributed.Client(
                         address=LocalCUDACluster(**local_default_params),
                         **kwargs)
             elif host == 'processes':
@@ -170,7 +170,7 @@ def _new_VClient(mode: Mode,
                         if 'local' in dask.config.global_config else {}
                     if mode == Mode.dask_cudf:
                         from dask_cuda import LocalCUDACluster
-                        client = distributed.Client(address=
+                        client = dask.distributed.Client(address=
                                                          LocalCUDACluster(
                                                              **local_default_params
                                                          ),
@@ -180,14 +180,14 @@ def _new_VClient(mode: Mode,
                         for key in params_cuda_local_cluster:
                             if key in local_default_params:
                                 del local_default_params[key]
-                        client = distributed.Client(
-                            address=distributed.LocalCluster(**local_default_params),
+                        client = dask.distributed.Client(
+                            address=dask.distributed.LocalCluster(**local_default_params),
                             **kwargs)
                     else:
                         assert False, "Invalid VDF_MODE"
                 else:
                     # Initialize for remote cluster
-                    client = distributed.Client(
+                    client = dask.distributed.Client(
                         address=f"{host}:{port}",
                         **kwargs)
                     LOGGER.warning(f"Use remote cluster on {host}:{port}")

@@ -49,7 +49,6 @@ requirements:
     - cudf>=22.8
     {% endif %}
     {% if vdf_mode in ('all', 'dask', 'dask_cudf', 'dask_modin') %}
-#    - dask
     - dask-core>=2022.7
     - distributed>=2022.7
     - bokeh>=2.1.1

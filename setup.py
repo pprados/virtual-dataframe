@@ -137,7 +137,7 @@ setup(
     license='Apache v2',
     keywords="dataframe",
     classifiers=[  # See https://pypi.org/classifiers/
-        'Development Status :: 2 - PRE-ALPHA',
+        'Development Status :: 4 - Beta',
         # Before release
         # 'Development Status :: 5 - Production/Stable',
         'Environment :: Console',

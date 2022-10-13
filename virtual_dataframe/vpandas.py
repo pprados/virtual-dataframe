@@ -471,7 +471,6 @@ if VDF_MODE == Mode.dask_cudf:
     import pandas
     import dask
     import dask.dataframe
-    import distributed
 
     try:
         import dask_cudf
