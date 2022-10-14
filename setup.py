@@ -63,7 +63,7 @@ all_requirements = [
     "distributed==2022.7.*",
 ]
 setup_requirements = [
-    #"pytest-runner",
+    # "pytest-runner",
     "setuptools_scm"
 ]
 
@@ -104,28 +104,13 @@ dev_requirements = set(all_requirements).union([
 
 # Return git remote url
 def _git_url() -> str:
-    try:
-        with open(os.devnull, "wb") as devnull:
-            out = subprocess.check_output(
-                ["git", "remote", "get-url", "origin"],
-                cwd=".",
-                universal_newlines=True,
-                stderr=devnull,
-            )
-        return out.strip()
-    except subprocess.CalledProcessError:
-        # git returned error, we are not in a git repo
-        return ""
-    except OSError:
-        # git command not found, probably
-        return ""
-
+    return "git@github.com:pprados/virtual_dataframe.git"
 
 # Return Git remote in HTTP form
 def _git_http_url() -> str:
     return re.sub(r".*@(.*):(.*).git", r"http://\1/\2", _git_url())
 
-
+version=os.environ.get("VERSION")
 setup(
     name='virtual_dataframe',
     author="Philippe Prados",
@@ -164,6 +149,7 @@ setup(
     # packages=find_packages(),
     packages=["virtual_dataframe"],
     package_data={"virtual_dataframe": ["py.typed"]},
-    use_scm_version=True,  # Manage versions from Git tags
+    version=version,
+    use_scm_version=not version,  # Manage versions from Git tags
     install_requires=requirements,
 )

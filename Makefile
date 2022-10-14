@@ -712,6 +712,11 @@ conda-remove-envs:
 ## Build the conda packages
 conda-build: ${CONDA_BUILD_TARGET}
 
+# Check conda recipe
+conda-check:
+	@$(VALIDATE_VENV)
+	conda smithy recipe-lint conda-recipe/
+
 ## Purge the conda build process
 conda-purge: conda-remove-envs
 	@$(VALIDATE_VENV)
