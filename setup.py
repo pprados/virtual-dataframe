@@ -63,7 +63,7 @@ all_requirements = [
     "distributed==2022.7.*",
 ]
 setup_requirements = [
-    "pytest-runner",
+    #"pytest-runner",
     "setuptools_scm"
 ]
 
