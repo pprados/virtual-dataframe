@@ -1,0 +1,3 @@
+[submodule "conda-recipe/staged-recipes"]
+	path = conda-recipe/staged-recipes
+	url = https://github.com/pprados/staged-recipes.git

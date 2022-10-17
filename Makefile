@@ -776,20 +776,43 @@ conda-create: # ${CONDA_BUILD_TARGET}
 
 
 conda-recipe/staged-recipes:
-	# Create a clone of https://github.com/conda-forge/staged-recipes
-	git submodule add https://github.com/$(GIT_USER)/staged-recipes.git conda-recipe/staged-recipes
+	@$(VALIDATE_VENV)
+	# Create a user fork of staged-recipes
+	gh fork --remote https://github.com/conda-forge/staged-recipes
+	GIT_USER=$$(gh auth status -t 2>&1 | grep oauth_token | awk '{ print $7 }')
+	git submodule add --force https://github.com/$$GIT_USER/staged-recipes.git conda-recipe/staged-recipes
 
 conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE): conda-recipe/staged-recipes
 	mkdir conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE)
 
-conda-forge: conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE)
+# ---------------------------------------------------------------------------------------
+# SNIPPET pour créer publier une version dans conda-forge.
+# La procedure n'est pas simple. Il faut commencer par avoir un clone
+# du projet staged-recipes. (Voir https://conda-forge.org/docs/maintainer/adding_pkgs.html)
+# A partir de celui-ci, et d'un tag déposé pour la version,
+# et une publication de release dans github
+# le code se charge de publier la version.
+
+_prepare-conda-forge: conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE)
+	@$(VALIDATE_VENV)
+	RECIPE=conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE)
 	PRJ_VERSION=$(shell python setup.py --version)
 	HASH=$(shell wget -q https://github.com/pprados/$(PRJ_PACKAGE)/tarball/$$PRJ_VERSION \
 		| sha256sum | awk '{print $$1}')
-
+	# Inject HASH and version
 	sed "s/<<VERSION>>/$$PRJ_VERSION/g; s/<<HASH>>/$$HASH/g;" \
 		<conda-recipe/meta.yaml.template \
-		>conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE)/meta.yaml
+		>$$RECIPE/meta.yaml
+
+# Test a new version of meta.yaml files
+test-conda-forge: _prepare-conda-forge
+	git commit -a --amend -m "Test $(PRJ_PACKAGE)" $$RECIPE
+
+# See https://conda-forge.org/docs/maintainer/adding_pkgs.html
+## First release in conda-forge. Add a version tag before use.
+conda-forge: _prepare-conda-forge
+	PRJ_VERSION=$(shell python setup.py --version)
+	git commit -m "Add a new version $$PRJ_VERSION for $(PRJ_PACKAGE)" $$RECIPE
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour créer une distribution des binaires au format whl.

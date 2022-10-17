@@ -4,34 +4,27 @@
 {% else %}
   {% set NAME = BASENAME %}
 {% endif %}
-#{% set PRJ_VERSION = environ['GIT_DESCRIBE_TAG'] %}
-{% set PRJ_VERSION = "<<VERSION>>" %} # FIXME: a virer
-{% set SETUPTOOLS_SCM_PRETEND_VERSION = "<<VERSION>>" %}
+{% set PRJ_VERSION = "<<VERSION>>" %}
+{% set SETUPTOOLS_SCM_PRETEND_VERSION = PRJ_VERSION %}
 {% set PRJ_PACKAGE = BASENAME %}
-{% set PYTHON_VERSION = "3.9" %}
+{% set PYTHON_VERSION = "3.8" %}
 {% set PYTHON_VERSION_MAX = "3.9" %}
 
 package:
   name: "{{ NAME }}"
-  version: "{{ PRJ_VERSION }}"
+  version: "{{ SETUPTOOLS_SCM_PRETEND_VERSION }}"
 
 source:
   # See https://docs.github.com/en/rest/repos/contents#download-a-repository-archive-tar
-  # url: https://github.com/pprados/{{ BASENAME }}/tarball/refs/tags/virtual_dataframe-{{ PRJ_VERSION }}.tar.gz
   url: https://github.com/pprados/{{ BASENAME }}/tarball/{{ PRJ_VERSION }}/{{ BASENAME }}.tar.gz
   sha256: <<HASH>>
-  # Utiliser les 3 lignes suivantes, pour récupérer les sources en attendant
-  # url: https://github.com/pprados/virtual_dataframe/tarball/develop
-  # fn: {{ BASENAME }}.tar.gz
-  # git_url: https://github.com/pprados/virtual_dataframe.git
-  # git_depth: 1
 
 build:
   noarch: python
   number: 0
   # no such file directory sur PYTHON ?
   script_env:
-    - VERSION={{ SETUPTOOLS_SCM_PRETEND_VERSION }}
+    - VERSION={{ PRJ_VERSION }}
   #script: python -m pip install --progress-bar off --quiet --no-input . -vv
 
 requirements:
@@ -93,17 +86,17 @@ test:
   commands:
     {% if vdf_mode != "" %}
     {% if vdf_mode != "all" %}
-    - VDF_MODE="{{ vdf_mode }}" python -c 'from {{ PRJ_PACKAGE }} import *'
+    - VDF_MODE="{{ vdf_mode }}" python -c 'from {{ PRJ_PACKAGE }} import *'  # [unix]
     {% else %}
-    - VDF_MODE="pandas"     python -c 'from {{ PRJ_PACKAGE }} import *'
-    - VDF_MODE="cudf"       python -c 'from {{ PRJ_PACKAGE }} import *'
-    - VDF_MODE="modin"      python -c 'from {{ PRJ_PACKAGE }} import *'
-    - VDF_MODE="dask"       python -c 'from {{ PRJ_PACKAGE }} import *'
-    - VDF_MODE="dask_cudf"  python -c 'from {{ PRJ_PACKAGE }} import *'
-    - VDF_MODE="dask_modin" python -c 'from {{ PRJ_PACKAGE }} import *'
-#    - VDF_MODE=ray_modin  python -c 'from {{ PRJ_PACKAGE }} import *'
-    {% endif %} # Default, all
-    {% endif %} # core
+    - VDF_MODE="pandas"     python -c 'from {{ PRJ_PACKAGE }} import *'  # [unix]
+    - VDF_MODE="cudf"       python -c 'from {{ PRJ_PACKAGE }} import *'  # [unix]
+    - VDF_MODE="modin"      python -c 'from {{ PRJ_PACKAGE }} import *'  # [unix]
+    - VDF_MODE="dask"       python -c 'from {{ PRJ_PACKAGE }} import *'  # [unix]
+    - VDF_MODE="dask_cudf"  python -c 'from {{ PRJ_PACKAGE }} import *'  # [unix]
+    - VDF_MODE="dask_modin" python -c 'from {{ PRJ_PACKAGE }} import *'  # [unix]
+#    - VDF_MODE=ray_modin   python -c 'from {{ PRJ_PACKAGE }} import *'  # [unix]
+    {% endif %}  # Default, all
+    {% endif %}  # core
 
 about:
   home:    https://github.com/pprados/virtual_dataframe

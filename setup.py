@@ -118,7 +118,7 @@ setup(
     long_description=open('README.md', mode='r', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
     url=_git_http_url(),
-    license='Apache v2',
+    license='Apache-2.0',
     keywords="dataframe",
     classifiers=[  # See https://pypi.org/classifiers/
         'Development Status :: 4 - Beta',
@@ -149,7 +149,7 @@ setup(
     packages=["virtual_dataframe"],
     package_data={"virtual_dataframe": ["py.typed"]},
     use_scm_version={
-        'write_to': '_version.py',
+        'write_to': 'virtual_dataframe/_version.py',
     },
     install_requires=requirements,
 )
