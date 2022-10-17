@@ -1,3 +1,7 @@
+from ._version import __version__
+__author__ = 'Philippe PRADOS'
+__email__ = 'github@prados.fr'
+
 from typing import List
 
 from dotenv import load_dotenv

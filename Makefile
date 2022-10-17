@@ -124,6 +124,7 @@ KERNEL ?=$(VENV)
 REMOTE_GIT_URL?=$(shell git remote get-url origin)
 PRJ_URL=$(REMOTE_GIT_URL:.git=)
 PRJ_DOC_URL=$(PRJ_URL)
+GIT_USER?=$(USER)
 GIT_DESCRIBE_TAG=$(shell git describe --tags --exact-match 2>/dev/null || git symbolic-ref -q --short HEAD)
 PRJ_PACKAGE:=$(PRJ)
 PYTHON_VERSION?=3.9
@@ -772,6 +773,24 @@ conda-create: # ${CONDA_BUILD_TARGET}
 		CONDA_PREFIX=$(CONDA_HOME)/envs/test-$$mode \
 		$(CONDA) env config vars set VDF_MODE=$$mode
 	done
+
+
+conda-recipe/staged-recipes:
+	# Create a clone of https://github.com/conda-forge/staged-recipes
+	git submodule add https://github.com/$(GIT_USER)/staged-recipes.git conda-recipe/staged-recipes
+
+conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE): conda-recipe/staged-recipes
+	mkdir conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE)
+
+conda-forge: conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE)
+	PRJ_VERSION=$(shell python setup.py --version)
+	HASH=$(shell wget -q https://github.com/pprados/$(PRJ_PACKAGE)/tarball/$$PRJ_VERSION \
+		| sha256sum | awk '{print $$1}')
+
+	sed "s/<<VERSION>>/$$PRJ_VERSION/g; s/<<HASH>>/$$HASH/g;" \
+		<conda-recipe/meta.yaml.template \
+		>conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE)/meta.yaml
+
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour créer une distribution des binaires au format whl.
 # Pour vérifier la version produite :

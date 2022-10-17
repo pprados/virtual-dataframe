@@ -1,0 +1,118 @@
+{% set BASENAME = "virtual_dataframe" %}
+{% if vdf_mode %}
+  {% set NAME = BASENAME + "-" + vdf_mode %}
+{% else %}
+  {% set NAME = BASENAME %}
+{% endif %}
+#{% set PRJ_VERSION = environ['GIT_DESCRIBE_TAG'] %}
+{% set PRJ_VERSION = "<<VERSION>>" %} # FIXME: a virer
+{% set SETUPTOOLS_SCM_PRETEND_VERSION = "<<VERSION>>" %}
+{% set PRJ_PACKAGE = BASENAME %}
+{% set PYTHON_VERSION = "3.9" %}
+{% set PYTHON_VERSION_MAX = "3.9" %}
+
+package:
+  name: "{{ NAME }}"
+  version: "{{ PRJ_VERSION }}"
+
+source:
+  # See https://docs.github.com/en/rest/repos/contents#download-a-repository-archive-tar
+  # url: https://github.com/pprados/{{ BASENAME }}/tarball/refs/tags/virtual_dataframe-{{ PRJ_VERSION }}.tar.gz
+  url: https://github.com/pprados/{{ BASENAME }}/tarball/{{ PRJ_VERSION }}/{{ BASENAME }}.tar.gz
+  sha256: <<HASH>>
+  # Utiliser les 3 lignes suivantes, pour récupérer les sources en attendant
+  # url: https://github.com/pprados/virtual_dataframe/tarball/develop
+  # fn: {{ BASENAME }}.tar.gz
+  # git_url: https://github.com/pprados/virtual_dataframe.git
+  # git_depth: 1
+
+build:
+  noarch: python
+  number: 0
+  # no such file directory sur PYTHON ?
+  script_env:
+    - VERSION={{ SETUPTOOLS_SCM_PRETEND_VERSION }}
+  #script: python -m pip install --progress-bar off --quiet --no-input . -vv
+
+requirements:
+  build:
+    - python {{ PYTHON_VERSION }}
+    - pip
+    - setuptools
+    - setuptools_scm
+
+  run_constrained:
+    - conda-build >=3
+    - conda-content-trust >=0.1.1
+    - conda-env >=2.6
+    - cytoolz >=0.8.1
+
+  host:
+    {% if vdf_mode in ('all', 'cudf', 'dask_cudf') %}
+    - python >={{ PYTHON_VERSION }}
+    {% else %}
+    - python >={{ PYTHON_VERSION }}
+    {% endif %}
+    - pip
+    - setuptools_scm
+
+  run:
+    {% if vdf_mode in ('all', 'cudf', 'dask_cudf') %}
+    - python >={{ PYTHON_VERSION }},<={{ PYTHON_VERSION_MAX }}
+    {% else %}
+    - python >={{ PYTHON_VERSION }}
+    {% endif %}
+    - python-dotenv
+    - pandas >=1.4
+    - GPUtil
+    {% if vdf_mode != '' %}
+    {% if vdf_mode in ('all', 'modin', 'dask_modin') %}
+    - modin-core >=0.13
+    {% endif %}
+    {% if vdf_mode in ('all', 'cudf', 'dask_cudf') %}
+    - cupy
+    - cudf >=22.8
+    {% endif %}
+    {% if vdf_mode in ('all', 'dask', 'dask_cudf', 'dask_modin') %}
+    - dask-core >=2022.7
+    - distributed >=2022.7
+    - bokeh >=2.1.1
+    - cytoolz >=0.8.2
+    - jinja2
+    {% endif %}
+    {% if vdf_mode in ('all', 'dask_cudf') %}
+    - dask-cuda >=22.8
+    - dask-cudf >=22.8
+    {% endif %}
+#    {% if vdf_mode in ('all', 'ray_modin') %}
+#    - ray >=0.15.2
+#    {% endif %}
+    {% endif %} # vdf_mode != ''
+
+test:
+  commands:
+    {% if vdf_mode != "" %}
+    {% if vdf_mode != "all" %}
+    - VDF_MODE="{{ vdf_mode }}" python -c 'from {{ PRJ_PACKAGE }} import *'
+    {% else %}
+    - VDF_MODE="pandas"     python -c 'from {{ PRJ_PACKAGE }} import *'
+    - VDF_MODE="cudf"       python -c 'from {{ PRJ_PACKAGE }} import *'
+    - VDF_MODE="modin"      python -c 'from {{ PRJ_PACKAGE }} import *'
+    - VDF_MODE="dask"       python -c 'from {{ PRJ_PACKAGE }} import *'
+    - VDF_MODE="dask_cudf"  python -c 'from {{ PRJ_PACKAGE }} import *'
+    - VDF_MODE="dask_modin" python -c 'from {{ PRJ_PACKAGE }} import *'
+#    - VDF_MODE=ray_modin  python -c 'from {{ PRJ_PACKAGE }} import *'
+    {% endif %} # Default, all
+    {% endif %} # core
+
+about:
+  home:    https://github.com/pprados/virtual_dataframe
+  doc_url: https://pprados.github.io/virtual_dataframe/
+  license: Apache-2.0
+  license_family: Apache
+  license_file: LICENSE
+  summary: Bridge between pandas, cudf, modin, dask and dask-cudf
+
+extra:
+  recipe-maintainers:
+    - pprados
