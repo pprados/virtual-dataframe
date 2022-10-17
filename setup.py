@@ -37,7 +37,7 @@ dask_ver = '2022.9'
 # Run package dependencies
 requirements = [
     'python-dotenv>=0.20',
-    'GPUtil>=1.4.0',
+    'GPUtil',
 ]
 
 pandas_requirements = [
@@ -64,7 +64,7 @@ all_requirements = [
 ]
 setup_requirements = [
     # "pytest-runner",
-    "setuptools_scm"  # FIXME: trouver une autre approche pour gérer la version compatible conda-build
+    "setuptools_scm"
 ]
 
 # Packages for tests
@@ -110,6 +110,7 @@ def _git_url() -> str:
 def _git_http_url() -> str:
     return re.sub(r".*@(.*):(.*).git", r"http://\1/\2", _git_url())
 
+version=os.environ.get("VERSION")
 setup(
     name='virtual_dataframe',
     author="Philippe Prados",
@@ -118,7 +119,7 @@ setup(
     long_description=open('README.md', mode='r', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
     url=_git_http_url(),
-    license='Apache-2.0',
+    license='Apache v2',
     keywords="dataframe",
     classifiers=[  # See https://pypi.org/classifiers/
         'Development Status :: 4 - Beta',
@@ -148,8 +149,7 @@ setup(
     # packages=find_packages(),
     packages=["virtual_dataframe"],
     package_data={"virtual_dataframe": ["py.typed"]},
-    use_scm_version={
-        'write_to': 'virtual_dataframe/_version.py',
-    },
+    version=version,
+    use_scm_version=not version,  # Manage versions from Git tags
     install_requires=requirements,
 )
