@@ -37,7 +37,7 @@ dask_ver = '2022.9'
 # Run package dependencies
 requirements = [
     'python-dotenv>=0.20',
-    'GPUtil',
+    'GPUtil>=1.4.0',
 ]
 
 pandas_requirements = [
@@ -101,16 +101,6 @@ dev_requirements = set(all_requirements).union([
     'tables',
 ])
 
-
-# Return git remote url
-def _git_url() -> str:
-    return "git@github.com:pprados/virtual_dataframe.git"
-
-# Return Git remote in HTTP form
-def _git_http_url() -> str:
-    return re.sub(r".*@(.*):(.*).git", r"http://\1/\2", _git_url())
-
-version=os.environ.get("VERSION")
 setup(
     name='virtual_dataframe',
     author="Philippe Prados",
@@ -118,13 +108,13 @@ setup(
     description="Bridge between pandas, cudf, modin, dask and dask-cudf",
     long_description=open('README.md', mode='r', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
-    url=_git_http_url(),
-    license='Apache v2',
+    url="https://github.com/pprados/virtual_dataframe",
+    license='Apache-2.0',
     keywords="dataframe",
     classifiers=[  # See https://pypi.org/classifiers/
-        'Development Status :: 4 - Beta',
         # Before release
-        # 'Development Status :: 5 - Production/Stable',
+        'Development Status :: 4 - Beta',
+        # Development Status :: 5 - Production/Stable
         'Environment :: Console',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
@@ -149,7 +139,8 @@ setup(
     # packages=find_packages(),
     packages=["virtual_dataframe"],
     package_data={"virtual_dataframe": ["py.typed"]},
-    version=version,
-    use_scm_version=not version,  # Manage versions from Git tags
+    use_scm_version={
+        'write_to': 'virtual_dataframe/_version.py',
+    },
     install_requires=requirements,
 )
