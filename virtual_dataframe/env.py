@@ -2,6 +2,7 @@ import ctypes
 import logging
 import os
 import sys
+import warnings
 
 from typing import List, Union, Dict
 
@@ -48,6 +49,10 @@ def _check_cuda() -> bool:
 USE_GPU = _check_cuda()
 
 # Default is pandas
-VDF_MODE: Mode = Mode[os.environ.get("VDF_MODE", "pandas").replace('-', '_')]
+_mode = os.environ.get("VDF_MODE", "pandas").replace('-', '_')
+if _mode not in Mode._value2member_map_:
+    _mode = "pandas"
+    warnings.warn("Invalide VDF_MODE. Use default 'pandas'", stacklevel=0)
+VDF_MODE: Mode = Mode[_mode]
 
 LOGGER.info(f"{DEBUG=} {VDF_MODE=}")
