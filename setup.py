@@ -4,35 +4,9 @@ import os
 import re
 import subprocess
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 PYTHON_VERSION = "3.8"
-
-
-# USE_GPU="-gpu" ou "" si le PC possède une carte NVidia
-# ou suivant la valeur de la variable d'environnement GPU (export GPU=yes)
-def _check_gpu() -> bool:
-    import ctypes
-    libnames = ('libcuda.so', 'libcuda.dylib', 'cuda.dll')
-    for libname in libnames:
-        try:
-            cuda = ctypes.CDLL(libname)
-            result = cuda.cuInit(0)
-            if not result:
-                return True
-        except OSError:
-            continue
-        else:
-            break
-    return False
-
-
-USE_GPU: str = "-gpu" if _check_gpu() else ""
-
-# Mutual compatible versions
-modin_ver = '0.13'
-panda_ver = '1.4'
-dask_ver = '2022.9'
 
 # Run package dependencies
 requirements = [
@@ -40,64 +14,11 @@ requirements = [
     'GPUtil>=1.4.0',
 ]
 
-pandas_requirements = [
-    f'pandas>={panda_ver}'
-]
-
-dask_requirements = \
-    [
-        f'dask>={dask_ver}',
-        f'distributed>={dask_ver}',
-    ]
-dask_modin_requirements = [f'dask-modin>={modin_ver}'] + dask_requirements
-# ray_modin_requirements = ['modin[ray]>={modin_ver}']
-
-# Pinned set of multualy compatible versions
-all_requirements = [
-    "pandas==1.4.*",
-    "modin[dask]==0.13.*",
-    "dask==2022.7.*",
-    "distributed==2022.7.*",
-]
 setup_requirements = [
     # "pytest-runner",
     "pip",
     "setuptools_scm"
 ]
-
-# Packages for tests
-test_requirements = [
-    'pytest>=2.8',
-    'pytest-xdist',
-    'pytest-mock',
-    'pytest-cov>=3.0.0',
-
-    'werkzeug==2.0',
-    'papermill',
-    'ipython',
-]
-
-# Package nécessaires aux builds mais pas au run
-dev_requirements = set(all_requirements).union([
-    'pip',
-    'twine',  # To publish package in Pypi
-    'flake8', 'pylint',  # For lint
-    'daff',
-    'pytype', 'mypy',
-    'pandas-stubs',
-    'mkdocs',
-
-    'jupyterlab',
-    'jupyterlab-git',
-    'dask-labextension',
-    'voila',
-
-    # Extension
-    'graphviz',
-    'openpyxl',
-    'sqlalchemy',
-    'tables',
-])
 
 setup(
     name='virtual_dataframe',
@@ -122,22 +43,25 @@ setup(
         'Topic :: Scientific/Engineering',
     ],
     python_requires=f'>={PYTHON_VERSION}',
+    include_package_data=True,
     test_suite="tests",
     setup_requires=setup_requirements,
     # tests_require=test_requirements,
-    extras_require={
-        'dev': dev_requirements,
-        'test': test_requirements,
-        'pandas': pandas_requirements,
-        'dask': dask_requirements,
-        'dask_modin': dask_modin_requirements,
-        'all': all_requirements
+    packages=[
+        "virtual_dataframe",
+        "virtual_dataframe.bin"
+    ],
+    package_data={
+        "virtual_dataframe": ["py.typed"],
+        "virtual_dataframe.bin": ["*"],
     },
-    # packages=find_packages(),
-    packages=["virtual_dataframe"],
-    package_data={"virtual_dataframe": ["py.typed"]},
     use_scm_version={
         'write_to': 'virtual_dataframe/_version.py',
     },
     install_requires=requirements,
+    entry_points = {
+        'console_scripts': [
+            'build-conda-vdf-env = virtual_dataframe.bin.__init__:main'
+        ]
+    }
 )

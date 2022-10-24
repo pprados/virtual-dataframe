@@ -18,9 +18,9 @@ def vclient():
     client = vdf.VClient(
         address=local_cluster,
     )
-    client.__enter__()
+    # client.__enter__()
     yield client
-    client.__exit__(None, None, None)
+    # client.__exit__(None, None, None)
     client.shutdown()
 
 

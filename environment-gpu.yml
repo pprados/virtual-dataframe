@@ -1,0 +1,8 @@
+channels:
+  - rapidsai
+  - conda-forge
+  - defaults
+dependencies:
+  - cudf==22.10.*
+  - dask-cuda==22.10.*
+  - dask-cudf==22.10.*

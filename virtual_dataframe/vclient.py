@@ -175,7 +175,7 @@ def _new_VClient(mode: Mode,
                                                              **local_default_params
                                                          ),
                             **kwargs)
-                    elif mode in (Mode.dask, Mode.dask_cudf):
+                    elif mode in (Mode.dask, Mode.dask_cudf, Mode.dask_modin):
                         # Purge params
                         for key in params_cuda_local_cluster:
                             if key in local_default_params:
@@ -184,7 +184,7 @@ def _new_VClient(mode: Mode,
                             address=dask.distributed.LocalCluster(**local_default_params),
                             **kwargs)
                     else:
-                        assert False, "Invalid VDF_MODE"
+                        assert False, f"Invalid VDF_MODE {mode}"
                 else:
                     # Initialize for remote cluster
                     client = dask.distributed.Client(
@@ -229,7 +229,7 @@ def _new_VClient(mode: Mode,
         #
         #     return RayClient(ray_context)
         else:
-            assert False, "Invalid VDF_MODE"
+            assert False, f"Invalid VDF_MODE {mode}"
 
     return client
 

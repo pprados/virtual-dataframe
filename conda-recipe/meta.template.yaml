@@ -19,8 +19,8 @@ build:
   number: 0
   # no such file directory sur PYTHON ?
   script_env:
-    - VERSION={{ PRJ_VERSION }}
-  script: python -m pip install --progress-bar off --quiet --no-input . -vv
+    - SETUPTOOLS_SCM_PRETEND_VERSION={{ PRJ_VERSION }}
+  script: {{ PYTHON }} -m pip install --progress-bar off --quiet --no-input . -vv
 
 requirements:
   build:
@@ -48,15 +48,15 @@ requirements:
 
 test:
   commands:
-    - python -c 'from {{ PRJ_PACKAGE }} import *'  # [unix]
+    - python -c 'from {{ PRJ_PACKAGE }} import *'
 
 about:
   home:    https://github.com/pprados/virtual_dataframe
   doc_url: https://pprados.github.io/virtual_dataframe/
   license: Apache-2.0
   license_family: Apache
-  license_file: LICENSE
-  summary: Bridge between pandas, cudf, modin, dask and dask-cudf
+  license_file: LICENSE.txt
+  summary: Bridge between pandas, cudf, modin, dask, dask-modin and dask-cudf
 
 extra:
   recipe-maintainers:

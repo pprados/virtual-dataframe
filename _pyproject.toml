@@ -1,0 +1,52 @@
+# pyproject.toml
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools_scm]
+write_to = "virtual_dataframe/_version.py"
+
+[project]
+name = "virtual_dataframe"
+authors = [
+  { name="Philippe Prados", email="github@prados.fr" },
+]
+description = "Bridge between pandas, cudf, dask dask-modin, and dask-cudf"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    # Before release
+    'Development Status :: 4 - Beta',
+    # Development Status :: 5 - Production/Stable
+    'Environment :: Console',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: Apache Software License',
+    'Natural Language :: English',
+    'Programming Language :: Python :: 3',
+    'Operating System :: OS Independent',
+    'Topic :: Scientific/Engineering',
+]
+dependencies = [
+    "python-dotenv>=0.20",
+    "GPUtil>=1.4.0",
+]
+#requires-python = ">=3.9"
+
+[tool.setuptools.packages.find]
+# All the following settings are optional:
+where = ["."]  # ["."] by default
+include = ["virtual_dataframe"]  # ["*"] by default
+#exclude = ["tests*"]  # empty by default
+namespaces = true  # true by default
+
+[project.urls]
+"Homepage" = "https://github.com/pprados/virtual_dataframe"
+"Docs" =  "https://pprados.github.io/virtual_dataframe/"
+"Bug Tracker" = "https://github.com/pprados/virtual_dataframe/issues"
+
+[tool.setuptools.package-data]
+etc = ["virtual_dataframe/*"]
+

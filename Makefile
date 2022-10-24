@@ -145,7 +145,7 @@ export MAMBA_NO_BANNER=1
 CONDA_BASE:=$(shell conda info --base)
 CONDA_PACKAGE:=$(CONDA_PREFIX)/lib/python$(PYTHON_VERSION)/site-packages
 CONDA_PYTHON:=$(CONDA_PREFIX)/bin/python
-CONDA_BLD_DIR?=./build/conda-bld
+CONDA_BLD_DIR?=$(CONDA_PREFIX)/conda-bld
 CONDA_CHANNELS?=-c rapidsai -c nvidia -c conda-forge
 CONDA_ARGS?=
 CONDA_RECIPE=conda-recipe/staged-recipes/recipes/virtual_dataframe
@@ -384,13 +384,13 @@ VALIDATE_VENV=$(CHECK_VENV)
 # de run et de test (voir le modèle de `setup.py` proposé)
 
 # All dependencies of the project must be here
-$(CONDA_PACKAGE): environment.yml environment-dev.yml
+$(CONDA_PACKAGE): environment-gpu.yml environment-dev.yml
 	@$(VALIDATE_VENV)
 ifeq ($(USE_GPU),-gpu)
 	echo "$(green)  Install conda dependencies...$(normal)"
 	$(CONDA) env update \
 		-q $(CONDA_ARGS) \
-		--file environment.yml
+		--file environment-gpu.yml
 endif
 	$(CONDA) env update \
 		-q $(CONDA_ARGS) \
@@ -416,7 +416,7 @@ dependencies: requirements
 
 # Download dependencies for offline usage
 ~/.mypypi: setup.py
-	@pip download '.[dev,test]' --dest ~/.mypypi
+	@pip download '.' --dest ~/.mypypi
 # Download modules and packages before going offline
 offline: ~/.mypypi
 ifeq ($(OFFLINE),True)
@@ -433,7 +433,7 @@ $(CONDA_PYTHON):
 $(PIP_PACKAGE): $(CONDA_PYTHON) setup.py | .git # Install pip dependencies
 	@$(VALIDATE_VENV)
 	echo -e "$(cyan)Install setup.py dependencies ... (may take minutes)$(normal)"
-	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.[dev,test]' | grep -v 'already satisfied' || true
+	pip install $(PIP_ARGS) $(EXTRA_INDEX) -e '.' | grep -v 'already satisfied' || true
 	echo -e "$(cyan)setup.py dependencies updated$(normal)"
 	@touch $(PIP_PACKAGE)
 
@@ -475,10 +475,12 @@ configure: $(CONDA_HOME)/bin/mamba
 		--name "$(VENV)" \
 		-y $(CONDA_ARGS) \
 		python==$(PYTHON_VERSION)
+ifeq ($(USE_GPU),-gpu)
 	$(CONDA) env update \
 		--name "$(VENV)" \
 		$(CONDA_ARGS) \
-		--file environment.yml
+		--file environment-gpu.yml
+endif
 	@if [[ "base" == "$(CONDA_DEFAULT_ENV)" ]] || [[ -z "$(CONDA_DEFAULT_ENV)" ]] ; \
 	then echo -e "Use: $(cyan)conda activate $(VENV)$(normal)" ; fi
 
@@ -681,10 +683,9 @@ $(CONDA_BLD_DIR):
 	$(CONDA) index $(CONDA_BLD_DIR)
 
 DEBUG_CONDA=--dirty #--keep-old-work --debug --no-remove-work-dir --no-long-test-prefix --no-build-id
-${CONDA_BUILD_TARGET}: clean-build conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl $(CONDA_BLD_DIR) $(CONDA_PREFIX)/bin/conda-build \
+${CONDA_BUILD_TARGET}: $(CONDA_PACKAGE) clean-build conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl $(CONDA_BLD_DIR) $(CONDA_PREFIX)/bin/conda-build \
 		conda-recipe/meta.template.yaml _rm_meta setup.* $(CONDA_RECIPE)/meta.yaml
 	@$(VALIDATE_VENV)
-	conda deactivate
 	$(CHECK_GIT_STATUS)
 	# cp -f --reflink=auto dist/*.whl conda-recipe/
 	export GIT_DESCRIBE_TAG=$(shell python setup.py --version 2>/dev/null)
@@ -693,8 +694,9 @@ ${CONDA_BUILD_TARGET}: clean-build conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-
 	# Note: due to a bug in conda-build, it's impossible to run the test with
 	# app packages at the time. So, I desactivate the tests now
 	# FIXME: virer --dirty
+	#	--output-folder ${CONDA_BLD_DIR} \
+
 	$(CONDA) mambabuild \
-		--output-folder ${CONDA_BLD_DIR} \
 		$(CONDA_CHANNELS) \
 		${CONDA_ARGS} \
 		${DEBUG_CONDA} \
@@ -704,7 +706,7 @@ ${CONDA_BUILD_TARGET}: clean-build conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-
 	cp --reflink=auto \
 		${CONDA_BLD_DIR}/noarch/${PRJ}*.tar.bz2 \
 		dist/
-	echo -e "$(green)Conda package builded in dist/${CONDA_BLD_DIR}/noarch/${PRJ}*-$${GIT_DESCRIBE_TAG}*.tar.bz2$(normal)"
+	echo -e "$(green)Conda package builded in ${CONDA_BLD_DIR}/noarch/${PRJ}*-$${GIT_DESCRIBE_TAG}*.tar.bz2$(normal)"
 	touch ${CONDA_BUILD_TARGET}
 
 # Remove alternative environment

@@ -1,11 +1,14 @@
 channels:
   - rapidsai
-  - nvidia
   - conda-forge
   - defaults
 dependencies:
-#  - cupy  # FIXME: cupy a garder ?
+  - python==3.9
+  - virtual_dataframe
+  - dask
   - cupy==10.6.*
   - cudf==22.8.*
   - dask-cuda==22.8.*
   - dask-cudf>=22.8.*
+variables:
+  VDF_MODE: dask_cudf

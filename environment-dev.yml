@@ -6,7 +6,9 @@ dependencies:
   - gh
   - conda-smithy
   - boa
-  - gitflow
+  - pip
+  - modin
+  - dask
 
   - pip:
       - pytest>=2.8
