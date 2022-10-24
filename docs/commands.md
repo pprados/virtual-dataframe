@@ -33,5 +33,7 @@ The Makefile contains the central entry points for common tasks related to this 
 * `make conda-install` will install the conda package
 * `make conda-purge` will remove the build artefact
 * `make conda-create` will create a test environment for each mode
+* `make test-conda-forge` will test the conda-forge first step publication
+* `make conda-forge` will publish the project to conda-forge
 
 

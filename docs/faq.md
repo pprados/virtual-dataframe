@@ -5,7 +5,7 @@ You must use only the similare functionality, and only a subpart of Pandas.
 Develop for *dask_cudf*. it's easier to be compatible with others frameworks.
 
 ### `.compute()` is not defined with pandas, cudf ?
-If your `@delayed` function return something, other than a `VDataFrame` or `VSerie`, the objet has not
+If your `@delayed` function return something, other than a `VDataFrame` or `VSerie`, the objet does not have
 the method `.compute()`. You can solve this, with:
 ```
 @delayed

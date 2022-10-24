@@ -44,26 +44,24 @@ pandas_requirements = [
     f'pandas>={panda_ver}'
 ]
 
-modin_requirements = [
-    f'modin>={modin_ver}'
-]
 dask_requirements = \
     [
         f'dask>={dask_ver}',
         f'distributed>={dask_ver}',
     ]
-dask_modin_requirements = [f'modin>={modin_ver}'] + dask_requirements
+dask_modin_requirements = [f'dask-modin>={modin_ver}'] + dask_requirements
 # ray_modin_requirements = ['modin[ray]>={modin_ver}']
 
 # Pinned set of multualy compatible versions
 all_requirements = [
     "pandas==1.4.*",
-    "modin==0.13.*",
+    "modin[dask]==0.13.*",
     "dask==2022.7.*",
     "distributed==2022.7.*",
 ]
 setup_requirements = [
     # "pytest-runner",
+    "pip",
     "setuptools_scm"
 ]
 
@@ -105,7 +103,7 @@ setup(
     name='virtual_dataframe',
     author="Philippe Prados",
     author_email="github@prados.fr",
-    description="Bridge between pandas, cudf, modin, dask and dask-cudf",
+    description="Bridge between pandas, cudf, dask dask-modin, and dask-cudf",
     long_description=open('README.md', mode='r', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
     url="https://github.com/pprados/virtual_dataframe",
@@ -131,7 +129,6 @@ setup(
         'dev': dev_requirements,
         'test': test_requirements,
         'pandas': pandas_requirements,
-        'modin': modin_requirements,
         'dask': dask_requirements,
         'dask_modin': dask_modin_requirements,
         'all': all_requirements

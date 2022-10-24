@@ -4,7 +4,7 @@
 
 ## Motivation
 
-With Panda like dataframe, do you want to create a code, and choose at the end, the framework to use?
+With Panda-like dataframe, do you want to create a code, and choose at the end, the framework to use?
 Do you want to be able to choose the best framework after simply performing performance measurements?
 This framework unifies multiple Panda-compatible components, to allow the writing of a single code, compatible with all.
 

@@ -49,10 +49,12 @@ def _check_cuda() -> bool:
 USE_GPU = _check_cuda()
 
 # Default is pandas
-_mode = os.environ.get("VDF_MODE", "pandas").replace('-', '_')
+_mode = os.environ.get("VDF_MODE", "pandas").replace('-', '_').strip()
 if _mode not in Mode._value2member_map_:
+    warnings.warn(f"Invalide VDF_MODE '{_mode}'. Use default 'pandas'",
+                  stacklevel=0,
+                  )
     _mode = "pandas"
-    warnings.warn("Invalide VDF_MODE. Use default 'pandas'", stacklevel=0)
 VDF_MODE: Mode = Mode[_mode]
 
 LOGGER.info(f"{DEBUG=} {VDF_MODE=}")

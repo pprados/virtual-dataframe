@@ -1,5 +1,38 @@
 dependencies:
   - pytables
-  - graphviz
+  #  - graphviz
   - conda-build
+  - conda-verify
   - gh
+  - conda-smithy
+  - boa
+  - gitflow
+
+  - pip:
+      - pytest>=2.8
+      - pytest-xdist
+      - pytest-mock
+      - pytest-cov>=3.0.0
+      - werkzeug==2.0
+      - papermill
+      - ipython
+
+      - pip
+      - twine
+      - flake8
+      - pylint
+      - daff
+      - pytype
+      - mypy
+      - pandas-stubs
+      - mkdocs
+
+      - jupyterlab
+      - jupyterlab-git
+      - dask-labextension
+      - voila
+
+      - graphviz
+      - openpyxl
+      - sqlalchemy
+      - tables

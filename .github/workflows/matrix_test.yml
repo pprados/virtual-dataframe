@@ -1,4 +1,4 @@
-name: Test matrix with Python 3.7-3.9
+name: Test matrix with Python 3.8-3.9
 
 on:
   push:
@@ -23,5 +23,5 @@ jobs:
         run: make PYTHON_VERSION=${{ matrix.python-version }} configure
       - name: make test
         run: |
-          source $CONDA/bin/activate shaystack
+          source $CONDA/bin/activate virtual_dataframe
           make PYTHON_VERSION=${{ matrix.python-version }} test

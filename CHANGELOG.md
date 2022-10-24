@@ -10,14 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pandas, cudf, modin, dask, dask_cudf and dask_modin frameworks
 
 ### Changed
+- Nop
 
 ### Deprecated
+- Nop
 
 ### Removed
+- Nop
 
 ### Fixed
+- Nop
 
 ### Security
+- Nop
 
 ## [0.0.1] - YYYY-MM-DD
 

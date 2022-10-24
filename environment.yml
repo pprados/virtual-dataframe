@@ -4,7 +4,8 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+#  - cupy  # FIXME: cupy a garder ?
+  - cupy==10.6.*
   - cudf==22.8.*
   - dask-cuda==22.8.*
   - dask-cudf>=22.8.*
-

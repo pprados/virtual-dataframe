@@ -28,7 +28,7 @@ To manage the initialisation of a Dask, you must use the `VClient()`. This alias
 initialized with some environment variables.
 
 ```python
-# Sample of code, compatible Pandas, cudf, modin, dask and dask_cudf
+# Sample of code, compatible Pandas, cudf, dask, dask_modin and dask_cudf
 from virtual_dataframe import *
 
 TestDF = VDataFrame
@@ -49,7 +49,6 @@ With this framework, you can select your environment, to run or debug your code.
 | env                                                 | Environement                                |
 |-----------------------------------------------------|---------------------------------------------|
 | VDF_MODE=pandas                                     | Only Python with classical pandas           |
-| VDF_MODE=modin                                      | Python with local multiple process          |
 | VDF_MODE=cudf                                       | Python with local cuDF (GPU)                |
 | VDF_MODE=dask                                       | Dask with local multiple process and pandas |
 | VDF_MODE=dask_cudf                                  | Dask with local multiple process and cuDF   |
@@ -59,6 +58,7 @@ With this framework, you can select your environment, to run or debug your code.
 | VDF_MODE=dask_cudf<br />VDF_CLUSTER=dask://.local   | Dask with local cuda cluster and cuDF       |
 | VDF_MODE=dask<br />VDF_CLUSTER=dask://...:ppp       | Dask with remote cluster and Pandas         |
 | VDF_MODE=dask_cudf<br />VDF_CLUSTER=dask://...:ppp  | Dask with remote cluster and cuDF           |
+| VDF_MODE=dask_modin<br />                           | Dask with modin           |
 | VDF_MODE=dask_modin<br />VDF_CLUSTER=dask://.local  | Dask with local cluster and modin           |
 | VDF_MODE=dask_modin<br />VDF_CLUSTER=dask://...:ppp | Dask with remote cluster and modin          |
 

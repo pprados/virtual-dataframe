@@ -40,6 +40,11 @@ $ pip install "virtual_dataframe"
 ```
 It's important to understand the implication of the dependencies (see below).
 
+Then, to use GPU, in a conda environment, use:
+```shell
+$ conda install -c rapidai -c nvidia -c conda-forge cudf dask-cuda daks-cudf
+```
+
 ### Installing from the GitHub master branch
 ```shell
 $ pip install "virtual_dataframe[all]@git+https://github.com/pprados/virtual-dataframe"
@@ -55,7 +60,7 @@ $ pip install "virtual_dataframe@git+https://github.com/pprados/virtual-datafram
 ```
 
 ### Dependencies
-It's difficulte to use all the *pandas like* framework at the same time, in the same projet.
+It's difficulte to use all the *pandas-like* framework at the same time, in the same projet.
 Each framework need some dependencies, differents of the others. But, with a specific selection
 of versions of each framework, it's possible to merge all the frameworks.
 

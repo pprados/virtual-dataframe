@@ -50,7 +50,7 @@
 | VDF_MODE                               | The current mode                                |
 | Mode                                   | The enumeration of differents mode              |
 
-<sup>*</sup> some frameworks do not implement it, see below
+<sup>*</sup> some frameworks do not implement it
 
 
 You can read a sample notebook [here](https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo.ipynb)

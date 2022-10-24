@@ -148,6 +148,8 @@ CONDA_PYTHON:=$(CONDA_PREFIX)/bin/python
 CONDA_BLD_DIR?=./build/conda-bld
 CONDA_CHANNELS?=-c rapidsai -c nvidia -c conda-forge
 CONDA_ARGS?=
+CONDA_RECIPE=conda-recipe/staged-recipes/recipes/virtual_dataframe
+
 export VIRTUAL_ENV=$(CONDA_PREFIX)
 
 PIP_PACKAGE:=$(CONDA_PACKAGE)/$(PRJ_PACKAGE).egg-link
@@ -161,7 +163,7 @@ JUPYTER_LABEXTENSIONS_DIR:=$(CONDA_PREFIX)/share/jupyter/labextensions
 _JUPYTER_LABEXTENSIONS:=$(foreach ext,$(JUPYTER_LABEXTENSIONS),$(JUPYTER_LABEXTENSIONS_DIR)/$(ext))
 
 # Project variable
-export VDF_MODES=pandas cudf modin dask dask_modin dask_cudf
+export VDF_MODES=pandas cudf dask dask_modin dask_cudf
 
 CHECK_GIT_STATUS=[[ `git status --porcelain` ]] && echo "$(yellow)Warning: All files are not commited$(normal)"
 
@@ -678,26 +680,29 @@ $(CONDA_BLD_DIR):
 	@mkdir -p $(CONDA_BLD_DIR)
 	$(CONDA) index $(CONDA_BLD_DIR)
 
+DEBUG_CONDA=--dirty #--keep-old-work --debug --no-remove-work-dir --no-long-test-prefix --no-build-id
 ${CONDA_BUILD_TARGET}: clean-build conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl $(CONDA_BLD_DIR) $(CONDA_PREFIX)/bin/conda-build \
-		conda-recipe/meta.yaml conda-recipe/conda_build_config.yaml setup.*
+		conda-recipe/meta.template.yaml _rm_meta setup.* $(CONDA_RECIPE)/meta.yaml
 	@$(VALIDATE_VENV)
+	conda deactivate
 	$(CHECK_GIT_STATUS)
-	cp -f --reflink=auto dist/*.whl conda-recipe/
+	# cp -f --reflink=auto dist/*.whl conda-recipe/
 	export GIT_DESCRIBE_TAG=$(shell python setup.py --version 2>/dev/null)
 	export WHEEL=$(subst -,_,$(PRJ_PACKAGE))-*.whl
 
 	# Note: due to a bug in conda-build, it's impossible to run the test with
 	# app packages at the time. So, I desactivate the tests now
-	$(CONDA) build \
-		--no-test \
+	# FIXME: virer --dirty
+	$(CONDA) mambabuild \
 		--output-folder ${CONDA_BLD_DIR} \
 		$(CONDA_CHANNELS) \
 		${CONDA_ARGS} \
+		${DEBUG_CONDA} \
 		--python=$(PYTHON_VERSION) \
 		--no-anaconda-upload \
-		conda-recipe
+		$(CONDA_RECIPE)
 	cp --reflink=auto \
-		${CONDA_BLD_DIR}/noarch/${PRJ}*-$${GIT_DESCRIBE_TAG}*.tar.bz2 \
+		${CONDA_BLD_DIR}/noarch/${PRJ}*.tar.bz2 \
 		dist/
 	echo -e "$(green)Conda package builded in dist/${CONDA_BLD_DIR}/noarch/${PRJ}*-$${GIT_DESCRIBE_TAG}*.tar.bz2$(normal)"
 	touch ${CONDA_BUILD_TARGET}
@@ -714,40 +719,41 @@ conda-remove-envs:
 conda-build: ${CONDA_BUILD_TARGET}
 
 # Check conda recipe
-conda-check:
+conda-check: $(CONDA_RECIPE)/meta.yaml
 	@$(VALIDATE_VENV)
-	conda smithy recipe-lint conda-recipe/
+	conda smithy recipe-lint $(CONDA_RECIPE)
 
 ## Purge the conda build process
 conda-purge: conda-remove-envs
 	@$(VALIDATE_VENV)
 	$(CONDA) build purge \
 		--output-folder ${CONDA_BLD_DIR}
-	rm -f conda-recipe/*.whl conda-recipe/setup.*
+	rm -f conda-recipe/*.whl
 	echo -e "$(cyan)Conda cleaned$(normal)"
 
 
-## Debug the conda build process
-conda-debug:
+## Debug the conda build process (make OUTPUT_ID="*-$VDF_MODE" conda-debug)
+conda-debug: $(CONDA_RECIPE)/meta.yaml
 	@$(VALIDATE_VENV)
 	$(CHECK_GIT_STATUS)
-	cp -f --reflink=auto dist/*.whl conda-recipe/
+	# cp -f --reflink=auto dist/*.whl conda-recipe/
 	export GIT_DESCRIBE_TAG=$(shell python setup.py --version 2>/dev/null)
 	export WHEEL=$(subst -,_,$(PRJ_PACKAGE))-*.whl
 	$(CONDA) debug \
 		$(CONDA_CHANNELS) \
 		${CONDA_ARGS} \
-		conda-recipe
+		--output-id="$(OUTPUT_ID)" \
+		$(CONDA_RECIPE)
 
 ## Convert the package for all platform
-conda-convert: ${CONDA_BUILD_TARGET}
+conda-convert: ${CONDA_BUILD_TARGET} $(CONDA_RECIPE)/meta.yaml
 	@$(CONDA) convert \
 		--platform all \
 		-o dist/ \
 		${CONDA_BUILD_TARGET}
 
 ## Install the built conda package
-conda-install: ${CONDA_BUILD_TARGET}
+conda-install: ${CONDA_BUILD_TARGET} $(CONDA_RECIPE)/meta.yaml
 	@$(VALIDATE_VENV)
 	$(CONDA) install \
 		-c ${CONDA_BLD_DIR} \
@@ -755,7 +761,7 @@ conda-install: ${CONDA_BUILD_TARGET}
 		$(PRJ_PACKAGE)
 
 ## Install a specific version of conda package
-conda-install-%: ${CONDA_BUILD_TARGET}
+conda-install-%: ${CONDA_BUILD_TARGET} $(CONDA_RECIPE)/meta.yaml
 	@$(CHECK_GIT_STATUS)
 	$(CONDA) install \
 		-c file://${PWD}/${CONDA_BLD_DIR} $(CONDA_CHANNELS) ${CONDA_ARGS} \
@@ -763,7 +769,7 @@ conda-install-%: ${CONDA_BUILD_TARGET}
 		${PRJ}-$*
 
 ## Create all tests environments
-conda-create: # ${CONDA_BUILD_TARGET}
+conda-create: $(CONDA_RECIPE)/meta.yaml # ${CONDA_BUILD_TARGET}
 	@$(VALIDATE_VENV)
 	for mode in $(VDF_MODES)
 	do
@@ -774,17 +780,6 @@ conda-create: # ${CONDA_BUILD_TARGET}
 		$(CONDA) env config vars set VDF_MODE=$$mode
 	done
 
-
-conda-recipe/staged-recipes:
-	@$(VALIDATE_VENV)
-	# Create a user fork of staged-recipes
-	gh fork --remote https://github.com/conda-forge/staged-recipes
-	GIT_USER=$$(gh auth status -t 2>&1 | grep oauth_token | awk '{ print $7 }')
-	git submodule add --force https://github.com/$$GIT_USER/staged-recipes.git conda-recipe/staged-recipes
-
-conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE): conda-recipe/staged-recipes
-	mkdir conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE)
-
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour créer publier une version dans conda-forge.
 # La procedure n'est pas simple. Il faut commencer par avoir un clone
@@ -793,25 +788,56 @@ conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE): conda-recipe/staged-recipes
 # et une publication de release dans github
 # le code se charge de publier la version.
 
-_prepare-conda-forge: conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE)
+.PHONY:test-conda-forge conda-forge _rm_meta _prepare-conda-forge
+
+_rm_meta:
+	rm -f $(CONDA_RECIPE)/meta.yaml
+
+conda-recipe/staged-recipes:
 	@$(VALIDATE_VENV)
-	RECIPE=conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE)
-	PRJ_VERSION=$(shell python setup.py --version)
-	HASH=$(shell wget -q https://github.com/pprados/$(PRJ_PACKAGE)/tarball/$$PRJ_VERSION \
-		| sha256sum | awk '{print $$1}')
+	# Create a user fork of staged-recipes
+	gh repo fork --remote https://github.com/conda-forge/staged-recipes conda-recipe/staged-recipes
+	(
+		cd conda-recipe/staged-recipes ; \
+		git checkout -b $(PRJ_PACKAGE) origin/$(PRJ_PACKAGE)\
+	)
+	GIT_USER=$$(gh auth status -t 2>&1 | grep oauth_token | awk '{ print $$7 }')
+	git submodule add --force https://github.com/$$GIT_USER/staged-recipes.git conda-recipe/staged-recipes
+
+conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE): conda-recipe/staged-recipes
+	@mkdir conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE)/$(PRJ_PACKAGE).tar.gz
+	echo -e "$(yellow)See the directory $(CONDA_RECIPE)$(normal)"
+
+$(CONDA_RECIPE)/meta.yaml: $(CONDA_RECIPE) conda-recipe/meta.template.yaml
+	@$(VALIDATE_VENV)
+	PRJ_VERSION=v$(shell python setup.py --version)
+	URL="https://github.com/pprados/$(PRJ_PACKAGE)/tarball/$$PRJ_VERSION/$(PRJ_PACKAGE).tar.gz"
+	HASH=$$(wget -q "$$URL" -O - | sha256sum | awk '{print $$1}')
 	# Inject HASH and version
 	sed "s/<<VERSION>>/$$PRJ_VERSION/g; s/<<HASH>>/$$HASH/g;" \
-		<conda-recipe/meta.yaml.template \
-		>$$RECIPE/meta.yaml
+		<conda-recipe/meta.template.yaml \
+		>$(CONDA_RECIPE)/meta.yaml
+	( \
+		cd $(CONDA_RECIPE) ; \
+		conda smithy recipe-lint . && \
+		git add meta.yaml \
+	)
+	echo -e "$(green)Inject version $$PRJ_VERSION$(normal)"
 
 # Test a new version of meta.yaml files
-test-conda-forge: _prepare-conda-forge
-	git commit -a --amend -m "Test $(PRJ_PACKAGE)" $$RECIPE
+test-conda-forge: _rm_meta $(CONDA_RECIPE)/meta.yaml
+	@(
+		cd $(CONDA_RECIPE) ; \
+		git commit -a --amend -m "Test $(PRJ_PACKAGE)" $$RECIPE ; \
+		git push --force
+	)
+	echo -e "$(green)A new version was published. The CI will begin to test \
+	(https://github.com/conda-forge/staged-recipes/pulls?q=$(PRJ_PACKAGE)$(normal)"
 
 # See https://conda-forge.org/docs/maintainer/adding_pkgs.html
 ## First release in conda-forge. Add a version tag before use.
-conda-forge: _prepare-conda-forge
-	PRJ_VERSION=$(shell python setup.py --version)
+conda-forge: _rm_meta $(CONDA_RECIPE)/meta.yaml
+	@PRJ_VERSION=v$(shell python setup.py --version)
 	git commit -m "Add a new version $$PRJ_VERSION for $(PRJ_PACKAGE)" $$RECIPE
 
 # ---------------------------------------------------------------------------------------
@@ -898,7 +924,6 @@ $(DATA)/raw:
 # via un 'scripts/phase1/1_sample.py'.
 .PHONY: nb-convert
 # Convert all notebooks to python scripts
-# jupyter nbconvert --to python --ExecutePreprocessor.kernel_name=virtual_dataframe --template /tmp/make-XhsSM --TemplateExporter.extra_template_basedirs=/home/pprados/miniconda3/envs/virtual_dataframe/share/jupyter/nbconvert/templates --stdout "notebooks/demo.ipynb"
 _nbconvert:  $(JUPYTER_DATA_DIR)/kernels/$(KERNEL)
 	@echo -e "Convert all notebooks..."
 	notebook_path=notebooks

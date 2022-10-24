@@ -9,6 +9,8 @@ on:
     paths-ignore:
       - 'docs/**'
       - 'README.md'
+      - 'CHANGELOG.md'
+      - 'mkdocs.yml'
 
 jobs:
   build-n-publish-release:
