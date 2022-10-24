@@ -54,7 +54,7 @@ about:
   home:    https://github.com/pprados/virtual_dataframe
   doc_url: https://pprados.github.io/virtual_dataframe/
   license: Apache-2.0
-  license_family: Apache
+  license_family: APACHE
   license_file: LICENSE.txt
   summary: Bridge between pandas, cudf, modin, dask, dask-modin and dask-cudf
 
