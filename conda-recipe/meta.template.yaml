@@ -1,0 +1,63 @@
+{% set BASENAME = "virtual_dataframe" %}
+{% set PRJ_VERSION = "<<VERSION>>" %}
+{% set SETUPTOOLS_SCM_PRETEND_VERSION = PRJ_VERSION %}
+{% set PRJ_PACKAGE = BASENAME %}
+{% set PYTHON_VERSION = "3.8" %}
+{% set PYTHON_VERSION_MAX = "3.9" %}
+
+package:
+  name: "virtual_dataframe"
+  version: "{{ SETUPTOOLS_SCM_PRETEND_VERSION }}"
+
+source:
+  # See https://docs.github.com/en/rest/repos/contents#download-a-repository-archive-tar
+  url: https://github.com/pprados/virtual_dataframe/tarball/{{ PRJ_VERSION }}/virtual_dataframe.tar.gz
+  sha256: <<HASH>>
+
+build:
+  noarch: python
+  number: 0
+  # no such file directory sur PYTHON ?
+  script_env:
+    - VERSION={{ PRJ_VERSION }}
+  script: python -m pip install --progress-bar off --quiet --no-input . -vv
+
+requirements:
+  build:
+    - python {{ PYTHON_VERSION }}
+    - pip
+    - setuptools
+    - setuptools_scm
+
+  run_constrained:
+    - conda-build >=3
+    - conda-content-trust >=0.1.1
+    - conda-env >=2.6
+    - cytoolz >=0.8.1
+
+  host:
+    - python >={{ PYTHON_VERSION }}
+    - pip
+    - setuptools_scm
+
+  run:
+    - python >={{ PYTHON_VERSION }}
+    - python-dotenv
+    - pandas >=1.4
+    - GPUtil
+
+test:
+  commands:
+    - python -c 'from {{ PRJ_PACKAGE }} import *'  # [unix]
+
+about:
+  home:    https://github.com/pprados/virtual_dataframe
+  doc_url: https://pprados.github.io/virtual_dataframe/
+  license: Apache-2.0
+  license_family: Apache
+  license_file: LICENSE
+  summary: Bridge between pandas, cudf, modin, dask and dask-cudf
+
+extra:
+  recipe-maintainers:
+    - pprados
