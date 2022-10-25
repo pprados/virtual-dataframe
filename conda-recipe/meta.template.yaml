@@ -48,7 +48,7 @@ requirements:
 
 test:
   commands:
-    - python -c 'from {{ PRJ_PACKAGE }} import *'
+    - python -c 'from virtual_dataframe import *'
 
 about:
   home:    https://github.com/pprados/virtual_dataframe
