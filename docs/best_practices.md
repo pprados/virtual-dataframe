@@ -16,3 +16,6 @@ For write a code, optimized with all frameworks, you must use some *best practic
 the cluster and GPU.
 
 
+If you known the volume of the data is compatible with one node, you can convert a distributed dataframe to a local
+dataframe and continue to manipulate the data locally. Use the `.to_backend()` to convert a `Dataframe` to Pandas or
+cudf Dataframe.

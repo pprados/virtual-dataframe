@@ -13,6 +13,7 @@ from pandas._typing import Axes, Dtype
 
 from .env import VDF_MODE, Mode
 
+# %% docs
 _doc_delayed = ''' Fake @dask.delayed. Do nothing.'''
 _doc_from_pandas = '''
 Construct a VDataFrame from a Pandas DataFrame
@@ -192,7 +193,7 @@ Convert columns of the DataFrame to category dtype.
                           Keyword arguments are passed on to compute.'''
 
 
-# %%
+# %% tools
 
 def _remove_parameters(func, _params: List[str]):
     def wrapper(*args, **kwargs):
@@ -264,6 +265,118 @@ def _patch_read(front, func, scope=None):
     _wrapper.__name__ = func
     return _wrapper
 
+def _patch_pandas(pd_DataFrame, pd_Series):
+    # Add-on and patch of original dataframes and series
+    _extra_params = ["single_file",
+                     "name_function",
+                     "compute",
+                     "scheduler",
+                     "header_first_partition_only",
+                     "compute_kwargs"]
+    pd_DataFrame.to_csv = _patch_to(pd_DataFrame.to_csv, _extra_params)
+    pd_DataFrame.to_excel = _patch_to(pd_DataFrame.to_excel, _extra_params, "cudf, dask and dask_cudf")
+    pd_DataFrame.to_feather = _patch_to(pd_DataFrame.to_feather, _extra_params, "dask and dask_cudf")
+    pd_DataFrame.to_fwf = _not_implemented
+    pd_DataFrame.to_hdf = _patch_to(pd_DataFrame.to_hdf, _extra_params)
+    pd_DataFrame.to_json = _patch_to(pd_DataFrame.to_json, _extra_params)
+    pd_DataFrame.to_orc = _not_implemented
+    pd_DataFrame.to_parquet = _patch_to(pd_DataFrame.to_parquet, _extra_params)
+    pd_DataFrame.to_sql = _patch_to(pd_DataFrame.to_sql, _extra_params)
+
+    pd_DataFrame.to_pandas = lambda self: self
+    pd_DataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
+    pd_DataFrame.to_backend = lambda self: self
+    pd_DataFrame.to_backend.__doc__ = _doc_VDataFrame_to_pandas
+
+    pd_DataFrame.apply_rows = _apply_rows
+    pd_DataFrame.apply_rows.__doc__ = _doc_apply_rows
+    pd_DataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, *args, **kwargs)
+    pd_DataFrame.map_partitions.__doc__ = pd_Series.map.__doc__
+    pd_DataFrame.compute = lambda self, **kwargs: self
+    pd_DataFrame.compute.__doc__ = _doc_VDataFrame_compute
+    pd_DataFrame.persist = lambda self, **kwargs: self
+    pd_DataFrame.persist.__doc__ = _doc_VDataFrame_persist
+    pd_DataFrame.repartition = lambda self, **kwargs: self
+    pd_DataFrame.repartition.__doc__ = _doc_VDataFrame_repartition
+    pd_DataFrame.visualize = lambda self: visualize(self)
+    pd_DataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
+    pd_DataFrame.categorize = lambda self: self
+    pd_DataFrame.categorize.__doc__ = _doc_categorize
+
+    pd_Series.map_partitions = lambda self, func, *args, **kwargs: self.map(func, *args, *kwargs)
+    pd_Series.map_partitions.__doc__ = pd_Series.map.__doc__
+    pd_Series.compute = lambda self, **kwargs: self
+    pd_Series.compute.__doc__ = _doc_VSeries_compute
+    pd_Series.persist = lambda self, **kwargs: self
+    pd_Series.persist.__doc__ = _doc_VSeries_persist
+    pd_Series.repartition = lambda self, **kwargs: self
+    pd_Series.repartition.__doc__ = _doc_VSeries_repartition
+    pd_Series.visualize = lambda self: visualize(self)
+    pd_Series.visualize.__doc__ = _doc_VSeries_visualize
+    pd_Series.to_pandas = lambda self: self
+    pd_Series.to_pandas.__doc__ = _doc_VSeries_to_pandas
+    pd_Series.to_backend = lambda self: self
+    pd_Series.to_backend.__doc__ = _doc_VSeries_to_pandas
+    pd_Series.to_csv = _patch_to(pd_Series.to_csv, [], "cudf, dask and dask_cudf")
+    pd_Series.to_excel = _patch_to(pd_Series.to_excel, [], "cudf, dask and dask_cudf")
+    pd_Series.to_hdf = _patch_to(pd_Series.to_hdf, [], "dask_cudf")
+    pd_Series.to_json = _patch_to(pd_Series.to_json, [], "dask_cudf")
+
+def _patch_cudf(cu_DataFrame, cu_Series):
+    _extra_params = ["single_file",
+                     "name_function",
+                     "compute",
+                     "scheduler",
+                     "header_first_partition_only",
+                     "compute_kwargs"]
+
+    cu_DataFrame.to_csv = _patch_to(cu_DataFrame.to_csv, _extra_params)
+    cu_DataFrame.to_excel = _not_implemented
+    cu_DataFrame.to_feather = _patch_to(cu_DataFrame.to_feather, _extra_params, "dask and dask_cudf")
+    cu_DataFrame.to_fwf = _not_implemented
+    cu_DataFrame.to_hdf = _patch_to(cu_DataFrame.to_hdf, _extra_params)
+    cu_DataFrame.to_json = _patch_to(cu_DataFrame.to_json, _extra_params)
+    cu_DataFrame.to_orc = _patch_to(cu_DataFrame.to_orc, _extra_params)
+    _VDataFrameto_parquet = _patch_to(cu_DataFrame.to_parquet, _extra_params)
+    cu_DataFrame.to_sql = _not_implemented
+
+    pandas.Series.to_pandas = lambda self: self
+    pandas.Series.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
+
+    # Add-on and patch of original dataframes and series
+    cu_DataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, *args, **kwargs)
+    cu_DataFrame.map_partitions.__doc__ = _doc_VDataFrame_map_partitions
+    cu_DataFrame.to_backend = lambda self: self
+    cu_DataFrame.to_backend.__doc__ = cu_DataFrame.to_pandas.__doc__
+    cu_DataFrame.compute = lambda self, **kwargs: self
+    cu_DataFrame.compute.__doc__ = _doc_VDataFrame_compute
+    cu_DataFrame.persist = lambda self, **kwargs: self
+    cu_DataFrame.persist.__doc__ = _doc_VDataFrame_persist
+    cu_DataFrame.repartition = lambda self, **kwargs: self
+    cu_DataFrame.repartition.__doc__ = _doc_VDataFrame_repartition
+    cu_DataFrame.visualize = lambda self: visualize(self)
+    cu_DataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
+    cu_DataFrame.categorize = lambda self: self
+    cu_DataFrame.categorize.__doc__ = _doc_categorize
+
+    cu_Series.map_partitions = lambda self, func, *args, **kwargs: self.map(func, *args, *kwargs)
+    cu_Series.map_partitions.__doc__ = cu_Series.map.__doc__
+    cu_Series.to_backend = lambda self: self
+    cu_Series.to_backend.__doc__ = cu_Series.to_pandas.__doc__
+    cu_Series.compute = lambda self, **kwargs: self
+    cu_Series.compute.__doc__ = _doc_VSeries_compute
+    cu_Series.persist = lambda self, **kwargs: self
+    cu_Series.persist.__doc__ = _doc_VSeries_persist
+    cu_Series.repartition = lambda self, **kwargs: self
+    cu_Series.repartition.__doc__ = _doc_VSeries_repartition
+    cu_Series.visualize = lambda self: visualize(self)
+    cu_Series.visualize.__doc__ = _doc_VSeries_visualize
+    cu_Series.to_csv = _not_implemented
+    cu_Series.to_excel = _not_implemented
+    cu_Series.to_hdf = _patch_to(cu_Series.to_hdf, [], "dask_cudf")
+    cu_Series.to_json = _patch_to(cu_Series.to_json, [], "dask_cudf")
+
+
 
 if VDF_MODE in (Mode.pandas, Mode.cudf, Mode.modin, Mode.dask_modin):
 
@@ -297,8 +410,222 @@ if VDF_MODE in (Mode.pandas, Mode.cudf, Mode.modin, Mode.dask_modin):
     def _persist(*collections, traverse=True, optimize_graph=True, scheduler=None, **kwargs):
         return collections
 
-# %%
-# if VDF_MODE in (Mode.modin, Mode.dask_modin, Mode.ray_modin):
+# %% pandas
+if VDF_MODE == Mode.pandas:
+    import pandas
+    import numpy
+
+    # BackEndDataFrame = pandas.DataFrame
+    # BackEndSeries = pandas.Series
+    # _BackIndex = pandas.Index
+    BackEndDataFrame: Any = pandas.DataFrame
+    BackEndSeries: Any = pandas.Series
+    BackEnd = pandas
+
+    FrontEnd = pandas
+
+    _VDataFrame: Any = FrontEnd.DataFrame
+    _VSeries: Any = FrontEnd.Series
+
+
+    # noinspection PyUnusedLocal
+    def _from_back(  # noqa: F811
+            data: Union[BackEndDataFrame, BackEndSeries],
+            npartitions: Optional[int] = None,
+            chunksize: Optional[int] = None,
+            sort: bool = True,
+            name: Optional[str] = None,
+    ) -> _VDataFrame:
+        return data
+
+
+    def _read_csv(filepath_or_buffer, **kwargs) -> Union[_VDataFrame, Iterator[_VDataFrame]]:
+        if not isinstance(filepath_or_buffer, list):
+            return pandas.concat((pandas.read_csv(f, **kwargs) for f in glob.glob(filepath_or_buffer)))
+        else:
+            return pandas.read_csv(filepath_or_buffer, **kwargs)
+
+
+    _read_csv.__doc__ = pandas.read_csv.__doc__
+
+    # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
+    _cache = {}  # type: ignore
+
+
+    def _compile(func: Callable, cache_key: Optional[str]):
+        import numba
+        if cache_key is None:
+            cache_key = func
+
+        try:
+            out = _cache[cache_key]
+            return out
+        except KeyError:
+            kernel = numba.jit(func, nopython=True)
+            _cache[cache_key] = kernel
+            return kernel
+
+
+    def _apply_rows(
+            self,
+            func: Callable,
+            incols: Dict[str, str],
+            outcols: Dict[str, Type],
+            kwargs: Dict[str, Any],
+            cache_key: Optional[str] = None,
+    ):
+        import numba
+
+        size = len(self)
+        params = {param: self[col].to_numpy() for col, param in incols.items()}
+        outputs = {param: numpy.empty(size, dtype=dtype) for param, dtype in outcols.items()}
+        _compile(func, cache_key)(**params, **outputs, **kwargs)
+        for col, data in outputs.items():
+            self[col] = data
+        return self
+
+
+    # noinspection PyUnusedLocal
+    def compute(*args,  # noqa: F811
+                traverse: bool = True,
+                optimize_graph: bool = True,
+                scheduler: bool = None,
+                get=None,
+                **kwargs
+                ) -> Tuple:
+        return args
+
+
+    compute.__doc__ = _doc_compute
+
+
+    def visualize(*args, **kwargs):
+        try:
+            import IPython
+            return IPython.core.display.Image(data=[], url=None, filename=None, format=u'png', embed=None, width=None,
+                                              height=None,
+                                              retina=False)
+        except ModuleNotFoundError:
+            return True
+
+
+    visualize.__doc__ = _doc_visualize
+
+    delayed = _delayed
+    delayed.__doc__ = _doc_delayed
+    concat = pandas.concat
+    persist = _persist  # type: ignore
+
+    from_pandas = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
+    from_backend = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
+
+    from_pandas.__doc__ = _doc_from_pandas
+    from_backend.__doc__ = _doc_from_backend
+
+    # pandas
+    read_csv = _patch_read(FrontEnd, "read_csv")
+    read_excel = _patch_read(FrontEnd, "read_excel", "cudf, dask or dask_cudf")
+    read_feather = _patch_read(FrontEnd, "read_feather", "dask and dask_cudf")
+    read_fwf = _patch_read(FrontEnd, "read_fwf", "cudf and dask_cudf")
+    read_hdf = _patch_read(FrontEnd, "read_hdf", "dask_cudf")
+    read_json = _patch_read(FrontEnd, "read_json")
+    read_orc = FrontEnd.read_orc
+    read_parquet = FrontEnd.read_parquet
+    read_sql_table = _warn(FrontEnd.read_sql_table, "cudf and dask_cudf")
+
+
+
+    _patch_pandas(_VDataFrame, _VSeries)
+
+# %% cudf
+if VDF_MODE == Mode.cudf:
+    import cudf
+    import pandas
+
+    BackEndDataFrame: Any = cudf.DataFrame
+    BackEndSeries: Any = cudf.Series
+    BackEnd = cudf
+
+    FrontEnd = cudf
+
+    _VDataFrame: Any = BackEndDataFrame
+    _VSeries: Any = BackEndSeries
+
+
+    def _from_back(
+            data: Union[BackEndDataFrame, BackEndSeries],
+            npartitions: Optional[int] = None,
+            chunksize: Optional[int] = None,
+            sort: bool = True,
+            name: Optional[str] = None,
+    ) -> _VDataFrame:
+        return data
+
+
+    def _read_csv(filepath_or_buffer, **kwargs) -> Union[_VDataFrame, Iterator[_VDataFrame]]:
+        if not isinstance(filepath_or_buffer, list):
+            return cudf.concat((cudf.read_csv(f, **kwargs) for f in sorted(glob.glob(filepath_or_buffer))))
+        else:
+            return cudf.read_csv(filepath_or_buffer, **kwargs)
+
+
+    delayed: Any = _delayed
+    delayed.__doc__ = _doc_delayed
+
+
+    # noinspection PyUnusedLocal
+    def compute(*args,
+                traverse: bool = True,
+                optimize_graph: bool = True,
+                scheduler: bool = None,
+                get=None,
+                **kwargs
+                ) -> Tuple:
+        return tuple(args)
+
+
+    compute.__doc__ = _doc_compute
+
+
+    def visualize(*args, **kwargs):
+        try:
+            import IPython
+            return IPython.core.display.Image(data=[], url=None, filename=None, format=u'png', embed=None, width=None,
+                                              height=None,
+                                              retina=False)
+        except ImportError:
+            return True
+        except ModuleNotFoundError:
+            return True
+
+
+    visualize.__doc__ = _doc_visualize
+
+    persist = _persist  # type: ignore
+
+    concat: Any = cudf.concat
+
+    from_pandas: _VDataFrame = _remove_dask_parameters(cudf.from_pandas)
+    from_backend: _VDataFrame = _remove_dask_parameters(lambda self: self)
+
+    from_pandas.__doc__ = _doc_from_pandas
+    from_backend.__doc__ = _doc_from_backend
+
+    # cudf
+    read_csv = _patch_read(FrontEnd, "read_csv")
+    read_excel = _not_implemented
+    read_feather = _patch_read(FrontEnd, "read_feather", "dask and dask_cudf")
+    read_fwf = _not_implemented
+    read_hdf = _patch_read(FrontEnd, "read_hdf", "dask_cudf")
+    read_json = _patch_read(FrontEnd, "read_json")
+    read_orc = FrontEnd.read_orc
+    read_parquet = FrontEnd.read_parquet
+    read_sql_table = _not_implemented
+
+
+    _patch_cudf(_VDataFrame, _VSeries)
+
+# %% modin dask_modin
 if VDF_MODE in (Mode.modin, Mode.dask_modin):
     if VDF_MODE == Mode.dask_modin:
         os.environ["MODIN_ENGINE"] = "dask"
@@ -466,7 +793,7 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
     _VSeries.to_backend = lambda self: self
     _VSeries.to_backend.__doc__ = _doc_VSeries_to_pandas
 
-# %%
+# %% dask_cudf
 if VDF_MODE == Mode.dask_cudf:
     import pandas
     import dask
@@ -530,8 +857,6 @@ if VDF_MODE == Mode.dask_cudf:
     _VDataFrame.to_sql = _not_implemented
 
     # Add-on and patch of original dataframes and series
-    pandas.DataFrame.to_pandas = lambda self: self
-    pandas.DataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
     _VDataFrame.to_pandas = lambda self: self.compute().to_pandas()
     _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
     _VDataFrame.to_backend = lambda self: self.compute()
@@ -548,7 +873,9 @@ if VDF_MODE == Mode.dask_cudf:
     _VSeries.to_numpy = lambda self: self.compute().to_numpy()
     _VSeries.to_numpy.__doc__ = _doc_VSeries_to_numpy
 
-# %%
+    _patch_cudf(BackEndDataFrame, BackEndSeries)
+
+# %% dask
 if VDF_MODE == Mode.dask:
     import pandas
     import numpy
@@ -653,16 +980,9 @@ if VDF_MODE == Mode.dask:
     _VDataFrame.to_feather = _not_implemented
     _VDataFrame.to_fwf = _not_implemented
 
-    BackEndDataFrame.to_pandas = lambda self: self
-    BackEndDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
-    BackEndSeries.to_pandas = lambda self: self
-    BackEndSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
-
     # Add-on and patch of original dataframes and series
     _VDataFrame.apply_rows = _apply_rows
     _VDataFrame.apply_rows.__doc__ = _doc_apply_rows
-    pandas.DataFrame.to_pandas = lambda self: self
-    pandas.DataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
     _VDataFrame.to_pandas = lambda self: self.compute()
     _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
     _VDataFrame.to_backend = lambda self: self.compute()
@@ -690,324 +1010,9 @@ if VDF_MODE == Mode.dask:
     _VSeries.to_numpy = lambda self: self.compute().to_numpy()
     _VSeries.to_numpy.__doc__ = _doc_VSeries_to_numpy
 
-# %%
-if VDF_MODE == Mode.cudf:
-    import cudf
-    import pandas
+    _patch_pandas(BackEndDataFrame, BackEndSeries)
 
-    BackEndDataFrame: Any = cudf.DataFrame
-    BackEndSeries: Any = cudf.Series
-    BackEnd = cudf
-
-    FrontEnd = cudf
-
-    _VDataFrame: Any = BackEndDataFrame
-    _VSeries: Any = BackEndSeries
-
-
-    def _from_back(
-            data: Union[BackEndDataFrame, BackEndSeries],
-            npartitions: Optional[int] = None,
-            chunksize: Optional[int] = None,
-            sort: bool = True,
-            name: Optional[str] = None,
-    ) -> _VDataFrame:
-        return data
-
-
-    def _read_csv(filepath_or_buffer, **kwargs) -> Union[_VDataFrame, Iterator[_VDataFrame]]:
-        if not isinstance(filepath_or_buffer, list):
-            return cudf.concat((cudf.read_csv(f, **kwargs) for f in sorted(glob.glob(filepath_or_buffer))))
-        else:
-            return cudf.read_csv(filepath_or_buffer, **kwargs)
-
-
-    delayed: Any = _delayed
-    delayed.__doc__ = _doc_delayed
-
-
-    # noinspection PyUnusedLocal
-    def compute(*args,
-                traverse: bool = True,
-                optimize_graph: bool = True,
-                scheduler: bool = None,
-                get=None,
-                **kwargs
-                ) -> Tuple:
-        return tuple(args)
-
-
-    compute.__doc__ = _doc_compute
-
-
-    def visualize(*args, **kwargs):
-        try:
-            import IPython
-            return IPython.core.display.Image(data=[], url=None, filename=None, format=u'png', embed=None, width=None,
-                                              height=None,
-                                              retina=False)
-        except ImportError:
-            return True
-        except ModuleNotFoundError:
-            return True
-
-
-    visualize.__doc__ = _doc_visualize
-
-    persist = _persist  # type: ignore
-
-    concat: Any = cudf.concat
-
-    from_pandas: _VDataFrame = _remove_dask_parameters(cudf.from_pandas)
-    from_backend: _VDataFrame = _remove_dask_parameters(lambda self: self)
-
-    from_pandas.__doc__ = _doc_from_pandas
-    from_backend.__doc__ = _doc_from_backend
-
-    # cudf
-    read_csv = _patch_read(FrontEnd, "read_csv")
-    read_excel = _not_implemented
-    read_feather = _patch_read(FrontEnd, "read_feather", "dask and dask_cudf")
-    read_fwf = _not_implemented
-    read_hdf = _patch_read(FrontEnd, "read_hdf", "dask_cudf")
-    read_json = _patch_read(FrontEnd, "read_json")
-    read_orc = FrontEnd.read_orc
-    read_parquet = FrontEnd.read_parquet
-    read_sql_table = _not_implemented
-
-    _extra_params = ["single_file",
-                     "name_function",
-                     "compute",
-                     "scheduler",
-                     "header_first_partition_only",
-                     "compute_kwargs"]
-    _VDataFrame.to_csv = _patch_to(_VDataFrame.to_csv, _extra_params)
-    _VDataFrame.to_excel = _not_implemented
-    _VDataFrame.to_feather = _patch_to(_VDataFrame.to_feather, _extra_params, "dask and dask_cudf")
-    _VDataFrame.to_fwf = _not_implemented
-    _VDataFrame.to_hdf = _patch_to(_VDataFrame.to_hdf, _extra_params)
-    _VDataFrame.to_json = _patch_to(_VDataFrame.to_json, _extra_params)
-    _VDataFrame.to_orc = _patch_to(_VDataFrame.to_orc, _extra_params)
-    _VDataFrameto_parquet = _patch_to(_VDataFrame.to_parquet, _extra_params)
-    _VDataFrame.to_sql = _not_implemented
-
-    pandas.Series.to_pandas = lambda self: self
-    pandas.Series.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
-
-    # Add-on and patch of original dataframes and series
-    _VDataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, *args, **kwargs)
-    _VDataFrame.map_partitions.__doc__ = _doc_VDataFrame_map_partitions
-    _VDataFrame.to_backend = lambda self: self
-    _VDataFrame.to_backend.__doc__ = _VDataFrame.to_pandas.__doc__
-    _VDataFrame.compute = lambda self, **kwargs: self
-    _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
-    _VDataFrame.persist = lambda self, **kwargs: self
-    _VDataFrame.persist.__doc__ = _doc_VDataFrame_persist
-    _VDataFrame.repartition = lambda self, **kwargs: self
-    _VDataFrame.repartition.__doc__ = _doc_VDataFrame_repartition
-    _VDataFrame.visualize = lambda self: visualize(self)
-    _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
-    _VDataFrame.categorize = lambda self: self
-    _VDataFrame.categorize.__doc__ = _doc_categorize
-
-    _VSeries.map_partitions = lambda self, func, *args, **kwargs: self.map(func, *args, *kwargs)
-    _VSeries.map_partitions.__doc__ = _VSeries.map.__doc__
-    _VSeries.to_backend = lambda self: self
-    _VSeries.to_backend.__doc__ = _VSeries.to_pandas.__doc__
-    _VSeries.compute = lambda self, **kwargs: self
-    _VSeries.compute.__doc__ = _doc_VSeries_compute
-    _VSeries.persist = lambda self, **kwargs: self
-    _VSeries.persist.__doc__ = _doc_VSeries_persist
-    _VSeries.repartition = lambda self, **kwargs: self
-    _VSeries.repartition.__doc__ = _doc_VSeries_repartition
-    _VSeries.visualize = lambda self: visualize(self)
-    _VSeries.visualize.__doc__ = _doc_VSeries_visualize
-    _VSeries.to_csv = _not_implemented
-    _VSeries.to_excel = _not_implemented
-    _VSeries.to_hdf = _patch_to(_VSeries.to_hdf, [], "dask_cudf")
-    _VSeries.to_json = _patch_to(_VSeries.to_json, [], "dask_cudf")
-
-# %%
-if VDF_MODE == Mode.pandas:
-    import pandas
-    import numpy
-
-    # BackEndDataFrame = pandas.DataFrame
-    # BackEndSeries = pandas.Series
-    # _BackIndex = pandas.Index
-    BackEndDataFrame: Any = pandas.DataFrame
-    BackEndSeries: Any = pandas.Series
-    BackEnd = pandas
-
-    FrontEnd = pandas
-
-    _VDataFrame: Any = FrontEnd.DataFrame
-    _VSeries: Any = FrontEnd.Series
-
-
-    # noinspection PyUnusedLocal
-    def _from_back(  # noqa: F811
-            data: Union[BackEndDataFrame, BackEndSeries],
-            npartitions: Optional[int] = None,
-            chunksize: Optional[int] = None,
-            sort: bool = True,
-            name: Optional[str] = None,
-    ) -> _VDataFrame:
-        return data
-
-
-    def _read_csv(filepath_or_buffer, **kwargs) -> Union[_VDataFrame, Iterator[_VDataFrame]]:
-        if not isinstance(filepath_or_buffer, list):
-            return pandas.concat((pandas.read_csv(f, **kwargs) for f in glob.glob(filepath_or_buffer)))
-        else:
-            return pandas.read_csv(filepath_or_buffer, **kwargs)
-
-
-    _read_csv.__doc__ = pandas.read_csv.__doc__
-
-    # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
-    _cache = {}  # type: ignore
-
-
-    def _compile(func: Callable, cache_key: Optional[str]):
-        import numba
-        if cache_key is None:
-            cache_key = func
-
-        try:
-            out = _cache[cache_key]
-            return out
-        except KeyError:
-            kernel = numba.jit(func, nopython=True)
-            _cache[cache_key] = kernel
-            return kernel
-
-
-    def _apply_rows(
-            self,
-            func: Callable,
-            incols: Dict[str, str],
-            outcols: Dict[str, Type],
-            kwargs: Dict[str, Any],
-            cache_key: Optional[str] = None,
-    ):
-        import numba
-
-        size = len(self)
-        params = {param: self[col].to_numpy() for col, param in incols.items()}
-        outputs = {param: numpy.empty(size, dtype=dtype) for param, dtype in outcols.items()}
-        _compile(func, cache_key)(**params, **outputs, **kwargs)
-        for col, data in outputs.items():
-            self[col] = data
-        return self
-
-
-    # noinspection PyUnusedLocal
-    def compute(*args,  # noqa: F811
-                traverse: bool = True,
-                optimize_graph: bool = True,
-                scheduler: bool = None,
-                get=None,
-                **kwargs
-                ) -> Tuple:
-        return args
-
-
-    compute.__doc__ = _doc_compute
-
-
-    def visualize(*args, **kwargs):
-        try:
-            import IPython
-            return IPython.core.display.Image(data=[], url=None, filename=None, format=u'png', embed=None, width=None,
-                                              height=None,
-                                              retina=False)
-        except ModuleNotFoundError:
-            return True
-
-
-    visualize.__doc__ = _doc_visualize
-
-    delayed = _delayed
-    delayed.__doc__ = _doc_delayed
-    concat = pandas.concat
-    persist = _persist  # type: ignore
-
-    from_pandas = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
-    from_backend = lambda df, npartitions=1, chuncksize=None, sort=True, name=None: df
-
-    from_pandas.__doc__ = _doc_from_pandas
-    from_backend.__doc__ = _doc_from_backend
-
-    # pandas
-    read_csv = _patch_read(FrontEnd, "read_csv")
-    read_excel = _patch_read(FrontEnd, "read_excel", "cudf, dask or dask_cudf")
-    read_feather = _patch_read(FrontEnd, "read_feather", "dask and dask_cudf")
-    read_fwf = _patch_read(FrontEnd, "read_fwf", "cudf and dask_cudf")
-    read_hdf = _patch_read(FrontEnd, "read_hdf", "dask_cudf")
-    read_json = _patch_read(FrontEnd, "read_json")
-    read_orc = FrontEnd.read_orc
-    read_parquet = FrontEnd.read_parquet
-    read_sql_table = _warn(FrontEnd.read_sql_table, "cudf and dask_cudf")
-
-    # Add-on and patch of original dataframes and series
-    _extra_params = ["single_file",
-                     "name_function",
-                     "compute",
-                     "scheduler",
-                     "header_first_partition_only",
-                     "compute_kwargs"]
-    _VDataFrame.to_csv = _patch_to(_VDataFrame.to_csv, _extra_params)
-    _VDataFrame.to_excel = _patch_to(_VDataFrame.to_excel, _extra_params, "cudf, dask and dask_cudf")
-    _VDataFrame.to_feather = _patch_to(_VDataFrame.to_feather, _extra_params, "dask and dask_cudf")
-    _VDataFrame.to_fwf = _not_implemented
-    _VDataFrame.to_hdf = _patch_to(_VDataFrame.to_hdf, _extra_params)
-    _VDataFrame.to_json = _patch_to(_VDataFrame.to_json, _extra_params)
-    _VDataFrame.to_orc = _not_implemented
-    _VDataFrame.to_parquet = _patch_to(_VDataFrame.to_parquet, _extra_params)
-    _VDataFrame.to_sql = _patch_to(_VDataFrame.to_sql, _extra_params)
-
-    _VDataFrame.to_pandas = lambda self: self
-    _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
-    _VDataFrame.to_backend = lambda self: self
-    _VDataFrame.to_backend.__doc__ = _doc_VDataFrame_to_pandas
-
-    _VDataFrame.apply_rows = _apply_rows
-    _VDataFrame.apply_rows.__doc__ = _doc_apply_rows
-    _VDataFrame.map_partitions = lambda self, func, *args, **kwargs: func(self, *args, **kwargs)
-    _VDataFrame.map_partitions.__doc__ = _VSeries.map.__doc__
-    _VDataFrame.compute = lambda self, **kwargs: self
-    _VDataFrame.compute.__doc__ = _doc_VDataFrame_compute
-    _VDataFrame.persist = lambda self, **kwargs: self
-    _VDataFrame.persist.__doc__ = _doc_VDataFrame_persist
-    _VDataFrame.repartition = lambda self, **kwargs: self
-    _VDataFrame.repartition.__doc__ = _doc_VDataFrame_repartition
-    _VDataFrame.visualize = lambda self: visualize(self)
-    _VDataFrame.visualize.__doc__ = _doc_VDataFrame_visualize
-    _VDataFrame.categorize = lambda self: self
-    _VDataFrame.categorize.__doc__ = _doc_categorize
-
-    _VSeries.map_partitions = lambda self, func, *args, **kwargs: self.map(func, *args, *kwargs)
-    _VSeries.map_partitions.__doc__ = _VSeries.map.__doc__
-    _VSeries.compute = lambda self, **kwargs: self
-    _VSeries.compute.__doc__ = _doc_VSeries_compute
-    _VSeries.persist = lambda self, **kwargs: self
-    _VSeries.persist.__doc__ = _doc_VSeries_persist
-    _VSeries.repartition = lambda self, **kwargs: self
-    _VSeries.repartition.__doc__ = _doc_VSeries_repartition
-    _VSeries.visualize = lambda self: visualize(self)
-    _VSeries.visualize.__doc__ = _doc_VSeries_visualize
-    _VSeries.to_pandas = lambda self: self
-    _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
-    _VSeries.to_backend = lambda self: self
-    _VSeries.to_backend.__doc__ = _doc_VSeries_to_pandas
-    _VSeries.to_csv = _patch_to(_VSeries.to_csv, [], "cudf, dask and dask_cudf")
-    _VSeries.to_excel = _patch_to(_VSeries.to_excel, [], "cudf, dask and dask_cudf")
-    _VSeries.to_hdf = _patch_to(_VSeries.to_hdf, [], "dask_cudf")
-    _VSeries.to_json = _patch_to(_VSeries.to_json, [], "dask_cudf")
-
-
-# %%
+# %% Virtual
 class VDataFrame(_VDataFrame):
     __test__ = False
     ''' A *virtual* dataframe.
@@ -1058,7 +1063,7 @@ class VSeries(_VSeries):
             name=name)
 
 
-# %%
+# %% __all__
 __all__: List[str] = ['VDF_MODE', 'Mode',
                       'VDataFrame', 'VSeries',
                       'delayed', 'compute', 'persist',
