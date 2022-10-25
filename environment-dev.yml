@@ -9,6 +9,8 @@ dependencies:
   - pip
   - modin
   - dask
+  - openjdk==11.0.*
+  - pyspark==3.2.*
 
   - pip:
       - pytest>=2.8

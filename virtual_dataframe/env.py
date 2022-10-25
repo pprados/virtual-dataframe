@@ -29,6 +29,7 @@ class Mode(Enum):
     cudf = "cudf"
     dask = "dask"
     modin = "modin"
+    pyspark = "pyspark"
     dask_modin = "dask_modin"
     # ray_modin = "ray_modin"
     dask_cudf = "dask_cudf"
