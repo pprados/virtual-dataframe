@@ -126,7 +126,7 @@ of the selected framework.</p>
 <code>dask.dataframe.DataFrame</code> with cudf (with Pandas or cudf for each partition).</p>
 <p>To manage the initialisation of a Dask, you must use the <code>VClient()</code>. This alias, can be automatically
 initialized with some environment variables.</p>
-<pre><code class="language-python"># Sample of code, compatible Pandas, cudf, modin, dask and dask_cudf
+<pre><code class="language-python"># Sample of code, compatible Pandas, cudf, dask, dask_modin and dask_cudf
 from virtual_dataframe import *
 
 TestDF = VDataFrame
@@ -153,10 +153,6 @@ with (VClient()):
 <tr>
 <td>VDF_MODE=pandas</td>
 <td>Only Python with classical pandas</td>
-</tr>
-<tr>
-<td>VDF_MODE=modin</td>
-<td>Python with local multiple process</td>
 </tr>
 <tr>
 <td>VDF_MODE=cudf</td>
@@ -193,6 +189,10 @@ with (VClient()):
 <tr>
 <td>VDF_MODE=dask_cudf<br />VDF_CLUSTER=dask://...:ppp</td>
 <td>Dask with remote cluster and cuDF</td>
+</tr>
+<tr>
+<td>VDF_MODE=dask_modin<br /></td>
+<td>Dask with modin</td>
 </tr>
 <tr>
 <td>VDF_MODE=dask_modin<br />VDF_CLUSTER=dask://.local</td>
@@ -263,6 +263,6 @@ with only one ou two environment variables.</p>
 </html>
 
 <!--
-MkDocs version : 1.4.0
-Build Date UTC : 2022-10-11 11:12:28.741005+00:00
+MkDocs version : 1.4.1
+Build Date UTC : 2022-10-25 07:09:23.213882+00:00
 -->

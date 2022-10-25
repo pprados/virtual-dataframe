@@ -116,7 +116,7 @@
 <p>You must use only the similare functionality, and only a subpart of Pandas.
 Develop for <em>dask_cudf</em>. it's easier to be compatible with others frameworks.</p>
 <h3 id="compute-is-not-defined-with-pandas-cudf"><code>.compute()</code> is not defined with pandas, cudf ?</h3>
-<p>If your <code>@delayed</code> function return something, other than a <code>VDataFrame</code> or <code>VSerie</code>, the objet has not
+<p>If your <code>@delayed</code> function return something, other than a <code>VDataFrame</code> or <code>VSerie</code>, the objet does not have
 the method <code>.compute()</code>. You can solve this, with:</p>
 <pre><code>@delayed
 def f()-&gt; int:
@@ -130,9 +130,8 @@ a,b = compute(f(),f())
 To resolve that, add in dask <a href="https://docs.dask.org/en/stable/configuration.html">configuration files</a>:</p>
 <ul>
 <li>the parameter <code>distributed:diagnostics:nvml = False</code></li>
-<li>the parameter <code>worker:diagnostics:nvml = False</code></li>
 <li>the parameter <code>local:device_memory_limit = 5g</code> or the parameter <code>--device-memory-limit 5g</code> when you start
-<code>dask-cuda-worker</code></li>
+<code>dask-cuda-worker</code> (update the size)</li>
 </ul>
               
             </div>

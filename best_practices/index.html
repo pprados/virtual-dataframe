@@ -105,18 +105,20 @@
               
                 <h2 id="best-practices">Best practices</h2>
 <p>For write a code, optimized with all frameworks, you must use some <em>best practices</em>.</p>
-<h3 id="use-read-file">Use <em>read file</em></h3>
-<p>It's not a good idea to use the constructor of <code>VDataFrame</code> or <code>VSeries</code> because, all the datas
-must be in memory in the driver. If the dataframe is big, an <em>out of memory</em> can happen.
-To partitionning the job, create multiple files, and use <code>read_csv("filename*.csv")</code>,
-use a big file and the <em>auto partitioning</em> proposed by dask
-or other file format. Then, each worker can read directly a partition.</p>
-<p>The constructor for <code>VDataFrame</code> and <code>VSeries</code> are present, only to help to write some unit test,
-but may not be used in production.</p>
-<h3 id="no-loop">No loop</h3>
-<p>It's not a good idea to iterate over row of DataFrame. Some framework are very slow with this approach.
-It's better to use <code>apply()</code> or <code>apply_rows()</code> to distribute the code in the cluster and GPU.
-The code used in <code>apply</code>, will be compiled to CPU or GPU, before using, with some frameworks.</p>
+<ul>
+<li><strong>Avoid very large partition:</strong> so that they fit in a worker's available memory.</li>
+<li><strong>Avoid very large graphs:</strong> because that can create an overhead on task.</li>
+<li><strong>Learn techniques for customization:</strong> in order to improve the efficiency of your processes.</li>
+<li><strong>Stop using Dask when no longer needed:</strong> like when you are iterating on a much smaller amount of data.</li>
+<li><strong>Persist in dsitributed RAM when you can:</strong> in doing so, accessing RAM memory will be faster.</li>
+<li><strong>Processes and threads:</strong> be careful to separate numeric work from text data to maintain efficiency.</li>
+<li><strong>Load data with Dask</strong>: for instance, if you need to work with large Python objects, let Dask create them
+  (instead of creating them outside of Dask and then handing thom over the framework).</li>
+<li><strong>Avoid using <code>VDataFrame</code> or <code>VSeries</code></strong> outside the unit tests</li>
+<li><strong>Avoid calling compute repeatedly:</strong> as this can lower performance.</li>
+<li><strong>Avoid iterate over rows or columns of DataFrame:</strong> Use <code>apply()</code> or <code>apply_rows()</code> to distribute the code in
+the cluster and GPU.</li>
+</ul>
               
             </div>
           </div><footer>
