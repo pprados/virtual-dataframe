@@ -73,7 +73,7 @@ shift $((OPTIND-1)) # remove parsed options and args from $@ list
 [[ -z "$CHANNEL" ]] && CHANNEL=-c rapids -c nvidia -c conda-forge
 if [[ "$PREFIX" == "" ]]; then
   REF="-n $NAME"
-  _CONDA_PREFIX=$CONDA_PREFIX/envs/$NAME
+  _CONDA_PREFIX=$CONDA_HOME/envs/$NAME
 else
   REF="-p $PREFIX"
   _CONDA_PREFIX=$PREFIX

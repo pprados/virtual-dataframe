@@ -36,7 +36,7 @@ If you create an environment for a *dask* framework, two environment will be cre
 One `vdf-XXX` where you must set the `VDF_CLUSTER` variable and another `vdf-XXX-local` with a pre set
 of `VDF_CLUSTER=dask://.local` to use a *local* cluster.
 
-You can find all environement Yaml file [here](https://github.com/pprados/virtual_dataframe/tree/develop/virtual_dataframe).
+You can find all environement Yaml file [here](https://github.com/pprados/virtual_dataframe/tree/develop/virtual_dataframe/bin).
 
 You can remove all versions with:
 ```shell

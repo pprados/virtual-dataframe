@@ -40,7 +40,6 @@ if you use a function not compatible with others frameworks.
 | vdf.read_feather      |   ✓    |  ✓   |   ✓   |      |            |           |
 | VDataFrame.to_feather |   ✓    |  ✓   |   ✓   |      |            |           |
 | vdf.read_fwf          |   ✓    |      |   ✓   |  ✓   |     ✓      |           |
-| VDataFrame.to_fwf     |        |      |       |      |            |           |
 | vdf.read_hdf          |   ✓    |  ✓   |   ✓   |  ✓   |     ✓      |           |
 | VDataFrame.to_hdf     |   ✓    |  ✓   |   ✓   |  ✓   |     ✓      |           |
 | VSeries.to_hdf        |   ✓    |  ✓   |   ✓   |  ✓   |     ✓      |           |
