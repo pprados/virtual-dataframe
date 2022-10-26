@@ -61,32 +61,32 @@ def test_persist(vclient):
     df2 = vdf.VDataFrame([2])
 
     rc1, rc2 = vdf.persist(df1, df2)
-    assert rc1.to_backend().equals(df1.to_backend())
-    assert rc2.to_backend().equals(df2.to_backend())
+    assert rc1.to_pandas().equals(df1.to_pandas())
+    assert rc2.to_pandas().equals(df2.to_pandas())
 
 
 def test_dataframe_persist(vclient):
     df = vdf.VDataFrame([1])
     rc = df.persist()
-    assert rc.to_backend().equals(df.to_backend())
+    assert rc.to_pandas().equals(df.to_pandas())
 
 
 def test_serie_persist(vclient):
     s = vdf.VSeries([1])
     rc = s.persist()
-    assert rc.to_backend().equals(s.to_backend())
+    assert rc.to_pandas().equals(s.to_pandas())
 
 
 def test_dataframe_repartition(vclient):
     df = vdf.VDataFrame([1])
     rc = df.repartition(npartitions=1)
-    assert rc.to_backend().equals(df.to_backend())
+    assert rc.to_pandas().equals(df.to_pandas())
 
 
 def test_serie_repartition(vclient):
     s = vdf.VSeries([1])
     rc = s.repartition(npartitions=1)
-    assert rc.to_backend().equals(s.to_backend())
+    assert rc.to_pandas().equals(s.to_pandas())
 
 
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
@@ -98,8 +98,8 @@ def test_from_pandas():
 
 def test_from_backend():
     odf = vdf.VDataFrame({"a": [1, 2]}, npartitions=2)
-    assert vdf.from_backend(odf.to_backend(), npartitions=2).to_backend().equals(
-        vdf.VDataFrame({"a": [1, 2]}).to_backend())
+    assert vdf.from_backend(odf.to_backend(), npartitions=2).to_pandas().equals(
+        vdf.VDataFrame({"a": [1, 2]}).to_pandas())
 
 
 # %%
@@ -174,8 +174,7 @@ def test_DataFrame_to_read_excel():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.dask_cudf),
-                    reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.dask_cudf), reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
@@ -193,20 +192,17 @@ def test_DataFrame_to_read_feather():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf),
-                    reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_DataFrame_read_fwf():
     filename = f"tests/test*.fwf"
     df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
     df2 = vdf.read_fwf(filename, dtype=int)
-    assert (df.sort_values("a").set_index("a")
-            == df2.sort_values("a").set_index("a")).all().to_backend().all()
+    assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask_cudf,),
-                    reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask_cudf,), reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
@@ -275,8 +271,7 @@ def test_DataFrame_to_read_parquet():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf),
-                    reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_DataFrame_to_read_sql():
@@ -329,6 +324,8 @@ def test_Serie_to_excel():
         shutil.rmtree(d)
 
 
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.pyspark,),
+                    reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
@@ -357,7 +354,7 @@ def test_Serie_to_json():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf, vdf.Mode.pyspark), reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_Serie_to_sql():

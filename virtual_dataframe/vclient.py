@@ -191,6 +191,10 @@ def _new_VClient(mode: Mode,
                         address=f"{host}:{port}",
                         **kwargs)
                     LOGGER.warning(f"Use remote cluster on {host}:{port}")
+        elif mode == Mode.pyspark:
+
+            client = _ClientDummy("threads")  # FIXME
+
         # elif mode == Mode.ray_modin:
         #     assert vdf_cluster.scheme == "ray"
         #     import ray
