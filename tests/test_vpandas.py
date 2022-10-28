@@ -61,32 +61,32 @@ def test_persist(vclient):
     df2 = vdf.VDataFrame([2])
 
     rc1, rc2 = vdf.persist(df1, df2)
-    assert rc1.to_pandas().equals(df1.to_pandas())
-    assert rc2.to_pandas().equals(df2.to_pandas())
+    assert rc1.to_backend().equals(df1.to_backend())
+    assert rc2.to_backend().equals(df2.to_backend())
 
 
 def test_dataframe_persist(vclient):
     df = vdf.VDataFrame([1])
     rc = df.persist()
-    assert rc.to_pandas().equals(df.to_pandas())
+    assert rc.to_backend().equals(df.to_backend())
 
 
 def test_serie_persist(vclient):
     s = vdf.VSeries([1])
     rc = s.persist()
-    assert rc.to_pandas().equals(s.to_pandas())
+    assert rc.to_backend().equals(s.to_backend())
 
 
 def test_dataframe_repartition(vclient):
     df = vdf.VDataFrame([1])
     rc = df.repartition(npartitions=1)
-    assert rc.to_pandas().equals(df.to_pandas())
+    assert rc.to_backend().equals(df.to_backend())
 
 
 def test_serie_repartition(vclient):
     s = vdf.VSeries([1])
     rc = s.repartition(npartitions=1)
-    assert rc.to_pandas().equals(s.to_pandas())
+    assert rc.to_backend().equals(s.to_backend())
 
 
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
@@ -98,8 +98,8 @@ def test_from_pandas():
 
 def test_from_backend():
     odf = vdf.VDataFrame({"a": [1, 2]}, npartitions=2)
-    assert vdf.from_backend(odf.to_backend(), npartitions=2).to_pandas().equals(
-        vdf.VDataFrame({"a": [1, 2]}).to_pandas())
+    assert vdf.from_backend(odf.to_backend(), npartitions=2).to_backend().equals(
+        vdf.VDataFrame({"a": [1, 2]}).to_backend())
 
 
 # %%
@@ -149,7 +149,9 @@ def test_DataFrame_to_read_csv():
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df.to_csv(filename, index=False)
         df2 = vdf.read_csv(filename)
-        assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+        assert (df.sort_values("a").reset_index(drop=True)
+                == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
+
     finally:
         shutil.rmtree(d)
 
@@ -166,12 +168,14 @@ def test_DataFrame_to_read_excel():
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df.to_excel(filename, index=False)
         df2 = vdf.read_excel(filename, dtype=int)
-        assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+        assert (df.sort_values("a").reset_index(drop=True)
+                == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
     finally:
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.dask_cudf),
+                    reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
@@ -183,22 +187,26 @@ def test_DataFrame_to_read_feather():
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df.to_feather(filename)
         df2 = vdf.read_feather(filename)
-        assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+        assert (df.sort_values("a").reset_index(drop=True)
+                == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
     finally:
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf),
+                    reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_DataFrame_read_fwf():
     filename = f"tests/test*.fwf"
     df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
     df2 = vdf.read_fwf(filename, dtype=int)
-    assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+    assert (df.sort_values("a").set_index("a")
+            == df2.sort_values("a").set_index("a")).all().to_backend().all()
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask_cudf,), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask_cudf,),
+                    reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
@@ -210,7 +218,8 @@ def test_DataFrame_to_read_hdf():
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df.to_hdf(filename, key='a', index=False)
         df2 = vdf.read_hdf(filename, key='a')
-        assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+        assert (df.sort_values("a").reset_index(drop=True)
+                == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
     finally:
         shutil.rmtree(d)
 
@@ -226,7 +235,8 @@ def test_DataFrame_to_read_json():
         df = vdf.VDataFrame({'a': list(range(0, 10000)), 'b': list(range(0, 10000))}, npartitions=2)
         df.to_json(filename)
         df2 = vdf.read_json(filename)
-        assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+        assert (df.sort_values("a").reset_index(drop=True)
+                == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
     finally:
         shutil.rmtree(d)
 
@@ -244,7 +254,8 @@ def test_DataFrame_to_read_orc():
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df.to_orc(filename)  # Bug with dask
         df2 = vdf.read_orc(filename)
-        assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+        assert (df.sort_values("a").reset_index(drop=True)
+                == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
     finally:
         shutil.rmtree(d)
 
@@ -258,19 +269,21 @@ def test_DataFrame_to_read_parquet():
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df.to_parquet(filename)
         df2 = vdf.read_parquet(filename)
-        assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
+        assert (df.sort_values("a").reset_index(drop=True)
+                == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
     finally:
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf),
+                    reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_DataFrame_to_read_sql():
     filename = f"{tempfile.gettempdir()}/test.db"
     try:
         import sqlalchemy
-        db_uri = f'sqlite:////{filename}'
+        db_uri = f'sqlite:////{filename}'  # f"jdbc:sqlite:{filename}" for pyspark
 
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df = df.set_index("a")
@@ -283,7 +296,7 @@ def test_DataFrame_to_read_sql():
                                  con=db_uri,
                                  index_col='a',  # For dask and dask_cudf
                                  )
-        assert df.to_pandas().equals(df2.to_pandas())
+        assert df.to_backend().equals(df2.to_backend())
     finally:
         Path(filename).unlink(missing_ok=True)
         pass
@@ -368,7 +381,7 @@ def test_DataFrame_to_from_numpy():
     df = vdf.VDataFrame({'a': [0.0, 1.0, 2.0, 3.0]}, npartitions=2)
     n = df.to_numpy()
     df2 = vdf.VDataFrame(n, columns=df.columns, npartitions=2)
-    assert df.compute().equals(df2.compute())
+    assert df.to_backend().equals(df2.to_backend())
 
 
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
@@ -376,7 +389,7 @@ def test_Series_to_from_numpy():
     s = vdf.VSeries([0.0, 1.0, 2.0, 3.0], npartitions=2)
     n = s.to_numpy()
     s2 = vdf.VSeries(n, npartitions=2)
-    assert s.compute().equals(s2.compute())
+    assert s.to_backend().equals(s2.to_backend())
 
 
 def test_DataFrame_map_partitions():
