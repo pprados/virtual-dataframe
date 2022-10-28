@@ -152,8 +152,8 @@ def test_DataFrame_to_read_csv():
             df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
             df.to_csv(filename, index=False)
             df2 = vdf.read_csv(filename)
-            assert (df.sort_values("a").reset_index(drop=True)
-                    == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
+            assert (df.sort_values("a").reset_index(drop=True).to_backend()
+                    == df2.sort_values("a").reset_index(drop=True).to_backend()).all().to_backend().all()
 
     finally:
         shutil.rmtree(d)
@@ -237,8 +237,8 @@ def test_DataFrame_to_read_json():
         df = vdf.VDataFrame({'a': list(range(0, 10000)), 'b': list(range(0, 10000))}, npartitions=2)
         df.to_json(filename)
         df2 = vdf.read_json(filename)
-        assert (df.sort_values("a").reset_index(drop=True)
-                == df2.sort_values("a").reset_index(drop=True)).all()[0]
+        assert (df.sort_values("a").reset_index(drop=True).to_backend()
+                == df2.sort_values("a").reset_index(drop=True).to_backend()).all()[0]
     finally:
         shutil.rmtree(d)
 
@@ -256,8 +256,8 @@ def test_DataFrame_to_read_orc():
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df.to_orc(filename)  # Bug with dask
         df2 = vdf.read_orc(filename)
-        assert (df.sort_values("a").reset_index(drop=True)
-                == df2.sort_values("a").reset_index(drop=True)).all()[0]
+        assert (df.sort_values("a").reset_index(drop=True).to_backend()
+                == df2.sort_values("a").reset_index(drop=True).to_backend()).all()[0]
     finally:
         shutil.rmtree(d)
 
@@ -271,8 +271,8 @@ def test_DataFrame_to_read_parquet():
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df.to_parquet(filename)
         df2 = vdf.read_parquet(filename)
-        assert (df.sort_values("a").reset_index(drop=True)
-                == df2.sort_values("a").reset_index(drop=True)).all()[0]
+        assert (df.sort_values("a").reset_index(drop=True).to_backend()
+                == df2.sort_values("a").reset_index(drop=True).to_backend()).all()[0]
     finally:
         shutil.rmtree(d)
 

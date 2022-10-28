@@ -1061,12 +1061,10 @@ if VDF_MODE == Mode.pyspark:
                                   )
         for col, data in outputs.items():
             if VDF_MODE == Mode.pyspark:
-                self[col] = VSeries(data)
+                self[col] = data.tolist()
             else:
                 self[col] = data
         return self
-
-
     def _apply_rows(self,
                     fn: Callable,
                     incols: Dict[str, str],

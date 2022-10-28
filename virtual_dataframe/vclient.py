@@ -258,7 +258,6 @@ def _new_VClient(mode: Mode,
                     self.shutdown()
 
                 def __enter__(self) -> Any:
-                    pyspark.pandas.set_option('compute.ops_on_diff_frames', True)  # FIXME: via les envs ?
                     self.session = get_spark_builder().getOrCreate().__enter__()
                     return self
 
