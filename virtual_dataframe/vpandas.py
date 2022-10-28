@@ -243,7 +243,7 @@ def _patch_to(func, rm_params, scope=None):
             path_or_buf = path_or_buf.replace("*", "")
         for k in rm_params:
             kwargs.pop(k, None)
-        return func(self, path_or_buf, **kwargs)
+        return func(self, path_or_buf, *args, **kwargs)
 
     _patch.__name__ = func.__name__
     return _patch
@@ -1007,7 +1007,7 @@ if VDF_MODE == Mode.pyspark:
     import numpy
     import pyspark.pandas
 
-    pyspark.pandas.set_option('compute.ops_on_diff_frames', True)  # FIXME
+    # FIXME pyspark.pandas.set_option('compute.ops_on_diff_frames', True)  # FIXME
 
     BackEndDataFrame: Any = pandas.DataFrame
     BackEndSeries: Any = pandas.Series

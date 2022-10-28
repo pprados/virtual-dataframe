@@ -171,9 +171,9 @@ def _new_VClient(mode: Mode,
                     if mode == Mode.dask_cudf:
                         from dask_cuda import LocalCUDACluster
                         client = dask.distributed.Client(address=
-                                                         LocalCUDACluster(
-                                                             **local_default_params
-                                                         ),
+                        LocalCUDACluster(
+                            **local_default_params
+                        ),
                             **kwargs)
                     elif mode in (Mode.dask, Mode.dask_cudf, Mode.dask_modin):
                         # Purge params
@@ -192,8 +192,40 @@ def _new_VClient(mode: Mode,
                         **kwargs)
                     LOGGER.warning(f"Use remote cluster on {host}:{port}")
         elif mode == Mode.pyspark:
+            from pyspark import SparkContext, SparkConf
+            class SparkClient():
+                def __init__(self, spark_conf):
+                    self.conf = spark_conf
+                    self.context = None
 
-            client = _ClientDummy("threads")  # FIXME
+                def cancel(self, futures, asynchronous=None, force=False) -> None:
+                    pass
+
+                def close(self, timeout='__no_default__') -> None:
+                    self.shutdown()
+
+                def __enter__(self) -> Any:
+                    self.context = SparkContext.getOrCreate(self.conf)
+                    return self
+
+                def __exit__(self, type: None, value: None, traceback: None) -> None:
+                    self.shutdown()
+
+                def __str__(self) -> str:
+                    return "<Spark: TODO>"
+
+                def __repr__(self) -> str:
+                    return self.__str__()
+
+                def shutdown(self) -> None:
+                    if self.context:
+                        self.context.stop()
+                        self.context = None
+                    else:
+                        pass
+
+            conf = SparkConf().setAppName("RatingsHistogram").setMaster("local")
+            client = SparkClient(conf)
 
         # elif mode == Mode.ray_modin:
         #     assert vdf_cluster.scheme == "ray"
@@ -240,13 +272,6 @@ def _new_VClient(mode: Mode,
 
 class VClient():
     def __new__(cls, **kwargs) -> Any:
-        # global _global_client
-        # if not _global_client:
-        #     _global_client = _new_VClient(
-        #         VDF_MODE,
-        #         os.environ,
-        #         **kwargs)
-        # return _global_client
         return _new_VClient(
             VDF_MODE,
             os.environ,

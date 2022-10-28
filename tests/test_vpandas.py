@@ -18,9 +18,9 @@ def vclient():
     client = vdf.VClient(
         address=local_cluster,
     )
-    # client.__enter__()
+    client.__enter__()
     yield client
-    # client.__exit__(None, None, None)
+    client.__exit__(None, None, None)
     client.shutdown()
 
 
@@ -174,7 +174,8 @@ def test_DataFrame_to_read_excel():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.dask_cudf, vdf.Mode.pyspark),
+                    reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
@@ -192,7 +193,8 @@ def test_DataFrame_to_read_feather():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf, vdf.Mode.pyspark),
+                    reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_DataFrame_read_fwf():
@@ -202,7 +204,8 @@ def test_DataFrame_read_fwf():
     assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask_cudf,), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask_cudf,),
+                    reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
@@ -271,7 +274,8 @@ def test_DataFrame_to_read_parquet():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf),
+                    reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_DataFrame_to_read_sql():
@@ -310,7 +314,8 @@ def test_Serie_to_csv():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.cudf, vdf.Mode.dask_cudf),
+                    reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")

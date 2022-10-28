@@ -116,6 +116,7 @@ def test_dask_with_local_cluster():  # TODO: Mock
         assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
         client.shutdown()
 
+# FIXME
 # def test_ray_no_cluster_modin(mocker):
 #     ray_init = mocker.patch("ray.init")
 #     with (vclient._new_VClient(mode=Mode.ray_modin, env=dict())) as client:
@@ -132,3 +133,16 @@ def test_dask_with_local_cluster():  # TODO: Mock
 #     ray_init = mocker.patch("ray.init")
 #     with (vclient._new_VClient(mode=Mode.ray_modin, env=dict(VDF_CLUSTER="ray://auto"))) as client:
 #         ray_init.assert_called_with(address="auto")
+
+@pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
+def test_pyspark_implicit_cluster():
+    from dask.distributed import LocalCluster
+    with vclient._new_VClient(
+            mode=Mode.pyspark,
+            env={},
+    ) as client:
+        assert isinstance(client.cluster, LocalCluster)
+        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
+        client.shutdown()
+
+
