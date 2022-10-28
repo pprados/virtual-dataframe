@@ -7,6 +7,8 @@ import pandas
 import pytest
 
 import virtual_dataframe as vdf
+from virtual_dataframe import Mode
+from virtual_dataframe import VClient
 
 
 @pytest.fixture(scope="session")
@@ -145,18 +147,19 @@ def test_Series_visualize():
 def test_DataFrame_to_read_csv():
     d = tempfile.mkdtemp()
     try:
-        filename = f"{d}/test*.csv"
-        df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
-        df.to_csv(filename, index=False)
-        df2 = vdf.read_csv(filename)
-        assert (df.sort_values("a").reset_index(drop=True)
-                == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
+        with VClient():
+            filename = f"{d}/test*.csv"
+            df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
+            df.to_csv(filename, index=False)
+            df2 = vdf.read_csv(filename)
+            assert (df.sort_values("a").reset_index(drop=True)
+                    == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
 
     finally:
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask, Mode.dask_cudf,Mode.pyspark), reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
@@ -174,7 +177,7 @@ def test_DataFrame_to_read_excel():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.dask_cudf, vdf.Mode.pyspark),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.dask, Mode.dask_cudf, Mode.pyspark),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
@@ -193,7 +196,7 @@ def test_DataFrame_to_read_feather():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf, vdf.Mode.pyspark),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask_cudf, Mode.pyspark),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
@@ -204,7 +207,7 @@ def test_DataFrame_read_fwf():
     assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask_cudf,),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.dask_cudf,Mode.pyspark),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
@@ -235,15 +238,15 @@ def test_DataFrame_to_read_json():
         df.to_json(filename)
         df2 = vdf.read_json(filename)
         assert (df.sort_values("a").reset_index(drop=True)
-                == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
+                == df2.sort_values("a").reset_index(drop=True)).all()[0]
     finally:
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.pandas,
-                                     vdf.Mode.dask_cudf,
-                                     vdf.Mode.modin,
-                                     vdf.Mode.dask_modin), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.pandas,
+                                     Mode.dask_cudf,
+                                     Mode.modin,
+                                     Mode.dask_modin), reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_DataFrame_to_read_orc():
@@ -254,7 +257,7 @@ def test_DataFrame_to_read_orc():
         df.to_orc(filename)  # Bug with dask
         df2 = vdf.read_orc(filename)
         assert (df.sort_values("a").reset_index(drop=True)
-                == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
+                == df2.sort_values("a").reset_index(drop=True)).all()[0]
     finally:
         shutil.rmtree(d)
 
@@ -269,12 +272,12 @@ def test_DataFrame_to_read_parquet():
         df.to_parquet(filename)
         df2 = vdf.read_parquet(filename)
         assert (df.sort_values("a").reset_index(drop=True)
-                == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
+                == df2.sort_values("a").reset_index(drop=True)).all()[0]
     finally:
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask_cudf, Mode.pyspark),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
@@ -282,7 +285,8 @@ def test_DataFrame_to_read_sql():
     filename = f"{tempfile.gettempdir()}/test.db"
     try:
         import sqlalchemy
-        db_uri = f'sqlite:////{filename}'  # f"jdbc:sqlite:{filename}" for pyspark
+        # FIXME db_uri = f'sqlite:////{filename}'  # f"jdbc:sqlite:{filename}" for pyspark
+        db_uri = f"jdbc:sqlite:{filename}"
 
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df = df.set_index("a")
@@ -301,7 +305,7 @@ def test_DataFrame_to_read_sql():
         pass
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask_cudf), reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_Serie_to_csv():
@@ -314,7 +318,7 @@ def test_Serie_to_csv():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.dask, vdf.Mode.cudf, vdf.Mode.dask_cudf),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.dask, Mode.cudf, Mode.dask_cudf, Mode.pyspark),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
@@ -329,7 +333,7 @@ def test_Serie_to_excel():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.pyspark,),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.pyspark,),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
@@ -359,7 +363,7 @@ def test_Serie_to_json():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (vdf.Mode.cudf, vdf.Mode.dask_cudf, vdf.Mode.pyspark), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask_cudf, Mode.pyspark), reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_Serie_to_sql():

@@ -12,4 +12,6 @@ dependencies:
   - cudf==22.10.*
   - dask-cuda==22.10.*
   - dask-cudf>=22.10.*
+  - openjdk==11.0.*
+  - pyspark==3.2.*
 

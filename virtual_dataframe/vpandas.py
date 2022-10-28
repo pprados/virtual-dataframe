@@ -1007,8 +1007,6 @@ if VDF_MODE == Mode.pyspark:
     import numpy
     import pyspark.pandas
 
-    # FIXME pyspark.pandas.set_option('compute.ops_on_diff_frames', True)  # FIXME
-
     BackEndDataFrame: Any = pandas.DataFrame
     BackEndSeries: Any = pandas.Series
     BackEnd = pandas

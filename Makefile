@@ -163,7 +163,7 @@ JUPYTER_LABEXTENSIONS_DIR:=$(CONDA_PREFIX)/share/jupyter/labextensions
 _JUPYTER_LABEXTENSIONS:=$(foreach ext,$(JUPYTER_LABEXTENSIONS),$(JUPYTER_LABEXTENSIONS_DIR)/$(ext))
 
 # Project variable
-export VDF_MODES=pandas cudf dask dask_modin dask_cudf
+export VDF_MODES=pandas cudf dask dask_modin dask_cudf pyspark
 
 CHECK_GIT_STATUS=[[ `git status --porcelain` ]] && echo "$(yellow)Warning: All files are not commited$(normal)"
 
@@ -804,7 +804,7 @@ conda-recipe/staged-recipes:
 		git checkout -b $(PRJ_PACKAGE) origin/$(PRJ_PACKAGE)\
 	)
 	GIT_USER=$$(gh auth status -t 2>&1 | grep oauth_token | awk '{ print $$7 }')
-	git submodule add --force https://github.com/$$GIT_USER/staged-recipes.git conda-recipe/staged-recipes
+	#git submodule add --force https://github.com/$$GIT_USER/staged-recipes.git conda-recipe/staged-recipes
 
 conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE): conda-recipe/staged-recipes
 	@mkdir conda-recipe/staged-recipes/recipes/$(PRJ_PACKAGE)/$(PRJ_PACKAGE).tar.gz

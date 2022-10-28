@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -e
 NAME=vdf
-VDF_MODES=(all pandas modin cudf dask dask_modin dask_cudf)
+VDF_MODES=(all pandas modin cudf
+  dask dask-local
+  dask_modin dask_modin-local
+  dask_cudf dask_cudf-local
+  pyspark pyspark-local)
 DEFAULT_CHANNEL=${CHANNEL:--c rapidsai -c nvidia -c conda-forge}
 
 # usage ./build-conda-env.sh -h

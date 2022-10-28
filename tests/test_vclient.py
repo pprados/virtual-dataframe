@@ -136,13 +136,13 @@ def test_dask_with_local_cluster():  # TODO: Mock
 
 @pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
 def test_pyspark_implicit_cluster():
-    from dask.distributed import LocalCluster
+    import pyspark
     with vclient._new_VClient(
             mode=Mode.pyspark,
             env={},
     ) as client:
-        assert isinstance(client.cluster, LocalCluster)
-        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
+        assert isinstance(client.session, pyspark.sql.session.SparkSession)
+        assert repr(client) == "<Spark: 'local[*]'>"
         client.shutdown()
 
 

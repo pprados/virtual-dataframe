@@ -10,6 +10,7 @@ See README.md
 import logging
 import os
 import sys
+from pathlib import Path
 from typing import Any, Tuple, Dict, Optional, Union
 from urllib.parse import urlparse, ParseResult
 
@@ -129,6 +130,59 @@ _params_local_cuda_cluster = _params_local_cluster + [
     "scheduler_sync_interval",
 ]
 
+if VDF_MODE == Mode.pyspark:
+    from pyspark.sql import SparkSession
+
+    DEFAULT_APP_NAME="virtual_dataframe"  # FIXME
+
+
+    def _read_properties(default_conf: Path) -> Dict[str, str]:
+        with open(default_conf) as f:
+            ln = [line.split("=", 1) for line in f.readlines() if line.strip() and not line.startswith("#")]
+            return {key.strip(): value.strip() for key, value in ln if ln}
+
+
+    def get_spark_builder() -> SparkSession.Builder:
+        """
+        Load config in this order, from:
+        - ${SPARK_HOME}/conf/spark-default.conf
+        - ./spark.conf
+        - Environment variable (use spark.<...>)
+          - In `.env`
+          - Set before starting the process
+
+        And return a builder
+        """
+        conf = {}
+        global_default_conf = Path(os.environ.get("SPARK_HOME", "."), "conf/spark-defaults.conf")
+        if global_default_conf.exists():
+            conf = {**conf, **_read_properties(global_default_conf)}
+
+        default_conf = Path("./spark.conf")
+        if default_conf.exists():
+            conf = {**conf, **_read_properties(default_conf)}
+
+        # Add env. variables
+        conf = {**conf,
+                **dict(
+                    map(lambda t: (t[0][6:], t[1]), filter(lambda s: s[0].startswith("spark."), os.environ.items())))}
+
+        app_name=conf.get("spark.app.name")
+        if not app_name:
+            app_name= DEFAULT_APP_NAME
+        builder = SparkSession.builder.appName(app_name)
+        for k, v in conf.items():
+            builder.config(k, v)
+        return builder
+
+    def get_spark_session(spark_session: Optional[SparkSession]) -> SparkSession:
+        if not spark_session:
+            spark_session = SparkSession.getActiveSession()
+            if not spark_session:
+                spark_session = get_spark_builder().getOrCreate()
+            spark_session.sparkContext.setLogLevel("OFF")
+        return spark_session
+
 
 def _new_VClient(mode: Mode,
                  env: EnvDict,
@@ -192,11 +246,10 @@ def _new_VClient(mode: Mode,
                         **kwargs)
                     LOGGER.warning(f"Use remote cluster on {host}:{port}")
         elif mode == Mode.pyspark:
-            from pyspark import SparkContext, SparkConf
-            class SparkClient():
-                def __init__(self, spark_conf):
-                    self.conf = spark_conf
-                    self.context = None
+            import pyspark
+            class SparkClient():  # FIXME: gérer les confs
+                def __init__(self):
+                    self.session = None
 
                 def cancel(self, futures, asynchronous=None, force=False) -> None:
                     pass
@@ -205,27 +258,27 @@ def _new_VClient(mode: Mode,
                     self.shutdown()
 
                 def __enter__(self) -> Any:
-                    self.context = SparkContext.getOrCreate(self.conf)
+                    pyspark.pandas.set_option('compute.ops_on_diff_frames', True)  # FIXME: via les envs ?
+                    self.session = get_spark_builder().getOrCreate().__enter__()
                     return self
 
                 def __exit__(self, type: None, value: None, traceback: None) -> None:
-                    self.shutdown()
+                    if self.session:
+                        self.session.__exit__(type, None, None)
+                        self.session = None
 
                 def __str__(self) -> str:
-                    return "<Spark: TODO>"
+                    return f"<Spark: '{self.session.conf.get('spark.master')}'>"
 
                 def __repr__(self) -> str:
                     return self.__str__()
 
                 def shutdown(self) -> None:
-                    if self.context:
-                        self.context.stop()
-                        self.context = None
-                    else:
-                        pass
+                    if self.session:
+                        self.session.__exit__(type, None, None)
+                        self.session = None
 
-            conf = SparkConf().setAppName("RatingsHistogram").setMaster("local")
-            client = SparkClient(conf)
+            client = SparkClient()
 
         # elif mode == Mode.ray_modin:
         #     assert vdf_cluster.scheme == "ray"
