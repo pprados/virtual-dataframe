@@ -150,6 +150,7 @@ CONDA_CHANNELS?=-c rapidsai -c nvidia -c conda-forge
 CONDA_ARGS?=
 CONDA_RECIPE=conda-recipe/staged-recipes/recipes/virtual_dataframe
 
+export SETUPTOOLS_SCM_PRETEND_VERSION
 export VIRTUAL_ENV=$(CONDA_PREFIX)
 
 PIP_PACKAGE:=$(CONDA_PACKAGE)/$(PRJ_PACKAGE).egg-link

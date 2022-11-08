@@ -21,12 +21,11 @@ build:
     - build-conda-vdf-env = virtual_dataframe.bin.__init__:main
 
 requirements:
+  build:
+    - setuptools_scm
   host:
     - python
     - pip
-  build:
-    - setuptools_scm
-
   run_constrained:
     - conda-build >=3
     - conda-content-trust >=0.1.1

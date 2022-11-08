@@ -282,7 +282,6 @@ def _patch_pandas(pd_DataFrame, pd_Series):
     pd_DataFrame.to_json = _patch_to(pd_DataFrame.to_json, _extra_params)
     pd_DataFrame.to_orc = _not_implemented
     pd_DataFrame.to_parquet = _patch_to(pd_DataFrame.to_parquet, _extra_params)
-    pd_DataFrame.to_sql = _patch_to(pd_DataFrame.to_sql, _extra_params)
 
     pd_DataFrame.to_pandas = lambda self: self
     pd_DataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
@@ -1216,12 +1215,11 @@ if VDF_MODE == Mode.pyspark:
             _printed_warning.add("to_excel")
             warnings.warn(f"Function 'to_excel' not implemented in mode cudf, dask and dask_cudf",
                           RuntimeWarning, stacklevel=0)
-        if "*" in str(excel_writer):
-            path_or_buf = excel_writer.replace("*", "")
-        args = locals().copy()
-        del args["self"]
-        del args["_original_Series_to_excel"]
-        return _original_Series_to_excel(self, **args)
+        _ = locals().copy()
+        if "*" in str(_["excel_writer"]):
+            _["excel_writer"] = _["excel_writer"].replace("*", "")
+        del _["self"]
+        return _original_Dataframe_to_excel(self, **_)
 
     BackEnd.Series.to_excel = _series_to_excel
 

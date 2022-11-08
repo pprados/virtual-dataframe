@@ -22,7 +22,6 @@ def vclient():
     client.__enter__()
     yield client
     client.__exit__(None, None, None)
-    client.shutdown()
 
 
 # %%
@@ -329,8 +328,7 @@ def test_Series_to_csv():
 def test_Series_to_excel():
     d = tempfile.mkdtemp()
     try:
-        # FIXME filename = f"{d}/test*.xlsx"
-        filename = f"{d}/test.xlsx"
+        filename = f"{d}/test*.xlsx"
         s = vdf.VSeries(list(range(0, 3)), npartitions=2)
         s.to_excel(filename)
     finally:
