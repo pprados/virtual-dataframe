@@ -13,6 +13,7 @@ def test_panda():
     with vclient._new_VClient(
             mode=Mode.pandas,
             env=env,
+            address=None,
     ) as client:
         assert type(client).__name__ == "_ClientDummy"
         assert repr(client) == '<Client: in-process scheduler>'
@@ -24,6 +25,7 @@ def test_cudf():
     with vclient._new_VClient(
             mode=Mode.cudf,
             env=env,
+            address=None,
     ) as client:
         assert type(client).__name__ == "_ClientDummy"
         assert repr(client) == '<Client: in-process scheduler>'
@@ -34,6 +36,7 @@ def test_dask_debug():
     with vclient._new_VClient(
             mode=Mode.dask,
             env=dict(DEBUG="True"),
+            address=None,
     ) as client:
         assert repr(client).startswith('<Client: in-process scheduler>')
         client.shutdown()
@@ -50,6 +53,7 @@ def test_dask_cudf_implicit_cluster():
     with vclient._new_VClient(
             mode=Mode.dask_cudf,
             env=dict(VDF_CLUSTER="dask://.local"),
+            address=None,
     ) as client:
         assert isinstance(client.cluster, LocalCUDACluster)
         assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
@@ -78,6 +82,7 @@ def test_dask_cudf_with_default_cluster():
     with vclient._new_VClient(
             mode=Mode.dask_cudf,
             env=dict(),
+            address=None,
     ) as client:
         assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
         client.shutdown()
@@ -93,6 +98,7 @@ def test_dask_implicit_cluster():
     with vclient._new_VClient(
             mode=Mode.dask,
             env=dict(VDF_CLUSTER="dask://.local"),
+            address=None,
     ) as client:
         assert isinstance(client.cluster, LocalCluster)
         assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
@@ -115,6 +121,7 @@ def test_dask_with_local_cluster():  # TODO: Mock
         assert isinstance(client.cluster, LocalCluster)
         assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
         client.shutdown()
+
 
 # FIXME
 # def test_ray_no_cluster_modin(mocker):
@@ -139,6 +146,7 @@ def test_pyspark_implicit_cluster():
     import pyspark
     with vclient._new_VClient(
             mode=Mode.pyspark,
+            address=None,
             env={},
     ) as client:
         assert isinstance(client.session, pyspark.sql.session.SparkSession)
@@ -146,3 +154,77 @@ def test_pyspark_implicit_cluster():
         client.shutdown()
 
 
+@pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
+def test_pyspark_address_cluster():
+    import pyspark
+    with vclient._new_VClient(
+            mode=Mode.pyspark,
+            address="local[*]",
+            env={},
+    ) as client:
+        assert isinstance(client.session, pyspark.sql.session.SparkSession)
+        assert repr(client) == "<Spark: 'local[*]'>"
+        client.shutdown()
+
+
+@pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
+def test_pyspark_local_cluster():
+    import pyspark
+    with vclient._new_VClient(
+            mode=Mode.pyspark,
+            address=None,
+            env={"VDF_CLUSTER": "spark:local[*]"},
+    ) as client:
+        assert isinstance(client.session, pyspark.sql.session.SparkSession)
+        assert repr(client) == "<Spark: 'local[*]'>"
+        client.shutdown()
+
+
+@pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
+def test_pyspark_dot_local_cluster():
+    import pyspark
+    with vclient._new_VClient(
+            mode=Mode.pyspark,
+            address=None,
+            env={"VDF_CLUSTER": "spark://.local"},
+    ) as client:
+        assert isinstance(client.session, pyspark.sql.session.SparkSession)
+        assert repr(client) == "<Spark: 'local[*]'>"
+        client.shutdown()
+
+
+@pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
+def test_pyspark_master_env_cluster():
+    import pyspark
+    with vclient._new_VClient(
+            mode=Mode.pyspark,
+            address=None,
+            env={
+                "SPARK_MASTER_HOST": "local[*]",
+            },
+    ) as client:
+        assert isinstance(client.session, pyspark.sql.session.SparkSession)
+        assert repr(client) == "<Spark: 'local[*]'>"
+        client.shutdown()
+
+@pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
+def test_pyspark_vlocalcluster():
+    with \
+            vlocalcluster._new_VLocalCluster(
+                mode=Mode.pyspark,
+                spark_app_name="toto",
+                spark_master="local[*]",
+            ) as cluster, \
+            vclient._new_VClient(
+                mode=Mode.pyspark,
+                env={},
+                address=cluster,
+            ) as client:
+        assert isinstance(cluster, vlocalcluster.SparkLocalCluster)
+        assert repr(client) == "<Spark: 'local[*]'>"
+
+def test_client_with_local_cluster():
+    import virtual_dataframe
+    with virtual_dataframe.VClient(virtual_dataframe.VLocalCluster()) as client:
+        # Now, use the scheduler
+        pass

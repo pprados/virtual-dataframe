@@ -7,9 +7,9 @@ import os
 import sys
 import warnings
 from functools import wraps
-from typing import Any, List, Tuple, Optional, Union, Callable, Dict, Type, Iterator, Iterable
+from typing import Any, List, Tuple, Optional, Union, Callable, Dict, Type, Iterator, Iterable, Sequence, Hashable
 
-from pandas._typing import Axes, Dtype
+from pandas._typing import Axes, Dtype, IndexLabel, StorageOptions
 
 from .env import VDF_MODE, Mode
 
@@ -1003,7 +1003,9 @@ if VDF_MODE == Mode.dask:
 
 # %% pyspark
 if VDF_MODE == Mode.pyspark:
+
     import pandas
+    from pandas._libs import lib
     import numpy
     import pyspark.pandas
 
@@ -1065,6 +1067,8 @@ if VDF_MODE == Mode.pyspark:
             else:
                 self[col] = data
         return self
+
+
     def _apply_rows(self,
                     fn: Callable,
                     incols: Dict[str, str],
@@ -1146,19 +1150,14 @@ if VDF_MODE == Mode.pyspark:
     read_parquet = _patch_read(FrontEnd, "read_parquet")
     read_sql_table = _warn(FrontEnd.read_sql_table, "cudf and dask_cudf")
 
-    # _VDataFrame.to_excel = _patch_to(pyspark.pandas.generic.Frame.to_excel, [], "cudf, dask and dask_cudf")
     _VDataFrame.to_feather = _not_implemented
     _VDataFrame.to_fwf = _not_implemented
 
     # Add-on and patch of original dataframes and series
     _VDataFrame.apply_rows = _apply_rows
     _VDataFrame.apply_rows.__doc__ = _doc_apply_rows
-    # _VDataFrame.to_pandas = lambda self: self.compute()
-    # _VDataFrame.to_pandas.__doc__ = _doc_VDataFrame_to_pandas
     _VDataFrame.to_backend = _VDataFrame.to_pandas  # FIXME
     _VDataFrame.to_backend.__doc__ = _VDataFrame.to_pandas.__doc__
-    # _VDataFrame.to_numpy = lambda self: self.compute().to_numpy()
-    # _VDataFrame.to_numpy.__doc__ = _doc_VDataFrame_to_numpy
     _VDataFrame.persist = lambda self, **kwargs: self
     _VDataFrame.persist.__doc__ = _doc_VSeries_persist
     _VDataFrame.compute = lambda self, **kwargs: self
@@ -1175,12 +1174,8 @@ if VDF_MODE == Mode.pyspark:
     _VDataFrame.to_sql = _not_implemented
     _VSeries.to_sql = _not_implemented
 
-    # _VSeries.to_pandas = lambda self: self.compute()
-    # _VSeries.to_pandas.__doc__ = _doc_VSeries_to_pandas
     _VSeries.to_backend = _VSeries.to_pandas
     _VSeries.to_backend.__doc__ = _VSeries.to_pandas.__doc__
-    # _VSeries.to_numpy = lambda self: self.compute().to_numpy()
-    # _VSeries.to_numpy.__doc__ = _doc_VSeries_to_numpy
     _VSeries.persist = lambda self, **kwargs: self
     _VSeries.persist.__doc__ = _doc_VSeries_persist
     _VSeries.compute = lambda self, **kwargs: self
@@ -1192,7 +1187,76 @@ if VDF_MODE == Mode.pyspark:
     _VSeries.map_partitions = lambda self, func, *args, **kwargs: func(self, *args, **kwargs)
     _VSeries.map_partitions.__doc__ = _doc_VDataFrame_map_partitions
 
+    _original_Series_to_excel = BackEnd.DataFrame.to_excel
+    _original_Dataframe_to_excel = BackEnd.DataFrame.to_excel
+
     _patch_pandas(BackEndDataFrame, BackEndSeries)
+    # Special case for pyspark
+
+    def _series_to_excel(
+            self,
+            excel_writer,
+            sheet_name: str = "Sheet1",
+            na_rep: str = "",
+            float_format: Optional[str] = None,
+            columns: Optional[Union[str, List[str]]] = None,
+            header: bool = True,
+            index: bool = True,
+            index_label: Optional[Union[str, List[str]]] = None,
+            startrow: int = 0,
+            startcol: int = 0,
+            engine: Optional[str] = None,
+            merge_cells: bool = True,
+            encoding: Optional[str] = None,
+            inf_rep: str = "inf",
+            verbose: bool = True,
+            freeze_panes: Optional[Tuple[int, int]] = None,
+    ) -> None:
+        if "to_excel" not in _printed_warning:
+            _printed_warning.add("to_excel")
+            warnings.warn(f"Function 'to_excel' not implemented in mode cudf, dask and dask_cudf",
+                          RuntimeWarning, stacklevel=0)
+        if "*" in str(excel_writer):
+            path_or_buf = excel_writer.replace("*", "")
+        args = locals().copy()
+        del args["self"]
+        del args["_original_Series_to_excel"]
+        return _original_Series_to_excel(self, **args)
+
+    BackEnd.Series.to_excel = _series_to_excel
+
+
+    def _dataframe_to_excel(
+            self,
+            excel_writer,
+            sheet_name: str = "Sheet1",
+            na_rep: str = "",
+            float_format: Union[str,None] = None,
+            columns: Union[Sequence[Hashable], None] = None,
+            header: Union[Sequence[Hashable], bool] = True,
+            index: bool = True,
+            index_label: IndexLabel = None,
+            startrow: int = 0,
+            startcol: int = 0,
+            engine: Union[str, None] = None,
+            merge_cells: bool = True,
+            encoding: lib.NoDefault = lib.no_default,
+            inf_rep: str = "inf",
+            verbose: lib.NoDefault = lib.no_default,
+            freeze_panes: Union[Tuple[int, int], None] = None,
+            # storage_options: StorageOptions = None,
+    ) -> None:
+        if "to_excel" not in _printed_warning:
+            _printed_warning.add("to_excel")
+            warnings.warn(f"Function 'to_excel' not implemented in mode cudf, dask and dask_cudf",
+                          RuntimeWarning, stacklevel=0)
+        _ = locals().copy()
+        if "*" in str(_["excel_writer"]):
+            _["excel_writer"] = _["excel_writer"].replace("*", "")
+        del _["self"]
+        return _original_Dataframe_to_excel(self, **_)
+
+    BackEnd.DataFrame.to_excel = _dataframe_to_excel
 
 
 # %% Virtual

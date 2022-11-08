@@ -9,6 +9,7 @@ nav:
     - Compatibility: compatibility.md
     - API: api.md
     - Best Practice: best_practice.md
+    - Bench: bench.md
     - FAQ: faq.md
     - Contribute:
       - Contribute: contribute.md

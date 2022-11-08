@@ -15,4 +15,5 @@ def test_sample():
     with (VClient()) as client:
         vdf = vpd.VDataFrame({"data": [1, 2]})
         rc = sample_function(vdf).compute()
-        assert (rc == vpd.VDataFrame({"data": [1, 2]}).compute())["data"].all()
+        assert (vdf.to_backend()
+                == rc.to_backend()).all().all()

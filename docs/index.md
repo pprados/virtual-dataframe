@@ -21,10 +21,10 @@ of the selected framework.
 A new `@delayed` annotation can be use, with or without Dask.
 
 With some parameters, the real classes may be `pandas.DataFrame`, `modin.pandas.DataFrame`,
-`cudf.DataFrame`, `dask.dataframe.DataFrame` with Pandas or
+`cudf.DataFrame`, `pyspark.pandas.DataFrame`, `dask.dataframe.DataFrame` with Pandas or
 `dask.dataframe.DataFrame` with cudf (with Pandas or cudf for each partition).
 
-To manage the initialisation of a Dask, you must use the `VClient()`. This alias, can be automatically
+To manage the initialisation of a Dask ou Spark, you must use the `VClient()`. This alias, can be automatically
 initialized with some environment variables.
 
 ```python
@@ -58,12 +58,15 @@ With this framework, you can select your environment, to run or debug your code.
 | VDF_MODE=dask_cudf<br />VDF_CLUSTER=dask://.local   | Dask with local cuda cluster and cuDF       |
 | VDF_MODE=dask<br />VDF_CLUSTER=dask://...:ppp       | Dask with remote cluster and Pandas         |
 | VDF_MODE=dask_cudf<br />VDF_CLUSTER=dask://...:ppp  | Dask with remote cluster and cuDF           |
-| VDF_MODE=dask_modin<br />                           | Dask with modin           |
+| VDF_MODE=dask_modin<br />                           | Dask with modin                             |
 | VDF_MODE=dask_modin<br />VDF_CLUSTER=dask://.local  | Dask with local cluster and modin           |
 | VDF_MODE=dask_modin<br />VDF_CLUSTER=dask://...:ppp | Dask with remote cluster and modin          |
+| VDF_MODE=pyspark<br />VDF_CLUSTER=spark://.local    | PySpark with local cluster and modin        |
+| VDF_MODE=pyspark<br />VDF_CLUSTER=spark://...:ppp   | PySpark with remote cluster and modin       |
 
-The real compatibilty between the differents simulation of Pandas, depends on the implement of the modin, cudf or dask.
-Sometime, you can use the `VDF_MODE` variable, to update some part of code, between the selected backend.
+The real compatibilty between the differents simulation of Pandas, depends on the implement of the modin, cudf, pyspark
+or dask. Sometime, you can use the `VDF_MODE` variable, to update some part of code, between
+the selected backend.
 
 It's not always easy to write a code *compatible* with all scenario, but it's possible.
 Generally, add just `.compute()` and/or `.to_pandas()` at the end of the ETL, is enough.

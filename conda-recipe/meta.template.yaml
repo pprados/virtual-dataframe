@@ -21,8 +21,10 @@ build:
     - build-conda-vdf-env = virtual_dataframe.bin.__init__:main
 
 requirements:
-  build:
+  host:
+    - python
     - pip
+  build:
     - setuptools_scm
 
   run_constrained:

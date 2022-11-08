@@ -693,13 +693,12 @@ ${CONDA_BUILD_TARGET}: $(CONDA_PACKAGE) clean-build conda-purge dist/$(subst -,_
 
 	# Note: due to a bug in conda-build, it's impossible to run the test with
 	# app packages at the time. So, I desactivate the tests now
-	# FIXME: virer --dirty
-	#	--output-folder ${CONDA_BLD_DIR} \
 
 	$(CONDA) mambabuild \
 		$(CONDA_CHANNELS) \
 		${CONDA_ARGS} \
 		${DEBUG_CONDA} \
+		--output-folder ${CONDA_BLD_DIR} \
 		--python=$(PYTHON_VERSION) \
 		--no-anaconda-upload \
 		$(CONDA_RECIPE)

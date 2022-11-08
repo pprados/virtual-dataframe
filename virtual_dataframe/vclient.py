@@ -10,6 +10,7 @@ See README.md
 import logging
 import os
 import sys
+import urllib
 from pathlib import Path
 from typing import Any, Tuple, Dict, Optional, Union
 from urllib.parse import urlparse, ParseResult
@@ -20,6 +21,7 @@ from .vlocalcluster import params_cuda_local_cluster
 LOGGER: logging.Logger = logging.getLogger(__name__)
 DASK_DEFAULT_PORT = 8787
 RAY_DEFAULT_PORT = 10001
+SPARK_DEFAULT_PORT = 7077
 
 _global_client = None
 
@@ -38,6 +40,8 @@ def _analyse_cluster_url(mode: Mode, env) -> Tuple[ParseResult, Optional[str], i
             vdf_cluster = f"{Mode.dask.name}://threads"
         # elif mode == Mode.ray_modin:
         #     vdf_cluster = "ray://"
+        elif mode == Mode.pyspark:
+            vdf_cluster = "spark://.local"
         else:
             vdf_cluster = ""
     parsed = urlparse(vdf_cluster)
@@ -53,6 +57,8 @@ def _analyse_cluster_url(mode: Mode, env) -> Tuple[ParseResult, Optional[str], i
         port = DASK_DEFAULT_PORT
     elif parsed.scheme == "ray" and port == -1:
         port = RAY_DEFAULT_PORT
+    elif parsed.scheme == "spark" and port == -1:
+        port = SPARK_DEFAULT_PORT
     return parsed, host, int(port)
 
 
@@ -133,7 +139,7 @@ _params_local_cuda_cluster = _params_local_cluster + [
 if VDF_MODE == Mode.pyspark:
     from pyspark.sql import SparkSession
 
-    DEFAULT_APP_NAME="virtual_dataframe"  # FIXME
+    DEFAULT_APP_NAME = "virtual_dataframe"
 
 
     def _read_properties(default_conf: Path) -> Dict[str, str]:
@@ -142,7 +148,7 @@ if VDF_MODE == Mode.pyspark:
             return {key.strip(): value.strip() for key, value in ln if ln}
 
 
-    def get_spark_builder() -> SparkSession.Builder:
+    def get_spark_builder() -> Tuple[SparkSession.Builder, str]:
         """
         Load config in this order, from:
         - ${SPARK_HOME}/conf/spark-default.conf
@@ -167,13 +173,15 @@ if VDF_MODE == Mode.pyspark:
                 **dict(
                     map(lambda t: (t[0][6:], t[1]), filter(lambda s: s[0].startswith("spark."), os.environ.items())))}
 
-        app_name=conf.get("spark.app.name")
+        app_name = conf.get("spark.app.name")
         if not app_name:
-            app_name= DEFAULT_APP_NAME
+            app_name = DEFAULT_APP_NAME
+
         builder = SparkSession.builder.appName(app_name)
         for k, v in conf.items():
             builder.config(k, v)
-        return builder
+        return builder, conf.get("spark.master")
+
 
     def get_spark_session(spark_session: Optional[SparkSession]) -> SparkSession:
         if not spark_session:
@@ -184,16 +192,84 @@ if VDF_MODE == Mode.pyspark:
         return spark_session
 
 
+class SparkClient:
+    def __init__(self,
+                 env,
+                 address=None,
+                 ):
+        self.env = dict(env)
+        self.session = None
+        self.vdf_cluster = self.env.get("VDF_CLUSTER", None)
+        if isinstance(address, str):
+            self.vdf_cluster = address
+            self.address = None
+        else:
+            self.address = address
+
+    def cancel(self, futures, asynchronous=None, force=False) -> None:
+        pass
+
+    def close(self, timeout='__no_default__') -> None:
+        self.shutdown()
+
+    def __enter__(self) -> Any:
+        if not self.address:
+            builder, master = get_spark_builder()
+            if "SPARK_MASTER_HOST" in self.env:
+                master = self.env["SPARK_MASTER_HOST"]
+                if "SPARK_MASTER_PORT" in self.env:
+                    master = master + ":" + self.env["SPARK_MASTER_PORT"]
+                builder.config("spark.master", master)
+
+            if self.vdf_cluster:
+                if self.vdf_cluster.startswith("spark:local"):
+                    self.vdf_cluster = self.vdf_cluster[6:]
+                else:
+                    _, host, *_ = urlparse(self.vdf_cluster)
+                    if host and host.endswith(".local"):
+                        self.vdf_cluster = "local[*]"
+                builder.config("spark.master", self.vdf_cluster)
+            else:
+                if not master:
+                    builder.config("spark.master", "local[*]")
+            self.session = builder.getOrCreate().__enter__()
+        else:
+            self.address.__enter__()
+            self.session = self.address.session
+        return self
+
+    def __exit__(self, type: None, value: None, traceback: None) -> None:
+        if self.session:
+            self.session.__exit__(type, None, None)
+            if self.address:
+                self.address.__exit__(type,None,None)
+            self.address = None
+            self.session = None
+
+    def __str__(self) -> str:
+        return f"<Spark: '{self.session.conf.get('spark.master')}'>"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def shutdown(self) -> None:
+        self.__exit__(type,None,None)
+
+
 def _new_VClient(mode: Mode,
                  env: EnvDict,
+                 address: Union[str, Any],
                  **kwargs) -> Any:
     if mode in (Mode.pandas, Mode.cudf, Mode.modin):
         return _ClientDummy("")
 
-    if "address" in kwargs and isinstance(getattr(kwargs["address"], "scheduler_address", None), str):
-        assert mode in (Mode.dask, Mode.dask_cudf, Mode.dask_modin), "Compatible with Dask frameworks"
-        import dask.distributed
-        return dask.distributed.Client(**kwargs)
+    if address:  # FIXME in kwargs and isinstance(getattr(kwargs["address"], "scheduler_address", None), str):
+
+        if mode in (Mode.dask, Mode.dask_cudf, Mode.dask_modin):
+            import dask.distributed
+            return dask.distributed.Client(**kwargs)
+        elif mode == Mode.pyspark:
+            return SparkClient(env, address=address)
     else:
         vdf_cluster, host, port = _analyse_cluster_url(mode, env)
 
@@ -246,38 +322,8 @@ def _new_VClient(mode: Mode,
                         **kwargs)
                     LOGGER.warning(f"Use remote cluster on {host}:{port}")
         elif mode == Mode.pyspark:
-            import pyspark
-            class SparkClient():  # FIXME: gérer les confs
-                def __init__(self):
-                    self.session = None
 
-                def cancel(self, futures, asynchronous=None, force=False) -> None:
-                    pass
-
-                def close(self, timeout='__no_default__') -> None:
-                    self.shutdown()
-
-                def __enter__(self) -> Any:
-                    self.session = get_spark_builder().getOrCreate().__enter__()
-                    return self
-
-                def __exit__(self, type: None, value: None, traceback: None) -> None:
-                    if self.session:
-                        self.session.__exit__(type, None, None)
-                        self.session = None
-
-                def __str__(self) -> str:
-                    return f"<Spark: '{self.session.conf.get('spark.master')}'>"
-
-                def __repr__(self) -> str:
-                    return self.__str__()
-
-                def shutdown(self) -> None:
-                    if self.session:
-                        self.session.__exit__(type, None, None)
-                        self.session = None
-
-            client = SparkClient()
+            client = SparkClient(env)
 
         # elif mode == Mode.ray_modin:
         #     assert vdf_cluster.scheme == "ray"
@@ -323,8 +369,9 @@ def _new_VClient(mode: Mode,
 
 
 class VClient():
-    def __new__(cls, **kwargs) -> Any:
+    def __new__(cls, address=None, **kwargs) -> Any:
         return _new_VClient(
             VDF_MODE,
             os.environ,
+            address=address,
             **kwargs)

@@ -25,13 +25,48 @@ params_cuda_local_cluster = [
     "pre_import",
 ]
 
+
 class _LocalClusterDummy:
     def __init__(self, **kwargs):
-        self.scheduler_address="localhost:8786"
+        self.scheduler_address = "localhost:8786"
+
     def __str__(self):
         return "LocalClusterDummy('localhost:8786')"
+
     def __repr__(self):
         return self.__str__()
+
+
+class SparkLocalCluster:
+    def __init__(self, **kwargs):
+        from pyspark.conf import SparkConf
+
+        self.conf = SparkConf()
+        self.conf.set("spark.master","local[*]")  # Default value
+        for k, v in kwargs.items():
+            self.conf.set(k.replace("_", "."), v)
+        self.session = None
+
+    def __str__(self):
+        return f"SparkLocalCluster(\'{self.conf.get('spark.master')}\')"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __enter__(self):
+        if not self.session:
+            from pyspark.sql import SparkSession
+            # self.context = SparkContext(conf=self.conf)  # FIXME
+            builder = SparkSession.builder
+            for k, v in self.conf.getAll():
+                builder.config(k, v)
+            self.session = builder.getOrCreate()
+            return self
+
+    def __exit__(self, type: None, value: None, traceback: None) -> None:
+        if self.session:
+            self.session.__exit__(type, None, None)
+            self.session = None
 
 
 def _new_VLocalCluster(
@@ -39,6 +74,8 @@ def _new_VLocalCluster(
         **kwargs) -> Any:
     if mode in (Mode.pandas, Mode.cudf, Mode.modin):
         return _LocalClusterDummy()
+    elif mode == Mode.pyspark:
+        return SparkLocalCluster(**kwargs)
     elif mode in (Mode.dask, Mode.dask_modin):
         from dask.distributed import LocalCluster
         # Purge kwargs

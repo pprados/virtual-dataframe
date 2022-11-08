@@ -7,9 +7,8 @@ import pandas
 import pytest
 
 import virtual_dataframe as vdf
-from virtual_dataframe import Mode
+from virtual_dataframe import Mode, VDF_MODE
 from virtual_dataframe import VClient
-
 
 @pytest.fixture(scope="session")
 def vclient():
@@ -73,7 +72,7 @@ def test_dataframe_persist(vclient):
     assert rc.to_pandas().equals(df.to_pandas())
 
 
-def test_serie_persist(vclient):
+def test_Series_persist(vclient):
     s = vdf.VSeries([1])
     rc = s.persist()
     assert rc.to_pandas().equals(s.to_pandas())
@@ -85,7 +84,7 @@ def test_dataframe_repartition(vclient):
     assert rc.to_pandas().equals(df.to_pandas())
 
 
-def test_serie_repartition(vclient):
+def test_Series_repartition(vclient):
     s = vdf.VSeries([1])
     rc = s.repartition(npartitions=1)
     assert rc.to_pandas().equals(s.to_pandas())
@@ -113,7 +112,7 @@ def test_DataFrame_to_from_pandas():
 
 
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
-def test_Series_to_from_pandas():
+def test_Seriess_to_from_pandas():
     ps = pandas.Series([1, 2, 3, None, 4])
     s = vdf.from_pandas(ps, npartitions=2)
     assert s.to_pandas().equals(pandas.Series([1, 2, 3, None, 4]))
@@ -125,7 +124,7 @@ def test_DataFrame_compute():
     assert result.compute().to_pandas().equals(expected)
 
 
-def test_Series_compute():
+def test_Seriess_compute():
     expected = pandas.Series([1, 2, 3, None, 4])
     result = vdf.VSeries([1, 2, 3, None, 4])
     assert result.compute().to_pandas().equals(expected)
@@ -136,7 +135,7 @@ def test_DataFrame_visualize():
     assert result.visualize()
 
 
-def test_Series_visualize():
+def test_Seriess_visualize():
     result = vdf.VSeries([1, 2, 3, None, 4])
     assert result.visualize()
 
@@ -159,7 +158,7 @@ def test_DataFrame_to_read_csv():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask, Mode.dask_cudf,Mode.pyspark), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask, Mode.dask_cudf), reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
@@ -167,12 +166,14 @@ def test_DataFrame_to_read_csv():
 def test_DataFrame_to_read_excel():
     d = tempfile.mkdtemp()
     try:
-        filename = f"{d}/test*.xlsx"
+        # filename = f"{d}/test*.xlsx"  # FIXME
+        filename = f"{d}/test.xlsx"
+
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
-        df.to_excel(filename, index=False)
+        df.to_excel(filename, index=False)  # FIXME
         df2 = vdf.read_excel(filename, dtype=int)
-        assert (df.sort_values("a").reset_index(drop=True)
-                == df2.sort_values("a").reset_index(drop=True)).all().to_backend().all()
+        assert (df.sort_values("a").reset_index(drop=True).to_backend()
+                == df2.sort_values("a").reset_index(drop=True).to_backend()).all().to_backend().all()
     finally:
         shutil.rmtree(d)
 
@@ -285,8 +286,10 @@ def test_DataFrame_to_read_sql():
     filename = f"{tempfile.gettempdir()}/test.db"
     try:
         import sqlalchemy
-        # FIXME db_uri = f'sqlite:////{filename}'  # f"jdbc:sqlite:{filename}" for pyspark
-        db_uri = f"jdbc:sqlite:{filename}"
+        if VDF_MODE == Mode.pyspark:
+            db_uri = f"jdbc:sqlite:{filename}"
+        else:
+            db_uri = f'sqlite:////{filename}'  # f"jdbc:sqlite:{filename}" for pyspark
 
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df = df.set_index("a")
@@ -308,7 +311,7 @@ def test_DataFrame_to_read_sql():
 @pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask_cudf), reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
-def test_Serie_to_csv():
+def test_Series_to_csv():
     d = tempfile.mkdtemp()
     try:
         filename = f"{d}/test*.csv"
@@ -318,15 +321,16 @@ def test_Serie_to_csv():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (Mode.dask, Mode.cudf, Mode.dask_cudf, Mode.pyspark),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.dask, Mode.cudf, Mode.dask_cudf),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
-def test_Serie_to_excel():
+def test_Series_to_excel():
     d = tempfile.mkdtemp()
     try:
-        filename = f"{d}/test*.xlsx"
+        # FIXME filename = f"{d}/test*.xlsx"
+        filename = f"{d}/test.xlsx"
         s = vdf.VSeries(list(range(0, 3)), npartitions=2)
         s.to_excel(filename)
     finally:
@@ -339,7 +343,7 @@ def test_Serie_to_excel():
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
 @pytest.mark.filterwarnings("ignore:.*this may be GPU accelerated in the future")
-def test_Serie_to_hdf():
+def test_Series_to_hdf():
     d = tempfile.mkdtemp()
     try:
         filename = f"{d}/test*.hdf"
@@ -353,7 +357,7 @@ def test_Serie_to_hdf():
 @pytest.mark.filterwarnings("ignore:Using CPU via Pandas")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
-def test_Serie_to_json():
+def test_Series_to_json():
     d = tempfile.mkdtemp()
     try:
         filename = f"{d}/test*.json"
@@ -366,7 +370,7 @@ def test_Serie_to_json():
 @pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask_cudf, Mode.pyspark), reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
-def test_Serie_to_sql():
+def test_Series_to_sql():
     filename = f"{tempfile.gettempdir()}/test.db"
     try:
         import sqlalchemy
@@ -391,7 +395,7 @@ def test_DataFrame_to_from_numpy():
 
 
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
-def test_Series_to_from_numpy():
+def test_Seriess_to_from_numpy():
     s = vdf.VSeries([0.0, 1.0, 2.0, 3.0], npartitions=2)
     n = s.to_numpy()
     s2 = vdf.VSeries(n, npartitions=2)
@@ -418,7 +422,7 @@ def test_DataFrame_map_partitions():
     assert result.to_pandas().equals(expected)
 
 
-def test_Series_map_partitions():
+def test_Seriess_map_partitions():
     s = vdf.VSeries([0.0, 1.0, 2.0, 3.0],
                     npartitions=2
                     )
