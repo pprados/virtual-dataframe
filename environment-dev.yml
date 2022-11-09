@@ -9,7 +9,7 @@ dependencies:
   - pip
   - modin
   - dask
-  - openjdk==11.0.*
+  - openjdk==8.*
   - pyspark==3.2.*
 
   - pip:

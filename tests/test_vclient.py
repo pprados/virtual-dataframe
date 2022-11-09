@@ -1,10 +1,10 @@
 import os
+from unittest.mock import patch
 
 import pytest
 
 import virtual_dataframe.vclient as vclient
-import virtual_dataframe.vlocalcluster as vlocalcluster
-from virtual_dataframe import Mode, VDF_MODE
+from virtual_dataframe import Mode, VDF_MODE, vlocalcluster
 
 
 def test_panda():
@@ -32,20 +32,22 @@ def test_cudf():
 
 
 @pytest.mark.skipif(not VDF_MODE.name.startswith("dask"), reason="Invalid mode")
-def test_dask_debug():
+@patch('virtual_dataframe.vclient._ClientDummy')
+def test_dask_debug(mockClient):
     with vclient._new_VClient(
             mode=Mode.dask,
             env=dict(DEBUG="True"),
             address=None,
-    ) as client:
-        assert repr(client).startswith('<Client: in-process scheduler>')
-        client.shutdown()
+    ):
+        assert mockClient.called
+        assert mockClient.call_args == (('threads',), {})
+
 
 
 @pytest.mark.skipif(VDF_MODE != Mode.dask_cudf, reason="Invalid mode")
-def test_dask_cudf_implicit_cluster():
-    # Use implicit LocalCluster without parameters
-    from dask_cuda import LocalCUDACluster
+@patch('dask.distributed.Client')
+@patch('dask_cuda.LocalCUDACluster')
+def test_dask_cudf_implicit_cluster(mockClient,mockLocalCUDACluster):
     os.environ["DASK_LOCAL__SCHEDULER_PORT"] = "0"
     os.environ["DASK_LOCAL__DEVICE_MEMORY_LIMIT"] = "1g"
     import dask
@@ -54,15 +56,16 @@ def test_dask_cudf_implicit_cluster():
             mode=Mode.dask_cudf,
             env=dict(VDF_CLUSTER="dask://.local"),
             address=None,
-    ) as client:
-        assert isinstance(client.cluster, LocalCUDACluster)
-        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
+    ):
+        assert mockClient.called
+        assert mockLocalCUDACluster.called
 
 
 @pytest.mark.skipif(VDF_MODE != Mode.dask_cudf, reason="Invalid mode")
-def test_dask_cudf_with_local_cluster():
+@patch('dask.distributed.Client')
+@patch('dask_cuda.LocalCUDACluster')
+def test_dask_cudf_with_local_cluster(mockClient,mockLocalCUDACluster):
     # Use explicit LocalCudaCluster with parameters
-    from dask_cuda import LocalCUDACluster
     with \
             vlocalcluster._new_VLocalCluster(
                 mode=Mode.dask_cudf,
@@ -72,25 +75,28 @@ def test_dask_cudf_with_local_cluster():
                 mode=Mode.dask_cudf,
                 env={},
                 address=cluster,
-            ) as client:
-        assert isinstance(cluster, LocalCUDACluster)
-        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
+            ):
+        assert mockClient.called
+        assert mockLocalCUDACluster.called
 
 
 @pytest.mark.skipif(VDF_MODE != Mode.dask_cudf, reason="Invalid mode")
-def test_dask_cudf_with_default_cluster():
+@patch('dask.distributed.Client')
+@patch('dask_cuda.LocalCUDACluster')
+def test_dask_cudf_with_default_cluster(mockClient,mockLocalCUDACluster):
     with vclient._new_VClient(
             mode=Mode.dask_cudf,
             env=dict(),
             address=None,
-    ) as client:
-        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
-        client.shutdown()
+    ):
+        assert mockClient.called
+        assert mockLocalCUDACluster.called
 
 
 @pytest.mark.skipif(not VDF_MODE.name.startswith("dask"), reason="Invalid mode")
-def test_dask_implicit_cluster():
-    from dask.distributed import LocalCluster
+@patch('dask.distributed.Client')
+@patch('dask.distributed.LocalCluster')
+def test_dask_implicit_cluster(mockClient,mockLocalCluster):
     os.environ["DASK_LOCAL__SCHEDULER_PORT"] = "0"
     os.environ["DASK_LOCAL__DEVICE_MEMORY_LIMIT"] = "1g"
     import dask
@@ -100,14 +106,15 @@ def test_dask_implicit_cluster():
             env=dict(VDF_CLUSTER="dask://.local"),
             address=None,
     ) as client:
-        assert isinstance(client.cluster, LocalCluster)
-        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
-        client.shutdown()
+        assert mockClient.called
+        assert mockLocalCluster.called
+
 
 
 @pytest.mark.skipif(not VDF_MODE.name.startswith("dask"), reason="Invalid mode")
-def test_dask_with_local_cluster():  # TODO: Mock
-    from dask.distributed import LocalCluster
+@patch('dask.distributed.Client')
+@patch('dask.distributed.LocalCluster')
+def test_dask_with_local_cluster(mockClient,mockLocalCluster):
     with \
             vlocalcluster._new_VLocalCluster(
                 mode=Mode.dask,
@@ -117,98 +124,79 @@ def test_dask_with_local_cluster():  # TODO: Mock
                 mode=Mode.dask,
                 env={},
                 address=cluster,
-            ) as client:
-        assert isinstance(client.cluster, LocalCluster)
-        assert repr(client).startswith("<Client: 'tcp://127.0.0.1:")
-        client.shutdown()
+            ):
+        assert mockClient.called
+        assert mockLocalCluster.called
 
-
-# FIXME
-# def test_ray_no_cluster_modin(mocker):
-#     ray_init = mocker.patch("ray.init")
-#     with (vclient._new_VClient(mode=Mode.ray_modin, env=dict())) as client:
-#         ray_init.assert_called_with()
-#
-#
-# def test_ray_cluster_modin_localhost(mocker):
-#     ray_init = mocker.patch("ray.init")
-#     with (vclient._new_VClient(mode=Mode.ray_modin, env=dict(VDF_CLUSTER="ray://localhost"))) as client:
-#         ray_init.assert_called_with(address='ray://localhost:10001')
-
-
-# def test_ray_cluster_modin_auto(mocker):
-#     ray_init = mocker.patch("ray.init")
-#     with (vclient._new_VClient(mode=Mode.ray_modin, env=dict(VDF_CLUSTER="ray://auto"))) as client:
-#         ray_init.assert_called_with(address="auto")
 
 @pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
-def test_pyspark_implicit_cluster():
-    import pyspark
+@patch('pyspark.sql.session.SparkSession.Builder.config')
+def test_pyspark_implicit_cluster(mockBuilder):
     with vclient._new_VClient(
             mode=Mode.pyspark,
             address=None,
             env={},
-    ) as client:
-        assert isinstance(client.session, pyspark.sql.session.SparkSession)
-        assert repr(client) == "<Spark: 'local[*]'>"
-        client.shutdown()
+    ):
+        assert mockBuilder.called
+        assert mockBuilder.call_count == 1
 
 
 @pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
-def test_pyspark_address_cluster():
-    import pyspark
+@patch('pyspark.sql.session.SparkSession.Builder.config')
+def test_pyspark_address_cluster(mockBuilder):
     with vclient._new_VClient(
             mode=Mode.pyspark,
             address="local[*]",
             env={},
-    ) as client:
-        assert isinstance(client.session, pyspark.sql.session.SparkSession)
-        assert repr(client) == "<Spark: 'local[*]'>"
-        client.shutdown()
+    ):
+        assert mockBuilder.called
+        master_call=next(filter(lambda c: len(c.args) and c.args[0] == 'spark.master', mockBuilder.mock_calls)).args
+        assert master_call[1]=='local[*]'
 
 
 @pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
-def test_pyspark_local_cluster():
-    import pyspark
+@patch('pyspark.sql.session.SparkSession.Builder.config')
+def test_pyspark_local_cluster(mockBuilder):
     with vclient._new_VClient(
             mode=Mode.pyspark,
             address=None,
             env={"VDF_CLUSTER": "spark:local[*]"},
-    ) as client:
-        assert isinstance(client.session, pyspark.sql.session.SparkSession)
-        assert repr(client) == "<Spark: 'local[*]'>"
-        client.shutdown()
+    ):
+        assert mockBuilder.called
+        master_call=next(filter(lambda c: len(c.args) and c.args[0] == 'spark.master', mockBuilder.mock_calls)).args
+        assert master_call[1]=='local[*]'
 
 
 @pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
-def test_pyspark_dot_local_cluster():
-    import pyspark
+@patch('pyspark.sql.session.SparkSession.Builder.config')
+def test_pyspark_dot_local_cluster(mockBuilder):
     with vclient._new_VClient(
             mode=Mode.pyspark,
             address=None,
             env={"VDF_CLUSTER": "spark://.local"},
-    ) as client:
-        assert isinstance(client.session, pyspark.sql.session.SparkSession)
-        assert repr(client) == "<Spark: 'local[*]'>"
-        client.shutdown()
+    ):
+        assert mockBuilder.called
+        master_call=next(filter(lambda c: len(c.args) and c.args[0] == 'spark.master', mockBuilder.mock_calls)).args
+        assert master_call[1]=='local[*]'
 
 
 @pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
-def test_pyspark_master_env_cluster():
-    import pyspark
+@patch('pyspark.sql.session.SparkSession.Builder.config')
+def test_pyspark_master_env_cluster(mockBuilder):
     with vclient._new_VClient(
             mode=Mode.pyspark,
             address=None,
             env={
                 "SPARK_MASTER_HOST": "local[*]",
             },
-    ) as client:
-        assert isinstance(client.session, pyspark.sql.session.SparkSession)
-        assert repr(client) == "<Spark: 'local[*]'>"
-        client.shutdown()
+    ):
+        assert mockBuilder.called
+        master_call=next(filter(lambda c: len(c.args) and c.args[0] == 'spark.master', mockBuilder.mock_calls)).args
+        assert master_call[1]=='local[*]'
 
 @pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
-def test_pyspark_vlocalcluster():
+@patch('pyspark.sql.session.SparkSession.Builder.config')
+def test_pyspark_vlocalcluster(mockBuilder):
     with \
             vlocalcluster._new_VLocalCluster(
                 mode=Mode.pyspark,
@@ -220,8 +208,9 @@ def test_pyspark_vlocalcluster():
                 env={},
                 address=cluster,
             ) as client:
-        assert isinstance(cluster, vlocalcluster.SparkLocalCluster)
-        assert repr(client) == "<Spark: 'local[*]'>"
+        assert mockBuilder.called
+        master_call=next(filter(lambda c: len(c.args) and c.args[0] == 'spark.master', mockBuilder.mock_calls)).args
+        assert master_call[1]=='local[*]'
 
 def test_client_with_local_cluster():
     import virtual_dataframe

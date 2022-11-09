@@ -9,7 +9,7 @@ import warnings
 from functools import wraps
 from typing import Any, List, Tuple, Optional, Union, Callable, Dict, Type, Iterator, Iterable, Sequence, Hashable
 
-from pandas._typing import Axes, Dtype, IndexLabel, StorageOptions
+from pandas._typing import Axes, Dtype, IndexLabel
 
 from .env import VDF_MODE, Mode
 
@@ -1208,7 +1208,7 @@ if VDF_MODE == Mode.pyspark:
             merge_cells: bool = True,
             encoding: Optional[str] = None,
             inf_rep: str = "inf",
-            verbose: bool = True,
+            # FIXME: verbose: bool = True,
             freeze_panes: Optional[Tuple[int, int]] = None,
     ) -> None:
         if "to_excel" not in _printed_warning:

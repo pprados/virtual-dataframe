@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python>=3.9
   - virtual_dataframe
-  - openjdk==11.0.*
+  - openjdk==8.*
   - pyspark==3.2.*
 variables:
   VDF_MODE: pyspark

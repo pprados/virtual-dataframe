@@ -9,8 +9,6 @@ See README.md
 # @see https://blog.dask.org/2020/07/23/current-state-of-distributed-dask-clusters
 import logging
 import os
-import sys
-import urllib
 from pathlib import Path
 from typing import Any, Tuple, Dict, Optional, Union
 from urllib.parse import urlparse, ParseResult
