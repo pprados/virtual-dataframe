@@ -595,11 +595,9 @@ else
 	done
 	touch ".pytype/pyi/$(PRJ)"
 endif
-	touch .make-typing
 	# mypy
-	# TODO: find Pandas stub
 	# MYPYPATH=./stubs/ mypy "$(PRJ)"
-	# touch .make-mypy
+	touch .make-typing
 
 ## Check python typing
 typing: .make-typing
@@ -1016,7 +1014,7 @@ clean-venv : clean-$(VENV)
 .PHONY: clean
 ## Clean current environment
 clean: clean-pyc clean-build clean-notebooks conda-purge
-	@rm -Rf dask-worker-space
+	@rm -Rf dask-worker-space spark-warehouse site
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour faire le ménage du projet
@@ -1030,7 +1028,8 @@ clean-all: remove-kernel clean remove-venv
 # Utilisez 'NPROC=1 make unit-test' pour ne pas paralléliser les tests
 # Voir https://setuptools.readthedocs.io/en/latest/setuptools.html#test-build-package-and-run-a-unittest-suite
 ifeq ($(shell test $(NPROC) -gt 1; echo $$?),0)
-PYTEST_ARGS ?=-n $(NPROC)  --dist loadgroup
+#PYTEST_ARGS ?=-n $(NPROC)  --dist loadgroup
+PYTEST_ARGS ?=
 else
 PYTEST_ARGS ?=
 endif
@@ -1069,7 +1068,7 @@ unit-test: .make-unit-test
 .make-notebooks-test-%: $(REQUIREMENTS) $(PYTHON_TST) $(PYTHON_SRC) $(JUPYTER_DATA_DIR)/kernels/$(KERNEL) \
 	# notebooks/demo.ipynb
 	@$(VALIDATE_VENV)
-	echo -e "$(cyan)Run notebook tests for mode=$*...$(normal)"
+	echo -e "$(cyan)Run notebook tests for VDF_MODE=$*...$(normal)"
 	unset DASK_SCHEDULER_SERVICE_PORT
 	unset DASK_SCHEDULER_SERVICE_HOST
 	python $(PYTHON_ARGS) -m papermill \

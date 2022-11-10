@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 from pathlib import Path
+from time import sleep
 
 import numpy as np
 import pandas
@@ -9,6 +10,7 @@ import pytest
 import virtual_dataframe as vdf
 from virtual_dataframe import Mode, VDF_MODE
 from virtual_dataframe import VClient
+
 
 @pytest.fixture(scope="session")
 def vclient():
@@ -165,11 +167,10 @@ def test_DataFrame_to_read_csv():
 def test_DataFrame_to_read_excel():
     d = tempfile.mkdtemp()
     try:
-        # filename = f"{d}/test*.xlsx"  # FIXME
-        filename = f"{d}/test.xlsx"
+        filename = f"{d}/test*.xlsx"
 
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
-        df.to_excel(filename, index=False)  # FIXME
+        df.to_excel(filename, index=False)
         df2 = vdf.read_excel(filename, dtype=int)
         assert (df.sort_values("a").reset_index(drop=True).to_backend()
                 == df2.sort_values("a").reset_index(drop=True).to_backend()).all().to_backend().all()
@@ -207,7 +208,7 @@ def test_DataFrame_read_fwf():
     assert df.to_pandas().reset_index(drop=True).equals(df2.to_pandas().reset_index(drop=True))
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (Mode.dask_cudf,Mode.pyspark),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.dask_cudf, Mode.pyspark),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")

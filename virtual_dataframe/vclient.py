@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Any, Tuple, Dict, Optional, Union
 from urllib.parse import urlparse, ParseResult
 
+from anyio import sleep
+
 from .env import DEBUG, VDF_MODE, Mode, EnvDict
 from .vlocalcluster import params_cuda_local_cluster
 
@@ -146,7 +148,7 @@ if VDF_MODE == Mode.pyspark:
             return {key.strip(): value.strip() for key, value in ln if ln}
 
 
-    def get_spark_builder() -> Tuple[SparkSession.Builder, str]:
+    def get_spark_builder() -> Tuple[SparkSession.Builder, Optional[str]]:
         """
         Load config in this order, from:
         - ${SPARK_HOME}/conf/spark-default.conf
@@ -179,15 +181,6 @@ if VDF_MODE == Mode.pyspark:
         for k, v in conf.items():
             builder.config(k, v)
         return builder, conf.get("spark.master")
-
-
-    def get_spark_session(spark_session: Optional[SparkSession]) -> SparkSession:
-        if not spark_session:
-            spark_session = SparkSession.getActiveSession()
-            if not spark_session:
-                spark_session = get_spark_builder().getOrCreate()
-            spark_session.sparkContext.setLogLevel("OFF")
-        return spark_session
 
 
 class SparkClient:
@@ -240,7 +233,7 @@ class SparkClient:
         if self.session:
             self.session.__exit__(type, None, None)
             if self.address:
-                self.address.__exit__(type,None,None)
+                self.address.__exit__(type, None, None)
             self.address = None
             self.session = None
 
@@ -251,7 +244,7 @@ class SparkClient:
         return self.__str__()
 
     def shutdown(self) -> None:
-        self.__exit__(type,None,None)
+        self.__exit__(None, None, None)
 
 
 def _new_VClient(mode: Mode,
@@ -261,7 +254,7 @@ def _new_VClient(mode: Mode,
     if mode in (Mode.pandas, Mode.cudf, Mode.modin):
         return _ClientDummy("")
 
-    if address:  # FIXME in kwargs and isinstance(getattr(kwargs["address"], "scheduler_address", None), str):
+    if address:
 
         if mode in (Mode.dask, Mode.dask_cudf, Mode.dask_modin):
             import dask.distributed

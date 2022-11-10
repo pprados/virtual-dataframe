@@ -98,6 +98,7 @@ def test_DataFrame_MODE_dask():
         assert isinstance(input_df, dask.dataframe.DataFrame)
         assert isinstance(rc, pandas.DataFrame)
 
+
 @pytest.mark.skipif(vdf.VDF_MODE != vdf.Mode.cudf, reason="Incompatible mode")
 def test_DataFrame_MODE_cudf():
     if not USE_GPU:

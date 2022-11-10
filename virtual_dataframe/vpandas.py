@@ -645,7 +645,7 @@ if VDF_MODE in (Mode.modin, Mode.dask_modin):
             sort: bool = True,
             name: Optional[str] = None,
     ) -> _VDataFrame:
-        return data  # FIXME
+        return data
 
 
     # apply_rows is a special case of apply_chunks, which processes each of the DataFrame rows independently in parallel.
@@ -1024,7 +1024,7 @@ if VDF_MODE == Mode.pyspark:
             "sort",
             "name"
         ])
-    _cache = dict()  # type: Dict[Any, Any]
+    _cache = dict()
 
 
     def _compile(func: Callable, cache_key: Optional[str]):
@@ -1112,7 +1112,7 @@ if VDF_MODE == Mode.pyspark:
 
 
     def _persist(*collections, traverse=True, optimize_graph=True, scheduler=None, **kwargs):
-        return collections  # FIXME: cache ?
+        return collections  # TODO: cache ?
 
 
     # High level functions
@@ -1155,7 +1155,7 @@ if VDF_MODE == Mode.pyspark:
     # Add-on and patch of original dataframes and series
     _VDataFrame.apply_rows = _apply_rows
     _VDataFrame.apply_rows.__doc__ = _doc_apply_rows
-    _VDataFrame.to_backend = _VDataFrame.to_pandas  # FIXME
+    _VDataFrame.to_backend = _VDataFrame.to_pandas
     _VDataFrame.to_backend.__doc__ = _VDataFrame.to_pandas.__doc__
     _VDataFrame.persist = lambda self, **kwargs: self
     _VDataFrame.persist.__doc__ = _doc_VSeries_persist
@@ -1190,6 +1190,8 @@ if VDF_MODE == Mode.pyspark:
     _original_Dataframe_to_excel = BackEnd.DataFrame.to_excel
 
     _patch_pandas(BackEndDataFrame, BackEndSeries)
+
+
     # Special case for pyspark
 
     def _series_to_excel(
@@ -1208,7 +1210,6 @@ if VDF_MODE == Mode.pyspark:
             merge_cells: bool = True,
             encoding: Optional[str] = None,
             inf_rep: str = "inf",
-            # FIXME: verbose: bool = True,
             freeze_panes: Optional[Tuple[int, int]] = None,
     ) -> None:
         if "to_excel" not in _printed_warning:
@@ -1216,10 +1217,11 @@ if VDF_MODE == Mode.pyspark:
             warnings.warn(f"Function 'to_excel' not implemented in mode cudf, dask and dask_cudf",
                           RuntimeWarning, stacklevel=0)
         _ = locals().copy()
-        if "*" in str(_["excel_writer"]):
+        if isinstance(_["excel_writer"],str) and "*" in str(_["excel_writer"]):
             _["excel_writer"] = _["excel_writer"].replace("*", "")
         del _["self"]
         return _original_Dataframe_to_excel(self, **_)
+
 
     BackEnd.Series.to_excel = _series_to_excel
 
@@ -1229,7 +1231,7 @@ if VDF_MODE == Mode.pyspark:
             excel_writer,
             sheet_name: str = "Sheet1",
             na_rep: str = "",
-            float_format: Union[str,None] = None,
+            float_format: Union[str, None] = None,
             columns: Union[Sequence[Hashable], None] = None,
             header: Union[Sequence[Hashable], bool] = True,
             index: bool = True,
@@ -1249,10 +1251,11 @@ if VDF_MODE == Mode.pyspark:
             warnings.warn(f"Function 'to_excel' not implemented in mode cudf, dask and dask_cudf",
                           RuntimeWarning, stacklevel=0)
         _ = locals().copy()
-        if "*" in str(_["excel_writer"]):
+        if isinstance(_["excel_writer"],str) and "*" in str(_["excel_writer"]):
             _["excel_writer"] = _["excel_writer"].replace("*", "")
         del _["self"]
         return _original_Dataframe_to_excel(self, **_)
+
 
     BackEnd.DataFrame.to_excel = _dataframe_to_excel
 

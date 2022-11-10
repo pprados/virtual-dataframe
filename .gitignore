@@ -133,3 +133,4 @@ Dockerfile.standalone
 /stubs/
 .make-*
 dask-worker-space/
+spark-warehouse/

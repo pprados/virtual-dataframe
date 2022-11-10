@@ -36,13 +36,18 @@ class _LocalClusterDummy:
     def __repr__(self):
         return self.__str__()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type: None, value: None, traceback: None) -> None:
+        pass
 
 class SparkLocalCluster:
     def __init__(self, **kwargs):
         from pyspark.conf import SparkConf
 
         self.conf = SparkConf()
-        self.conf.set("spark.master","local[*]")  # Default value
+        self.conf.set("spark.master", "local[*]")  # Default value
         for k, v in kwargs.items():
             self.conf.set(k.replace("_", "."), v)
         self.session = None
@@ -56,7 +61,6 @@ class SparkLocalCluster:
     def __enter__(self):
         if not self.session:
             from pyspark.sql import SparkSession
-            # self.context = SparkContext(conf=self.conf)  # FIXME
             builder = SparkSession.builder
             for k, v in self.conf.getAll():
                 builder.config(k, v)
