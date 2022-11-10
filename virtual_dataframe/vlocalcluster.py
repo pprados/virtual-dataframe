@@ -1,7 +1,6 @@
-import os
 from typing import Any
 
-from .env import DEBUG, VDF_MODE, Mode, EnvDict
+from .env import VDF_MODE, Mode
 
 params_cuda_local_cluster = [
     "CUDA_VISIBLE_DEVICES",

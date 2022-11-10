@@ -1,4 +1,5 @@
 channels:
+  - local
   - conda-forge
   - defaults
 dependencies:
@@ -8,4 +9,4 @@ dependencies:
   - pyspark==3.2.*
 variables:
   VDF_MODE: pyspark
-  spark.master: local[*]
+  VDF_CLUSTER: spark://.local

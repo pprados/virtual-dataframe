@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -e
+
 NAME=vdf
 VDF_MODES=(all pandas modin cudf
   dask dask-local
   dask_modin dask_modin-local
   dask_cudf dask_cudf-local
   pyspark pyspark-local)
-DEFAULT_CHANNEL=${CHANNEL:--c rapidsai -c nvidia -c conda-forge}
 
 # usage ./build-conda-env.sh -h
 CONDA=conda
@@ -29,8 +29,10 @@ create() {
   for mode in ${VDF_MODES[@]}
   do
       echo -e "${bold}Create conda env $NAME-$mode...${normal}"
-      $CONDA create -y -q $CHANNEL $REF-$mode
+      set -x
+      $CONDA create -y -q $REF-$mode
       $CONDA env update $REF-$mode -f $BASE/virtual_dataframe-$mode.yml
+      set +x
       echo -e "${bold}Create conda env $NAME-$mode done${normal}"
   done
   $CONDA env list
@@ -38,9 +40,8 @@ create() {
 normal=$(tput sgr0)
 bold=$(tput bold)
 
-CHANNEL=$DEFAULT_CHANNEL
 do_remove=false
-if ! options=$(getopt -u -o p:c:n:h -l prefix,name,channel,remove,delete,help -- "$@")
+if ! options=$(getopt -u -o p:n:h -l prefix,name,remove,delete,help -- "$@")
 then
     # something went wrong, getopt will put out an error message for us
     exit 1
@@ -51,9 +52,8 @@ do
     case $1 in
     -n|--name) NAME="$2" ; shift ;;
     -p|--prefix) PREFIX="$2" ; shift ;;
-    -c|--channel) _CHANNEL+=("-c $2") ; shift;;
     --remove|--delete) do_remove=true ;;
-    -h|--help) echo "Usage: $(basename $0) [--delete] [-p <PREFIX> | -n <NAME>] [-c <channel>*] [<modes>*]"; exit 0 ;;
+    -h|--help) echo "Usage: $(basename $0) [--delete] [-p <PREFIX> | -n <NAME>] [<modes>*]"; exit 0 ;;
     (--) shift; break;;
     (-*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
     (*) break;;
@@ -62,16 +62,14 @@ do
 done
 shift $((OPTIND-1)) # remove parsed options and args from $@ list
 
-[[ ! -z "$_CHANNEL" ]] && CHANNEL=${_CHANNEL[@]}
 
 [[ $# != 0 ]] && VDF_MODES=($*)
-[[ -z "$CHANNEL" ]] && CHANNEL=$DEFAULT_CHANNEL
 if [[ "$PREFIX" == "" ]]; then
   REF="-n $NAME"
-  _CONDA_PREFIX=$CONDA_HOME/envs/$NAME
+#  _CONDA_PREFIX=$CONDA_HOME/envs/$NAME
 else
   REF="-p $PREFIX"
-  _CONDA_PREFIX=$PREFIX
+#  _CONDA_PREFIX=$PREFIX
 fi
 
 if [[ $do_remove == "true" ]] ;

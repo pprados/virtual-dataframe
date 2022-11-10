@@ -13,8 +13,6 @@ from pathlib import Path
 from typing import Any, Tuple, Dict, Optional, Union
 from urllib.parse import urlparse, ParseResult
 
-from anyio import sleep
-
 from .env import DEBUG, VDF_MODE, Mode, EnvDict
 from .vlocalcluster import params_cuda_local_cluster
 

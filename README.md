@@ -19,12 +19,13 @@ With some parameters and Virtual classes, it's possible to write a code, and exe
 To do that, we create some virtual classes, add some methods in others classes, etc.
 
 It's difficult to use a combinaison of framework, with the same classe name, with similare semantic, etc.
-For example, if you want to use in the same program, Dask, cudf, pandas and modin, you must manage:
+For example, if you want to use in the same program, Dask, cudf, pandas, modin and pyspark, you must manage:
 
 - `pandas.DataFrame`, `pandas,Series`
 - `modin.pandas.DataFrame`, `modin.pandas.Series`
 - `cudf.DataFrame`, `cudf.Series`
 - `dask.DataFrame`, `dask.Series`
+- `pyspark.pandas.DataFrame`, `pyspark.pandas.Series`
 
  With `cudf`, the code must call `.to_pandas()`. With dask, the code must call `.compute()`, can use `@delayed` or
 `dask.distributed.Client`. etc.

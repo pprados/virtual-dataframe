@@ -32,9 +32,9 @@ requirements:
 
   run:
     - python >=3.8
-    - python-dotenv
+    - python-dotenv >=0.20
     - pandas >=1.4
-    - GPUtil
+    - GPUtil >=1.4.0
 
 test:
   commands:

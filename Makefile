@@ -682,8 +682,10 @@ $(CONDA_BLD_DIR):
 	$(CONDA) index $(CONDA_BLD_DIR)
 
 DEBUG_CONDA=--dirty #--keep-old-work --debug --no-remove-work-dir --no-long-test-prefix --no-build-id
-${CONDA_BUILD_TARGET}: $(CONDA_PACKAGE) clean-build conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl $(CONDA_BLD_DIR) $(CONDA_PREFIX)/bin/conda-build \
-		conda-recipe/meta.template.yaml _rm_meta setup.* $(CONDA_RECIPE)/meta.yaml
+${CONDA_BUILD_TARGET}: $(REQUIREMENTS) $(CONDA_PACKAGE) clean-build conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl $(CONDA_BLD_DIR) \
+		$(CONDA_PREFIX)/bin/conda-build \
+		conda-recipe/meta.template.yaml _rm_meta setup.* \
+		$(CONDA_RECIPE)/meta.yaml
 	@$(VALIDATE_VENV)
 	$(CHECK_GIT_STATUS)
 	# cp -f --reflink=auto dist/*.whl conda-recipe/
@@ -716,15 +718,15 @@ conda-remove-envs:
 	done
 
 ## Build the conda packages
-conda-build: ${CONDA_BUILD_TARGET}
+conda-build: $(REQUIREMENTS) $(CONDA_PREFIX)/bin/conda-build ${CONDA_BUILD_TARGET}
 
 # Check conda recipe
-conda-check: $(CONDA_RECIPE)/meta.yaml
+conda-check: $(REQUIREMENTS) $(CONDA_RECIPE)/meta.yaml
 	@$(VALIDATE_VENV)
 	conda smithy recipe-lint $(CONDA_RECIPE)
 
 ## Purge the conda build process
-conda-purge: conda-remove-envs
+conda-purge: $(REQUIREMENTS) conda-remove-envs
 	@$(VALIDATE_VENV)
 	$(CONDA) build purge \
 		--output-folder ${CONDA_BLD_DIR}
@@ -733,7 +735,7 @@ conda-purge: conda-remove-envs
 
 
 ## Debug the conda build process (make OUTPUT_ID="*-$VDF_MODE" conda-debug)
-conda-debug: $(CONDA_RECIPE)/meta.yaml
+conda-debug: $(REQUIREMENTS) $(CONDA_RECIPE)/meta.yaml
 	@$(VALIDATE_VENV)
 	$(CHECK_GIT_STATUS)
 	# cp -f --reflink=auto dist/*.whl conda-recipe/
@@ -1028,8 +1030,7 @@ clean-all: remove-kernel clean remove-venv
 # Utilisez 'NPROC=1 make unit-test' pour ne pas paralléliser les tests
 # Voir https://setuptools.readthedocs.io/en/latest/setuptools.html#test-build-package-and-run-a-unittest-suite
 ifeq ($(shell test $(NPROC) -gt 1; echo $$?),0)
-#PYTEST_ARGS ?=-n $(NPROC)  --dist loadgroup
-PYTEST_ARGS ?=
+PYTEST_ARGS ?=-n $(NPROC)  --dist loadgroup
 else
 PYTEST_ARGS ?=
 endif

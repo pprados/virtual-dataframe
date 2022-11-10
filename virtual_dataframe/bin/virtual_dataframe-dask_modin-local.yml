@@ -1,4 +1,5 @@
 channels:
+  - local
   - conda-forge
   - defaults
 dependencies:

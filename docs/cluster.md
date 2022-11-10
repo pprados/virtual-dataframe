@@ -2,7 +2,10 @@
 To connect to a cluster, use `VDF_CLUSTER` with protocol, host and optionaly, the port.
 
 - `dask://locahost:8787`
-- or alternativelly, use `DASK_SCHEDULER_SERVICE_HOST` and `DASK_SCHEDULER_SERVICE_PORT`
+- `spark://locahost:7077`
+- or alternativelly,
+  - use `DASK_SCHEDULER_SERVICE_HOST` and `DASK_SCHEDULER_SERVICE_PORT`
+  - or `SPARK_MASTER_HOST` and `SPARK_MASTER_PORT`
 
 | VDF_MODE   | DEBUG | VDF_CLUSTER                 | Scheduler           |
 |------------|-------|-----------------------------|---------------------|
@@ -19,14 +22,14 @@ To connect to a cluster, use `VDF_CLUSTER` with protocol, host and optionaly, th
 | dask_modin | No    | dask://&lt;host>:&lt;port>  | Dask cluster        |
 | dask_cudf  | No    | dask://.local               | LocalCUDACluster    |
 | dask_cudf  | No    | dask://&lt;host>:&lt;port>  | Dask cluster        |
-| pyspark    | No    | spark://.local              | Spark local cluster |
 | pyspark    | No    | spark:local[*]              | Spark local cluster |
+| pyspark    | No    | spark://.local              | Spark local cluster |
 | pyspark    | No    | spark://&lt;host>:&lt;port> | Spark cluster       |
 
 
 The special *host name*, ends with `.local` can be use to start a `LocalCluster`, `LocalCUDACluster`
 or Spark `local[*]` when your program is started. An instance of local cluster is
-started and injected in the `Client`. Then, your code can not manage the local cluster.
+started and injected in the `Client`.
 
 Sample:
 ```
@@ -37,7 +40,7 @@ with VClient():
     pass
 ```
 
-If you want to manage the parameters of `Local(CUDA)Cluster`, use the alternative `VLocalCluster`.
+If you want to manage the parameters of `Local(CUDA)Cluster` or `SparkCluster`, use the alternative `VLocalCluster`.
 ```
 from virtual_dataframe import VClient,VLocalCluster
 
@@ -62,11 +65,26 @@ export DASK_LOCAL__SCHEDULER_PORT=0
 export DASK_LOCAL__DEVICE_MEMORY_LIMIT=5g
 ```
 ## Spark cluster
-To configure the spark cluster, use a file `spark.conf` with the
+To configure the spark cluster,
+- use a file `spark.conf` with the
 [Spark properties](https://spark.apache.org/docs/2.1.0/configuration.html#spark-properties)
-or use environment variables like `export spark.app.name=MyApp`.
 
-or for Domino datalab,
+- use environment variables like `export spark.app.name=MyApp`.
+
+- for `VLocalCluster`, use classical parameters, and replace dot to `_`:
+```
+from virtual_dataframe import VClient,VLocalCluster
+
+with VClient(VLocalCluster(
+        spark_app_name="MyApp",
+        spark_master="local[*]",
+    )):
+    # Now, use the scheduler
+    pass
+```
+
+
+- or for Domino datalab,
 ```shell
 export SPARK_MASTER_HOST=...
 export SPARK_MASTER_PORT=7077

@@ -10,6 +10,7 @@ PYTHON_VERSION = "3.8"
 
 # Run package dependencies
 requirements = [
+    'pandas>1.4',
     'python-dotenv>=0.20',
     'GPUtil>=1.4.0',
 ]

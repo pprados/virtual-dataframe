@@ -7,9 +7,9 @@ import os
 import sys
 import warnings
 from functools import wraps
-from typing import Any, List, Tuple, Optional, Union, Callable, Dict, Type, Iterator, Iterable, Sequence, Hashable
 
 from pandas._typing import Axes, Dtype, IndexLabel
+from typing import Any, List, Tuple, Optional, Union, Callable, Dict, Type, Iterator, Iterable, Sequence, Hashable
 
 from .env import VDF_MODE, Mode
 

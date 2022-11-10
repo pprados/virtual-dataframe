@@ -18,11 +18,11 @@ To reduce the confusion, you must use the classes `VDataFrame` and `VSeries` (Th
 These classes propose the methods `.to_pandas()` and `.compute()` for each version, but are the *real* classes
 of the selected framework.
 
-A new `@delayed` annotation can be use, with or without Dask.
-
 With some parameters, the real classes may be `pandas.DataFrame`, `modin.pandas.DataFrame`,
 `cudf.DataFrame`, `pyspark.pandas.DataFrame`, `dask.dataframe.DataFrame` with Pandas or
 `dask.dataframe.DataFrame` with cudf (with Pandas or cudf for each partition).
+
+A new `@delayed` annotation can be use, with or without Dask.
 
 To manage the initialisation of a Dask ou Spark, you must use the `VClient()`. This alias, can be automatically
 initialized with some environment variables.
@@ -74,6 +74,7 @@ But, you must use, only the common feature with all frameworks.
 After this effort, it's possible to compare the performance about the differents technologies,
 or propose a component, compatible with differents scenario.
 
-For the deployment of your project, you can select the best framework for your process (in a dockerfile?),
+For the deployment of your project, you can select the best framework for your process
+(in a dockerfile? or virtual environment),
 with only one ou two environment variables.
 
