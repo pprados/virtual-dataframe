@@ -67,6 +67,14 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test/">Test</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bench/">Bench</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../faq/">FAQ</a>
                 </li>
               </ul>
@@ -109,7 +117,10 @@
 <p>To connect to a cluster, use <code>VDF_CLUSTER</code> with protocol, host and optionaly, the port.</p>
 <ul>
 <li><code>dask://locahost:8787</code></li>
-<li>or alternativelly, use <code>DASK_SCHEDULER_SERVICE_HOST</code> and <code>DASK_SCHEDULER_SERVICE_PORT</code></li>
+<li><code>spark://locahost:7077</code></li>
+<li>or alternativelly,</li>
+<li>use <code>DASK_SCHEDULER_SERVICE_HOST</code> and <code>DASK_SCHEDULER_SERVICE_PORT</code></li>
+<li>or <code>SPARK_MASTER_HOST</code> and <code>SPARK_MASTER_PORT</code></li>
 </ul>
 <table>
 <thead>
@@ -199,32 +210,80 @@
 <td>dask://&lt;host&gt;:&lt;port&gt;</td>
 <td>Dask cluster</td>
 </tr>
+<tr>
+<td>pyspark</td>
+<td>No</td>
+<td>spark:local[*]</td>
+<td>Spark local cluster</td>
+</tr>
+<tr>
+<td>pyspark</td>
+<td>No</td>
+<td>spark://.local</td>
+<td>Spark local cluster</td>
+</tr>
+<tr>
+<td>pyspark</td>
+<td>No</td>
+<td>spark://&lt;host&gt;:&lt;port&gt;</td>
+<td>Spark cluster</td>
+</tr>
 </tbody>
 </table>
-<p>The special <em>host name</em>, ends with <code>.local</code> can be use to start a <code>LocalCluster</code> ( or <code>LocalCUDACluster</code> ) when
-your program is started. An instance of local cluster is started and injected in the <code>Client</code>.
-Then, your code can not manage the local cluster.</p>
+<p>The special <em>host name</em>, ends with <code>.local</code> can be use to start a <code>LocalCluster</code>, <code>LocalCUDACluster</code>
+or Spark <code>local[*]</code> when your program is started. An instance of local cluster is
+started and injected in the <code>Client</code>.</p>
+<p>Sample:</p>
+<pre><code>from virtual_dataframe import VClient
+
+with VClient():
+    # Now, use the scheduler
+    pass
+</code></pre>
+<p>If you want to manage the parameters of <code>Local(CUDA)Cluster</code> or <code>SparkCluster</code>, use the alternative <code>VLocalCluster</code>.</p>
+<pre><code>from virtual_dataframe import VClient,VLocalCluster
+
+with VClient(VLocalCluster(params=...)):
+    # Now, use the scheduler
+    pass
+</code></pre>
+<h2 id="dask-local-cluster">Dask local cluster</h2>
 <p>To update the parameters for the <em>implicit</em> <code>Local(CUDA)Cluster</code>, you can use the
 <a href="https://docs.dask.org/en/stable/configuration.html">Dask config file</a>.</p>
 <pre><code class="language-yaml">local:
   scheduler-port: 0
   device_memory_limit: 5G
 </code></pre>
-<p>or you can set some environment variables.</p>
+<p>or you can set some environment variables for dask,</p>
 <pre><code class="language-shell">export DASK_LOCAL__SCHEDULER_PORT=0
 export DASK_LOCAL__DEVICE_MEMORY_LIMIT=5g
 </code></pre>
-<p>Sample:</p>
-<pre><code>from virtual_dataframe import VClient
-
-with (VClient())
-    # Now, use the scheduler
-</code></pre>
-<p>If you want to manage the parameters of <code>Local(CUDA)Cluster</code>, use the alternative <code>VLocalCluster</code>.</p>
+<h2 id="spark-cluster">Spark cluster</h2>
+<p>To configure the spark cluster,
+- use a file <code>spark.conf</code> with the
+<a href="https://spark.apache.org/docs/2.1.0/configuration.html#spark-properties">Spark properties</a></p>
+<ul>
+<li>
+<p>use environment variables like <code>export spark.app.name=MyApp</code>.</p>
+</li>
+<li>
+<p>for <code>VLocalCluster</code>, use classical parameters, and replace dot to <code>_</code>:</p>
+</li>
+</ul>
 <pre><code>from virtual_dataframe import VClient,VLocalCluster
 
-with (VClient(VLocalCluster()))
+with VClient(VLocalCluster(
+        spark_app_name=&quot;MyApp&quot;,
+        spark_master=&quot;local[*]&quot;,
+    )):
     # Now, use the scheduler
+    pass
+</code></pre>
+<ul>
+<li>or for Domino datalab,</li>
+</ul>
+<pre><code class="language-shell">export SPARK_MASTER_HOST=...
+export SPARK_MASTER_PORT=7077
 </code></pre>
               
             </div>

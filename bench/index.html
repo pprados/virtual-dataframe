@@ -3,18 +3,18 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/pprados/virtual_dataframe/commands/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/pprados/virtual_dataframe/bench/" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Commands - virtual_dataframe</title>
+    <title>Bench - virtual_dataframe</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Commands";
-        var mkdocs_page_input_path = "commands.md";
-        var mkdocs_page_url = "/pprados/virtual_dataframe/commands/";
+        var mkdocs_page_name = "Bench";
+        var mkdocs_page_input_path = "bench.md";
+        var mkdocs_page_url = "/pprados/virtual_dataframe/bench/";
       </script>
     
     <script src="../js/jquery-3.6.0.min.js" defer></script>
@@ -68,8 +68,10 @@
                 <li class="toctree-l1"><a class="reference internal" href="../test/">Test</a>
                 </li>
               </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../bench/">Bench</a>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Bench</a>
+    <ul class="current">
+    </ul>
                 </li>
               </ul>
               <ul>
@@ -77,20 +79,10 @@
                 </li>
               </ul>
               <p class="caption"><span class="caption-text">Contribute</span></p>
-              <ul class="current">
+              <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../contribute/">Contribute</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Commands</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#commands">Commands</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#jupyter-commands">Jupyter commands</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#twine-commands">Twine commands</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#conda-commands">Conda commands</a>
-    </li>
-    </ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../commands/">Commands</a>
                   </li>
               </ul>
               <ul>
@@ -111,10 +103,9 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li>
-          <li>Contribute &raquo;</li>
-      <li>Commands</li>
+      <li>Bench</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/pprados/virtual_dataframe/edit/master/docs/commands.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/pprados/virtual_dataframe/edit/master/docs/bench.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -122,52 +113,21 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="make-commands">Make commands</h1>
-<p>The Makefile contains the central entry points for common tasks related to this project.</p>
-<h2 id="commands">Commands</h2>
-<ul>
-<li><code>make help</code> will print all majors target</li>
-<li><code>make configure</code>  will prepare the environment (conda venv, kernel, ...)</li>
-<li><code>make run-%</code> will invoke all script in lexical order from scripts/&lt;% dir&gt;</li>
-<li><code>make lint</code> will lint the code</li>
-<li><code>make test</code> will run all tests</li>
-<li><code>make typing</code> will check the typing</li>
-<li><code>make validate</code> will validate the version before commit</li>
-<li><code>make clean</code> will clean current environment</li>
-<li><code>make docs</code> will create and show a HTML documentation in 'build/'</li>
-<li><code>make dist</code> will create a full wheel distribution</li>
-</ul>
-<h2 id="jupyter-commands">Jupyter commands</h2>
-<ul>
-<li><code>make notebook</code> will start a jupyter notebook</li>
-<li><code>make remove-kernel</code> will remove the project's kernel</li>
-<li><code>make nb-run-%</code> will execute all notebooks</li>
-<li><code>make nb-convert</code> will convert all notebooks to python</li>
-<li><code>make clean-notebooks</code> will clean all datas in the notebooks</li>
-</ul>
-<h2 id="twine-commands">Twine commands</h2>
-<ul>
-<li><code>make check-twine</code> will check the packaging before publication</li>
-<li><code>make test-twine</code> will publish the package in <code>test.pypi.org &lt;https://test.pypi.org&gt;</code>_)</li>
-<li><code>make twine</code> will publish the package in <code>pypi.org &lt;https://pypi.org&gt;</code>_)</li>
-</ul>
-<h2 id="conda-commands">Conda commands</h2>
-<ul>
-<li><code>make conda-build</code> will build the conda package</li>
-<li><code>make conda-debug</code> will build the package in debug mode</li>
-<li><code>make conda-convert</code> will convert the package for all platform</li>
-<li><code>make conda-install</code> will install the conda package</li>
-<li><code>make conda-purge</code> will remove the build artefact</li>
-<li><code>make conda-create</code> will create a test environment for each mode</li>
-<li><code>make test-conda-forge</code> will test the conda-forge first step publication</li>
-<li><code>make conda-forge</code> will publish the project to conda-forge</li>
-</ul>
+                <h2 id="bench">Bench</h2>
+<p>To make a bench between framework, you must identify three step:
+- Time to <em>start local to cluster</em>, if any.
+- Time to compile the first time, the python code to C ou GPU
+- Time to run the performance tests</p>
+<p>Your recommandation it to run one time your test, and only after, run multiple time the
+same performance tests and calculate the
+<a href="https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-timeit">timeit</a>
+magic command.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../contribute/" class="btn btn-neutral float-left" title="Contribute"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../CHANGELOG/" class="btn btn-neutral float-right" title="Changelog">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../test/" class="btn btn-neutral float-left" title="Test"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../faq/" class="btn btn-neutral float-right" title="FAQ">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -194,10 +154,10 @@
         </span>
     
     
-      <span><a href="../contribute/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../test/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../CHANGELOG/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../faq/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

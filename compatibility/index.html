@@ -77,6 +77,14 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test/">Test</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bench/">Bench</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../faq/">FAQ</a>
                 </li>
               </ul>
@@ -181,6 +189,12 @@
 <tr>
 <td>Categories with strings not implemented</td>
 </tr>
+<tr>
+<td><br /><strong>pyspark</strong></td>
+</tr>
+<tr>
+<td><a href="https://spark.apache.org/docs/latest/api/python/reference/pyspark.pandas/index.html">Read this</a></td>
+</tr>
 </tbody>
 </table>
 <h3 id="file-format-compatibility">File format compatibility</h3>
@@ -197,11 +211,13 @@ if you use a function not compatible with others frameworks.</p>
 <th align="center">dask</th>
 <th align="center">dask_modin</th>
 <th align="center">dask_cudf</th>
+<th align="center">pyspark</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>vdf.read_csv</td>
+<td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -217,11 +233,13 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
+<td align="center">✓</td>
 </tr>
 <tr>
 <td>VSeries.to_csv</td>
 <td align="center">✓</td>
 <td align="center"></td>
+<td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -235,6 +253,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center">✓</td>
 </tr>
 <tr>
 <td>VDataFrame.to_excel</td>
@@ -244,6 +263,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center">✓</td>
 </tr>
 <tr>
 <td>VSeries.to_excel</td>
@@ -253,12 +273,14 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center">✓</td>
 </tr>
 <tr>
 <td>vdf.read_feather</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -271,6 +293,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr>
 <td>vdf.read_fwf</td>
@@ -279,6 +302,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
+<td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr>
@@ -289,6 +313,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr>
 <td>VDataFrame.to_hdf</td>
@@ -297,6 +322,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
+<td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr>
@@ -307,9 +333,11 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr>
 <td>vdf.read_json</td>
+<td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -325,9 +353,11 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
+<td align="center">✓</td>
 </tr>
 <tr>
 <td>VSeries.to_json</td>
+<td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -343,9 +373,11 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
+<td align="center">✓</td>
 </tr>
 <tr>
 <td>VDataFrame.to_orc</td>
+<td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -361,9 +393,11 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
+<td align="center">✓</td>
 </tr>
 <tr>
 <td>VDataFrame.to_parquet</td>
+<td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -379,6 +413,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center"></td>
+<td align="center">✓</td>
 </tr>
 <tr>
 <td>VDataFrame.to_sql</td>
@@ -388,6 +423,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center"></td>
+<td align="center">✓</td>
 </tr>
 <tr>
 <td>VSeries.to_sql</td>
@@ -397,6 +433,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center"></td>
+<td align="center">✓</td>
 </tr>
 </tbody>
 </table>
@@ -421,13 +458,13 @@ if you use a function not compatible with others frameworks.</p>
 <td>n-CPU</td>
 <td></td>
 <td>modin<br/>Limits+</td>
-<td>dask or dask_modin<br/>Limits:++</td>
+<td>dask, dask_modin or pyspark<br/>Limits:++</td>
 </tr>
 <tr>
 <td>GPU</td>
 <td>cudf<br/>Limits:++</td>
 <td></td>
-<td>dask_cudf<br/>Limits:+++</td>
+<td>dask_cudf, pyspark+spark-rapids<br/>Limits:+++</td>
 </tr>
 </tbody>
 </table>
@@ -455,13 +492,13 @@ Each cell is strongly compatible with the upper left part.</p>
 <td>n-CPU</td>
 <td></td>
 <td><strong>modin<br/>Limits+</strong></td>
-<td><strong>dask or dask_modin<br/>Limits:++</strong></td>
+<td><strong>dask, dask_modin or pyspark<br/>Limits:++</strong></td>
 </tr>
 <tr>
-<td>GPU</td>
-<td>cudf<br/>Limits:++</td>
+<td>~~GPU~~</td>
+<td>~~cudf<br/>Limits:++~~</td>
 <td></td>
-<td>dask_cudf<br/>Limits:+++</td>
+<td>~~dask_cudf, pyspark+spark-rapids<br/>Limits:+++~~</td>
 </tr>
 </tbody>
 </table>
@@ -491,13 +528,13 @@ Each cell is strongly compatible with the upper left part.</p>
 <td>n-CPU</td>
 <td></td>
 <td><strong>modin<br/>Limits+</strong></td>
-<td>dask or dask_modin<br/>Limits:++</td>
+<td>~~dask, dask_modin or pyspark<br/>Limits:++~~</td>
 </tr>
 <tr>
 <td>GPU</td>
 <td><strong>cudf<br/>Limits:++</strong></td>
 <td></td>
-<td>dask_cudf<br/>Limits:+++</td>
+<td>~~dask_cudf, pyspark+spark-rapids<br/>Limits:+++~~</td>
 </tr>
 </tbody>
 </table>
@@ -510,7 +547,7 @@ Each cell is strongly compatible with the upper left part.</p>
 <li><code>npartitions=...</code></li>
 </ul>
 <h3 id="need-all-possibility">Need all possibility?</h3>
-<p>To be compatible with all modes, develop for <code>dask_cudf</code> and use mode in <em>bold</em>..</p>
+<p>To be compatible with all modes, develop for <code>dask_cudf</code>.</p>
 <table>
 <thead>
 <tr>
@@ -523,21 +560,21 @@ Each cell is strongly compatible with the upper left part.</p>
 <tbody>
 <tr>
 <td>1-CPU</td>
-<td><strong>pandas<br/>Limits:+</strong></td>
+<td>pandas<br/>Limits:+</td>
 <td></td>
 <td></td>
 </tr>
 <tr>
 <td>n-CPU</td>
 <td></td>
-<td><strong>modin<br/>Limits+</strong></td>
-<td><strong>dask or dask_modin<br/>Limits:++</strong></td>
+<td>modin<br/>Limits+</td>
+<td>dask, dask_modin or pyspark<br/>Limits:++</td>
 </tr>
 <tr>
 <td>GPU</td>
-<td><strong>cudf<br/>Limits:++</strong></td>
+<td>cudf<br/>Limits:++</td>
 <td></td>
-<td><strong>dask_cudf<br/>Limits:+++</strong></td>
+<td><strong>dask_cudf</strong>, pyspark+spark-rapids<br/>Limits:+++</td>
 </tr>
 </tbody>
 </table>

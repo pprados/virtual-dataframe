@@ -67,6 +67,14 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="test/">Test</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="bench/">Bench</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="faq/">FAQ</a>
                 </li>
               </ul>
@@ -120,11 +128,11 @@ This framework unifies multiple Panda-compatible components, to allow the writin
 <p>To reduce the confusion, you must use the classes <code>VDataFrame</code> and <code>VSeries</code> (The prefix <code>V</code> is for <em>Virtual</em>).
 These classes propose the methods <code>.to_pandas()</code> and <code>.compute()</code> for each version, but are the <em>real</em> classes
 of the selected framework.</p>
-<p>A new <code>@delayed</code> annotation can be use, with or without Dask.</p>
 <p>With some parameters, the real classes may be <code>pandas.DataFrame</code>, <code>modin.pandas.DataFrame</code>,
-<code>cudf.DataFrame</code>, <code>dask.dataframe.DataFrame</code> with Pandas or
+<code>cudf.DataFrame</code>, <code>pyspark.pandas.DataFrame</code>, <code>dask.dataframe.DataFrame</code> with Pandas or
 <code>dask.dataframe.DataFrame</code> with cudf (with Pandas or cudf for each partition).</p>
-<p>To manage the initialisation of a Dask, you must use the <code>VClient()</code>. This alias, can be automatically
+<p>A new <code>@delayed</code> annotation can be use, with or without Dask.</p>
+<p>To manage the initialisation of a Dask ou Spark, you must use the <code>VClient()</code>. This alias, can be automatically
 initialized with some environment variables.</p>
 <pre><code class="language-python"># Sample of code, compatible Pandas, cudf, dask, dask_modin and dask_cudf
 from virtual_dataframe import *
@@ -202,16 +210,26 @@ with (VClient()):
 <td>VDF_MODE=dask_modin<br />VDF_CLUSTER=dask://...:ppp</td>
 <td>Dask with remote cluster and modin</td>
 </tr>
+<tr>
+<td>VDF_MODE=pyspark<br />VDF_CLUSTER=spark://.local</td>
+<td>PySpark with local cluster and modin</td>
+</tr>
+<tr>
+<td>VDF_MODE=pyspark<br />VDF_CLUSTER=spark://...:ppp</td>
+<td>PySpark with remote cluster and modin</td>
+</tr>
 </tbody>
 </table>
-<p>The real compatibilty between the differents simulation of Pandas, depends on the implement of the modin, cudf or dask.
-Sometime, you can use the <code>VDF_MODE</code> variable, to update some part of code, between the selected backend.</p>
+<p>The real compatibilty between the differents simulation of Pandas, depends on the implement of the modin, cudf, pyspark
+or dask. Sometime, you can use the <code>VDF_MODE</code> variable, to update some part of code, between
+the selected backend.</p>
 <p>It's not always easy to write a code <em>compatible</em> with all scenario, but it's possible.
 Generally, add just <code>.compute()</code> and/or <code>.to_pandas()</code> at the end of the ETL, is enough.
 But, you must use, only the common feature with all frameworks.
 After this effort, it's possible to compare the performance about the differents technologies,
 or propose a component, compatible with differents scenario.</p>
-<p>For the deployment of your project, you can select the best framework for your process (in a dockerfile?),
+<p>For the deployment of your project, you can select the best framework for your process
+(in a dockerfile? or virtual environment),
 with only one ou two environment variables.</p>
               
             </div>
@@ -263,6 +281,6 @@ with only one ou two environment variables.</p>
 </html>
 
 <!--
-MkDocs version : 1.4.1
-Build Date UTC : 2022-10-25 07:52:01.566199+00:00
+MkDocs version : 1.4.2
+Build Date UTC : 2022-11-10 14:43:08.581235+00:00
 -->

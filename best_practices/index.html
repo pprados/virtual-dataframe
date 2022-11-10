@@ -65,6 +65,14 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test/">Test</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bench/">Bench</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../faq/">FAQ</a>
                 </li>
               </ul>
@@ -119,6 +127,9 @@
 <li><strong>Avoid iterate over rows or columns of DataFrame:</strong> Use <code>apply()</code> or <code>apply_rows()</code> to distribute the code in
 the cluster and GPU.</li>
 </ul>
+<p>If you known the volume of the data is compatible with one node, you can convert a distributed dataframe to a local
+dataframe and continue to manipulate the data locally. Use the <code>.to_backend()</code> to convert a <code>Dataframe</code> to Pandas or
+cudf Dataframe.</p>
               
             </div>
           </div><footer>
