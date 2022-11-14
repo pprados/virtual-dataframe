@@ -113,7 +113,7 @@ def test_DataFrame_to_from_pandas():
 
 
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
-def test_Seriess_to_from_pandas():
+def test_Series_to_from_pandas():
     ps = pandas.Series([1, 2, 3, None, 4])
     s = vdf.from_pandas(ps, npartitions=2)
     assert s.to_pandas().equals(pandas.Series([1, 2, 3, None, 4]))
@@ -125,7 +125,7 @@ def test_DataFrame_compute():
     assert result.compute().to_pandas().equals(expected)
 
 
-def test_Seriess_compute():
+def test_Series_compute():
     expected = pandas.Series([1, 2, 3, None, 4])
     result = vdf.VSeries([1, 2, 3, None, 4])
     assert result.compute().to_pandas().equals(expected)
@@ -136,7 +136,7 @@ def test_DataFrame_visualize():
     assert result.visualize()
 
 
-def test_Seriess_visualize():
+def test_Series_visualize():
     result = vdf.VSeries([1, 2, 3, None, 4])
     assert result.visualize()
 
@@ -394,7 +394,7 @@ def test_DataFrame_to_from_numpy():
 
 
 @pytest.mark.filterwarnings("ignore:.*This may take some time.")
-def test_Seriess_to_from_numpy():
+def test_Series_to_from_numpy():
     s = vdf.VSeries([0.0, 1.0, 2.0, 3.0], npartitions=2)
     n = s.to_numpy()
     s2 = vdf.VSeries(n, npartitions=2)
@@ -421,7 +421,7 @@ def test_DataFrame_map_partitions():
     assert result.to_pandas().equals(expected)
 
 
-def test_Seriess_map_partitions():
+def test_Series_map_partitions():
     s = vdf.VSeries([0.0, 1.0, 2.0, 3.0],
                     npartitions=2
                     )

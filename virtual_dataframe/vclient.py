@@ -169,7 +169,7 @@ if VDF_MODE == Mode.pyspark:
         # Add env. variables
         conf = {**conf,
                 **dict(
-                    map(lambda t: (t[0][6:], t[1]), filter(lambda s: s[0].startswith("spark."), os.environ.items())))}
+                    map(lambda t: (t[0], t[1]), filter(lambda s: s[0].startswith("spark."), os.environ.items())))}
 
         app_name = conf.get("spark.app.name")
         if not app_name:

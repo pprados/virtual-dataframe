@@ -6,7 +6,8 @@ VDF_MODES=(all pandas modin cudf
   dask dask-local
   dask_modin dask_modin-local
   dask_cudf dask_cudf-local
-  pyspark pyspark-local)
+  pyspark pyspark-local
+  pyspark_gpu pyspark_gpu-local)
 
 # usage ./build-conda-env.sh -h
 CONDA=conda

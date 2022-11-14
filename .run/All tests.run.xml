@@ -4,7 +4,10 @@
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
-      <env name="VDF_MODE" value="dask" />
+      <env name="VDF_MODE" value="pyspark" />
+      <env name="spark.jars" value="rapids-4-spark_2.12-22.10.0.jar" />
+      <env name="spark.plugins" value="com.nvidia.spark.SQLPlugin" />
+      <env name="spark.rapids.sql.concurrentGpuTasks" value="1" />
     </envs>
     <option name="SDK_HOME" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
