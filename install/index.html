@@ -138,15 +138,17 @@
 <pre><code class="language-shell">$ build-conda-vdf-env --help
 </code></pre>
 <p>like</p>
-<pre><code class="language-shell">$ build-conda-vdf-env pandas cudf dask_cudf
+<pre><code class="language-shell">$ build-conda-vdf-env pandas cudf dask_cudf pyspark pyspark_gpu-local
 $ conda env list
 $ conda activate vdf-cudf
 $ conda activate vdf-dask_cudf-local
 </code></pre>
 <p>The <code>VDF_MODE</code> is set for each environment.
-If you create an environment for a <em>dask</em> framework, two environment will be created.
+If you create an environment for a <em>dask</em> or <em>spark</em> framework, two environment will be created.
 One <code>vdf-XXX</code> where you must set the <code>VDF_CLUSTER</code> variable and another <code>vdf-XXX-local</code> with a pre set
 of <code>VDF_CLUSTER=dask://.local</code> or <code>VDF_CLUSTER=spark://.local</code> to use a <em>local</em> cluster.</p>
+<p>For <code>pyspark_gpu</code>̀, somes environment variables will be set, to reference the
+<code>rapids-4-spark_2.12-22.10.0.jar</code> file.</p>
 <p>You can find all environement Yaml file <a href="https://github.com/pprados/virtual_dataframe/tree/develop/virtual_dataframe/bin">here</a>.</p>
 <p>You can remove all versions with:</p>
 <pre><code class="language-shell">$ ./build-conda-vdf-envs.sh --remove
