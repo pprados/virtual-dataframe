@@ -285,6 +285,15 @@ with VClient(VLocalCluster(
 <pre><code class="language-shell">export SPARK_MASTER_HOST=...
 export SPARK_MASTER_PORT=7077
 </code></pre>
+<h2 id="spark-cluster-gpu">Spark cluster GPU</h2>
+<p>To use the <a href="https://nvidia.github.io/spark-rapids/">Spark+rapids</a>, download the file
+<a href="https://repo1.maven.org/maven2/com/nvidia/rapids-4-spark_2.12/22.10.0/rapids-4-spark_2.12-22.10.0.jar"><code>rapids-4-spark_2.12-22.10.0.jar</code></a>
+(see <a href="https://nvidia.github.io/spark-rapids/docs/download.html">here</a>).</p>
+<p>Then, in the file <code>spark.conf</code>, add:</p>
+<pre><code>spark.jars=rapids-4-spark_2.12-22.10.0.jar
+spark.plugins=com.nvidia.spark.SQLPlugin
+spark.rapids.sql.concurrentGpuTasks=1
+</code></pre>
               
             </div>
           </div><footer>
