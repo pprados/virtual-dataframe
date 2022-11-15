@@ -840,7 +840,8 @@ test-conda-forge: _rm_meta $(CONDA_RECIPE)/meta.yaml
 ## First release in conda-forge. Add a version tag before use.
 conda-forge: _rm_meta $(CONDA_RECIPE)/meta.yaml
 	@PRJ_VERSION=v$(shell python setup.py --version)
-	git commit -m "Add a new version $$PRJ_VERSION for $(PRJ_PACKAGE)" $$RECIPE
+	git commit -a -m "Add a new version $$PRJ_VERSION for $(PRJ_PACKAGE)" $$RECIPE
+	git push
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour créer une distribution des binaires au format whl.

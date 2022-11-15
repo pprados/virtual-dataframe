@@ -1,6 +1,7 @@
 {% set name = "virtual_dataframe" %}
 {% set version = "<<VERSION>>" %}
 
+# For RC, see https://conda-forge.org/docs/maintainer/knowledge_base.html#creating-a-pre-release-build
 package:
   name: {{ name|lower }}
   version: {{ version }}
@@ -10,7 +11,7 @@ source:
   sha256: <<HASH>>
 
 build:
-  noarch: python  # Impossible with entry_points. See https://github.com/conda/conda-build/issues/2627
+  noarch: python
   number: 0
   script_env:
     - SETUPTOOLS_SCM_PRETEND_VERSION={{ version }}
