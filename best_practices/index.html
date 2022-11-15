@@ -122,16 +122,16 @@
 <li><strong>Stop using Dask when no longer needed:</strong> like when you are iterating on a much smaller amount of data.</li>
 <li><strong>Persist in dsitributed RAM when you can:</strong> in doing so, accessing RAM memory will be faster.</li>
 <li><strong>Processes and threads:</strong> be careful to separate numeric work from text data to maintain efficiency.</li>
-<li><strong>Load data with Dask</strong>: for instance, if you need to work with large Python objects, let Dask create them
-  (instead of creating them outside of Dask and then handing thom over the framework).</li>
+<li><strong>Load data with Dask or Spark</strong>: for instance, if you need to work with large Python objects, let Dask create them
+  (instead of creating them outside Dask or Spark and then handing thom over the framework).</li>
 <li><strong>Avoid using <code>VDataFrame</code> or <code>VSeries</code></strong> outside the unit tests</li>
 <li><strong>Avoid calling compute repeatedly:</strong> as this can lower performance.</li>
 <li><strong>Avoid iterate over rows or columns of DataFrame:</strong> Use <code>apply()</code> or <code>apply_rows()</code> to distribute the code in
 the cluster and GPU.</li>
 </ul>
-<p>If you known the volume of the data is compatible with one node, you can convert a distributed dataframe to a local
-dataframe and continue to manipulate the data locally. Use the <code>.to_backend()</code> to convert a <code>Dataframe</code> to Pandas or
-cudf Dataframe.</p>
+<p>If you know that the volume of data is compatible with one node, you can convert a distributed dataframe
+to <code>BackendDataFrame</code> and continue to manipulate the data locally.
+Use the <code>.to_backend()</code> to convert a <code>Dataframe</code> to Pandas or cudf Dataframe.</p>
               
             </div>
           </div><footer>

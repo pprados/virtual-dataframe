@@ -121,7 +121,7 @@ This framework unifies multiple Panda-compatible components, to allow the writin
 <p>With some parameters and Virtual classes, it's possible to write a code, and execute this code:</p>
 <ul>
 <li>With or without multicore</li>
-<li>With or without cluster (multi nodes)</li>
+<li>With or without cluster (multi nodes on Dask or Spark)</li>
 <li>With or without GPU</li>
 </ul>
 <p>To do that, we create some virtual classes, add some methods in others classes, etc.</p>
@@ -129,11 +129,15 @@ This framework unifies multiple Panda-compatible components, to allow the writin
 These classes propose the methods <code>.to_pandas()</code> and <code>.compute()</code> for each version, but are the <em>real</em> classes
 of the selected framework.</p>
 <p>With some parameters, the real classes may be <code>pandas.DataFrame</code>, <code>modin.pandas.DataFrame</code>,
-<code>cudf.DataFrame</code>, <code>pyspark.pandas.DataFrame</code>, <code>dask.dataframe.DataFrame</code> with Pandas or
+<code>cudf.DataFrame</code>,
+<code>pyspark.pandas.DataFrame</code> without GPU,
+<code>pyspark.pandas.DataFrame</code> with GPU,
+<code>dask.dataframe.DataFrame</code> with Pandas or
 <code>dask.dataframe.DataFrame</code> with cudf (with Pandas or cudf for each partition).</p>
 <p>A new <code>@delayed</code> annotation can be use, with or without Dask.</p>
-<p>To manage the initialisation of a Dask ou Spark, you must use the <code>VClient()</code>. This alias, can be automatically
-initialized with some environment variables.</p>
+<p>To manage the initialisation of a Dask ou Spark, you must use the <code>VClient()</code>,
+a connector to the cluster.
+This alias, can be automatically initialized with some environment variables.</p>
 <pre><code class="language-python"># Sample of code, compatible Pandas, cudf, dask, dask_modin and dask_cudf
 from virtual_dataframe import *
 
@@ -220,6 +224,7 @@ with (VClient()):
 </tr>
 </tbody>
 </table>
+<p><em>For pyspark with GPU, read <a href="cluster/">this</a>.</em></p>
 <p>The real compatibilty between the differents simulation of Pandas, depends on the implement of the modin, cudf, pyspark
 or dask. Sometime, you can use the <code>VDF_MODE</code> variable, to update some part of code, between
 the selected backend.</p>
@@ -231,6 +236,7 @@ or propose a component, compatible with differents scenario.</p>
 <p>For the deployment of your project, you can select the best framework for your process
 (in a dockerfile? or virtual environment),
 with only one ou two environment variables.</p>
+<p>With conda environment, you can use <a href="https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#setting-environment-variables">variables</a>.</p>
               
             </div>
           </div><footer>
@@ -282,5 +288,5 @@ with only one ou two environment variables.</p>
 
 <!--
 MkDocs version : 1.4.2
-Build Date UTC : 2022-11-14 13:44:58.910217+00:00
+Build Date UTC : 2022-11-15 09:47:24.029789+00:00
 -->

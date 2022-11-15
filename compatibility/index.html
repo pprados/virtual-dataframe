@@ -216,7 +216,7 @@ if you use a function not compatible with others frameworks.</p>
 </thead>
 <tbody>
 <tr>
-<td>vdf.read_csv</td>
+<td><strong>vdf.read_csv</strong></td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -226,7 +226,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 </tr>
 <tr>
-<td>VDataFrame.to_csv</td>
+<td><strong>VDataFrame.to_csv</strong></td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -236,7 +236,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 </tr>
 <tr>
-<td>VSeries.to_csv</td>
+<td><strong>VSeries.to_csv</strong></td>
 <td align="center">✓</td>
 <td align="center"></td>
 <td align="center">✓</td>
@@ -336,7 +336,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center"></td>
 </tr>
 <tr>
-<td>vdf.read_json</td>
+<td><strong>vdf.read_json</strong></td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -346,7 +346,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 </tr>
 <tr>
-<td>VDataFrame.to_json</td>
+<td><strong>VDataFrame.to_json</strong></td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -356,7 +356,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 </tr>
 <tr>
-<td>VSeries.to_json</td>
+<td><strong>VSeries.to_json</strong></td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -366,7 +366,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 </tr>
 <tr>
-<td>vdf.read_orc</td>
+<td><strong>vdf.read_orc</strong></td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -376,7 +376,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 </tr>
 <tr>
-<td>VDataFrame.to_orc</td>
+<td><strong>VDataFrame.to_orc</strong></td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -386,7 +386,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 </tr>
 <tr>
-<td>vdf.read_parquet</td>
+<td><strong>vdf.read_parquet</strong></td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -396,7 +396,7 @@ if you use a function not compatible with others frameworks.</p>
 <td align="center">✓</td>
 </tr>
 <tr>
-<td>VDataFrame.to_parquet</td>
+<td><strong>VDataFrame.to_parquet</strong></td>
 <td align="center">✓</td>
 <td align="center">✓</td>
 <td align="center">✓</td>
@@ -450,21 +450,21 @@ if you use a function not compatible with others frameworks.</p>
 <tbody>
 <tr>
 <td>1-CPU</td>
-<td>pandas<br/>Limits:+</td>
+<td>pandas<br/><em>Limits:+</em></td>
 <td></td>
 <td></td>
 </tr>
 <tr>
 <td>n-CPU</td>
 <td></td>
-<td>modin<br/>Limits+</td>
-<td>dask, dask_modin or pyspark<br/>Limits:++</td>
+<td>modin<br/><em>Limits+</em></td>
+<td>dask, dask_modin or pyspark<br/><em>Limits:++</em></td>
 </tr>
 <tr>
 <td>GPU</td>
-<td>cudf<br/>Limits:++</td>
+<td>cudf<br/><em>Limits:++</em></td>
 <td></td>
-<td>dask_cudf, pyspark+spark-rapids<br/>Limits:+++</td>
+<td>dask_cudf, pyspark+spark-rapids<br/><em>Limits:+++</em></td>
 </tr>
 </tbody>
 </table>
@@ -484,21 +484,21 @@ Each cell is strongly compatible with the upper left part.</p>
 <tbody>
 <tr>
 <td>1-CPU</td>
-<td><strong>pandas<br/>Limits:+</strong></td>
+<td><strong>pandas<br/><em>Limits:+</em></strong></td>
 <td></td>
 <td></td>
 </tr>
 <tr>
 <td>n-CPU</td>
 <td></td>
-<td><strong>modin<br/>Limits+</strong></td>
-<td><strong>dask, dask_modin or pyspark<br/>Limits:++</strong></td>
+<td><strong>modin<br/><em>Limits+</em></strong></td>
+<td><strong>dask, dask_modin or pyspark<br/><em>Limits:++</em></strong></td>
 </tr>
 <tr>
-<td>~~GPU~~</td>
-<td>~~cudf<br/>Limits:++~~</td>
+<td><em>GPU</em></td>
+<td><em>cudf<br/>Limits:++</em></td>
 <td></td>
-<td>~~dask_cudf, pyspark+spark-rapids<br/>Limits:+++~~</td>
+<td><em>dask_cudf, pyspark+spark-rapids<br/>Limits:+++</em></td>
 </tr>
 </tbody>
 </table>
@@ -520,21 +520,21 @@ Each cell is strongly compatible with the upper left part.</p>
 <tbody>
 <tr>
 <td>1-CPU</td>
-<td><strong>pandas<br/>Limits:+</strong></td>
+<td><strong>pandas<br/><em>Limits:+</em></strong></td>
 <td></td>
 <td></td>
 </tr>
 <tr>
 <td>n-CPU</td>
 <td></td>
-<td><strong>modin<br/>Limits+</strong></td>
-<td>~~dask, dask_modin or pyspark<br/>Limits:++~~</td>
+<td><strong>modin<br/><em>Limits+</em></strong></td>
+<td><em>dask, dask_modin or pyspark<br/>Limits:++</em></td>
 </tr>
 <tr>
 <td>GPU</td>
-<td><strong>cudf<br/>Limits:++</strong></td>
+<td><strong>cudf<br/><em>Limits:++</em></strong></td>
 <td></td>
-<td>~~dask_cudf, pyspark+spark-rapids<br/>Limits:+++~~</td>
+<td><em>dask_cudf, pyspark+spark-rapids<br/>Limits:+++</em></td>
 </tr>
 </tbody>
 </table>
@@ -560,21 +560,21 @@ Each cell is strongly compatible with the upper left part.</p>
 <tbody>
 <tr>
 <td>1-CPU</td>
-<td>pandas<br/>Limits:+</td>
+<td>pandas<br/><em>Limits:+</em></td>
 <td></td>
 <td></td>
 </tr>
 <tr>
 <td>n-CPU</td>
 <td></td>
-<td>modin<br/>Limits+</td>
-<td>dask, dask_modin or pyspark<br/>Limits:++</td>
+<td>modin<br/><em>Limits+</em></td>
+<td>dask, dask_modin or pyspark<br/><em>Limits:++</em></td>
 </tr>
 <tr>
 <td>GPU</td>
-<td>cudf<br/>Limits:++</td>
+<td>cudf<br/><em>Limits:++</em></td>
 <td></td>
-<td><strong>dask_cudf</strong>, pyspark+spark-rapids<br/>Limits:+++</td>
+<td><strong>dask_cudf</strong>, pyspark+spark-rapids<br/><em>Limits:+++</em></td>
 </tr>
 </tbody>
 </table>

@@ -184,7 +184,7 @@
 </tr>
 <tr>
 <td>VLocalCluster(...)</td>
-<td>Create a dask Local (CUDA) Cluster</td>
+<td>Create a dask Local Cluster (Dask, Cuda or Spark)</td>
 </tr>
 <tr>
 <td>BackEndDataFrame</td>
@@ -319,12 +319,12 @@ for an exemple of all API.</p>
 <ul>
 <li>the  <code>toPandas()</code> with Panda, return <code>self</code></li>
 <li><code>@delayed</code> use the dask <code>@delayed</code> or do nothing, and apply the code when the function was called.
-In the first case, the function return a part of the graph. In the second case, the function return immediately
+In the first case, the function return a part of the dask graph. In the second case, the function return immediately
 the result.</li>
-<li><code>read_csv("file*.csv")</code> read each file in parallele with dask by each worker,
-and read sequencially each file, and combine each dataframe, with a framework without distribution (pandas, modin, cudf)</li>
-<li><code>save_csv("file*.csv")</code> write each file in parallele with dask, and write one file <code>"file.csv"</code> (without the star)
-with a framework without distribution (pandas, modin, cudf)</li>
+<li><code>read_csv("file*.csv")</code> read each file in parallele with dask or spark by each worker,
+or read sequencially each file and combine each dataframe with a framework without distribution (pandas, modin, cudf)</li>
+<li><code>save_csv("file*.csv")</code> write each file in parallele with dask or spark,
+or write one file <code>"file.csv"</code> (without the star) with a framework without distribution (pandas, modin, cudf)</li>
 <li>...</li>
 </ul>
               
