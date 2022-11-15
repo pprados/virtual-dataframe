@@ -1,0 +1,10 @@
+channels:
+  - local
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.9
+  - virtual_dataframe
+  - pandas
+variables:
+  VDF_MODE: pandas

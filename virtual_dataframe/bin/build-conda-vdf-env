@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+set -e
+
+NAME=vdf
+VDF_MODES=(all pandas modin cudf
+  dask dask-local
+  dask_modin dask_modin-local
+  dask_cudf dask_cudf-local
+  pyspark pyspark-local
+  pyspark_gpu pyspark_gpu-local)
+
+# usage ./build-conda-env.sh -h
+CONDA=conda
+which mamba >/dev/null && CONDA=mamba
+
+BASE=$(dirname $0)
+
+normal=$(tput sgr0)
+bold=$(tput bold)
+
+remove() {
+  for mode in ${VDF_MODES[@]} ;
+  do
+    $CONDA env remove $REF-$mode || true
+  done
+
+}
+
+create() {
+  for mode in ${VDF_MODES[@]}
+  do
+      echo -e "${bold}Create conda env $NAME-$mode...${normal}"
+      set -x
+      $CONDA create -y -q $REF-$mode
+      $CONDA env update $REF-$mode -f $BASE/virtual_dataframe-$mode.yml
+      set +x
+      echo -e "${bold}Create conda env $NAME-$mode done${normal}"
+  done
+  $CONDA env list
+}
+normal=$(tput sgr0)
+bold=$(tput bold)
+
+do_remove=false
+if ! options=$(getopt -u -o p:n:h -l prefix,name,remove,delete,help -- "$@")
+then
+    # something went wrong, getopt will put out an error message for us
+    exit 1
+fi
+set -- $options
+while [ $# -gt 0 ]
+do
+    case $1 in
+    -n|--name) NAME="$2" ; shift ;;
+    -p|--prefix) PREFIX="$2" ; shift ;;
+    --remove|--delete) do_remove=true ;;
+    -h|--help) echo "Usage: $(basename $0) [--delete] [-p <PREFIX> | -n <NAME>] [<modes>*]";
+      echo "modes: " ${VDF_MODES[@]}
+      exit 0 ;;
+    (--) shift; break;;
+    (-*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
+    (*) break;;
+    esac
+    shift
+done
+shift $((OPTIND-1)) # remove parsed options and args from $@ list
+
+
+[[ $# != 0 ]] && VDF_MODES=($*)
+if [[ "$PREFIX" == "" ]]; then
+  REF="-n $NAME"
+#  _CONDA_PREFIX=$CONDA_HOME/envs/$NAME
+else
+  REF="-p $PREFIX"
+#  _CONDA_PREFIX=$PREFIX
+fi
+
+if [[ $do_remove == "true" ]] ;
+then
+  remove
+else
+  create
+fi

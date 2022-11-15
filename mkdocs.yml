@@ -1,0 +1,20 @@
+site_name: virtual_dataframe
+site_url: https://github.com/pprados/virtual_dataframe
+repo_url: https://github.com/pprados/virtual_dataframe
+theme: readthedocs
+nav:
+    - Home: index.md
+    - Cluster: cluster.md
+    - Install: install.md
+    - Compatibility: compatibility.md
+    - API: api.md
+    - Best Practice: best_practices.md
+    - Test: test.md
+    - Bench: bench.md
+    - FAQ: faq.md
+    - Contribute:
+      - Contribute: contribute.md
+      - Commands: commands.md
+    - Changelog: CHANGELOG.md
+
+

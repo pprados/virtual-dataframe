@@ -1,0 +1,45 @@
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pytables
+  #  - graphviz
+  - conda-build
+  - conda-verify
+  - conda-smithy
+  - gh
+  - boa
+  - pip
+  - modin
+  - dask
+  - openjdk==8.*
+  - pyspark==3.2.*
+
+  - pip:
+      - pytest>=2.8
+      - pytest-xdist
+      - pytest-mock
+      - pytest-cov>=3.0.0
+      - werkzeug==2.0
+      - papermill
+      - ipython
+
+      - pip
+      - twine
+      - flake8
+      - pylint
+      - daff
+      - pytype
+      - mypy
+      - pandas-stubs
+      - mkdocs
+
+      - jupyterlab
+      - jupyterlab-git
+      - dask-labextension
+      - voila
+
+      - graphviz
+      - openpyxl
+      - sqlalchemy
+      - tables

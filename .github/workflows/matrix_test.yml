@@ -1,0 +1,27 @@
+name: Test matrix with Python 3.9-3.9
+
+on:
+  push:
+  pull_request:
+    branches:
+      - develop
+      - release/**
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ 3.9 ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: make PYTHON_VERSION=${{ matrix.python-version }} configure
+        run: make PYTHON_VERSION=${{ matrix.python-version }} configure
+      - name: make test
+        run: |
+          source $CONDA/bin/activate virtual_dataframe
+          make PYTHON_VERSION=${{ matrix.python-version }} test

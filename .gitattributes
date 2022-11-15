@@ -1,0 +1,7 @@
+*.pkl filter=lfs diff=lfs merge=lfs -text lockable
+*.bin filter=lfs diff=lfs merge=lfs -text lockable
+*.jpg filter=lfs diff=lfs merge=lfs -text lockable
+*.jpeg filter=lfs diff=lfs merge=lfs -text lockable
+*.gif filter=lfs diff=lfs merge=lfs -text lockable
+*.png filter=lfs diff=lfs merge=lfs -text lockable
+*.ipynb filter=dropoutput_jupyter diff=dropoutput_jupyter -text

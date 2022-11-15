@@ -1,0 +1,14 @@
+channels:
+  - local
+  - rapidsai
+  - conda-forge
+  - defaults
+dependencies:
+  - python==3.9
+  - virtual_dataframe
+  - cupy==11.2.*
+  - cudf==22.10.*
+  - dask-cuda==22.10.*
+  - dask-cudf>=22.10.*
+variables:
+  VDF_MODE: cudf

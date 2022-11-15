@@ -1,0 +1,14 @@
+channels:
+  - local
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.9
+  - virtual_dataframe
+  - openjdk==8.*
+  - pyspark==3.2.*
+variables:
+  VDF_MODE: pyspark
+  spark.jars: rapids-4-spark_2.12-22.10.0.jar
+  spark.plugins: com.nvidia.spark.SQLPlugin
+  spark.rapids.sql.concurrentGpuTasks: 2

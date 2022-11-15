@@ -1,0 +1,4 @@
+(C) Philippe PRADOS 2022-07-25
+
+See Apache Licence (https://www.apache.org/licenses/LICENSE-2.0)
+
