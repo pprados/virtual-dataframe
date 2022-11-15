@@ -27,9 +27,9 @@ To connect to a cluster, use `VDF_CLUSTER` with protocol, host and optionaly, th
 | pyspark    | No    | spark://&lt;host>:&lt;port> | Spark cluster       |
 
 
-The special *host name*, ends with `.local` can be use to start a `LocalCluster`, `LocalCUDACluster`
-or Spark `local[*]` when your program is started. An instance of local cluster is
-started and injected in the `Client`.
+The special *host name*, ends with `.local` can be used to start a `LocalCluster`,
+`LocalCUDACluster` or Spark `local[*]` when your program is started.
+An instance of local cluster is started and injected in the `Client`.
 
 Sample:
 ```
@@ -40,7 +40,8 @@ with VClient():
     pass
 ```
 
-If you want to manage the parameters of `Local(CUDA)Cluster` or `SparkCluster`, use the alternative `VLocalCluster`.
+If you want to manage the parameters of `Local(CUDA)Cluster` or `SparkCluster`,
+use the alternative `VLocalCluster()`.
 ```
 from virtual_dataframe import VClient,VLocalCluster
 
@@ -50,7 +51,9 @@ with VClient(VLocalCluster(params=...)):
 ```
 
 ## Dask local cluster
-To update the parameters for the *implicit* `Local(CUDA)Cluster`, you can use the
+To update the parameters for the *implicit* `Local(CUDA)Cluster`,
+
+- you can use the
 [Dask config file](https://docs.dask.org/en/stable/configuration.html).
 
 ```yaml
@@ -59,11 +62,18 @@ local:
   device_memory_limit: 5G
 ```
 
-or you can set some environment variables for dask,
+- you can set some environment variables for dask,
 ```shell
 export DASK_LOCAL__SCHEDULER_PORT=0
 export DASK_LOCAL__DEVICE_MEMORY_LIMIT=5g
 ```
+
+- or for Domino datalab,
+```shell
+export DASK_SCHEDULER_SERVICE_HOST=...
+export DASK_SCHEDULER_SERVICE_PORT=7077
+```
+
 ## Spark cluster
 To configure the spark cluster,
 - use a file `spark.conf` with the
@@ -90,7 +100,7 @@ export SPARK_MASTER_HOST=...
 export SPARK_MASTER_PORT=7077
 ```
 
-## Spark cluster GPU
+## Spark cluster with GPU
 To use the [Spark+rapids](https://nvidia.github.io/spark-rapids/), download the file
 [`rapids-4-spark_2.12-22.10.0.jar`](https://repo1.maven.org/maven2/com/nvidia/rapids-4-spark_2.12/22.10.0/rapids-4-spark_2.12-22.10.0.jar)
 (see [here](https://nvidia.github.io/spark-rapids/docs/download.html)).

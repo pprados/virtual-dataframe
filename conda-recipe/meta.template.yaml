@@ -15,7 +15,7 @@ build:
   number: 0
   script_env:
     - SETUPTOOLS_SCM_PRETEND_VERSION={{ version }}
-  script: {{ PYTHON }} -m pip install --progress-bar off --quiet --no-input . -vv
+  script: {{ PYTHON }} -m pip install . -vv
   entry_points:
     - build-conda-vdf-env = virtual_dataframe.bin.__init__:main
 
@@ -25,12 +25,6 @@ requirements:
     - pip >=22.3
     - setuptools_scm
 
-  run_constrained:
-    - conda-build >=3
-    - conda-content-trust >=0.1.1
-    - conda-env >=2.6
-    - cytoolz >=0.8.1
-
   run:
     - python >=3.8
     - python-dotenv >=0.20
@@ -38,8 +32,12 @@ requirements:
     - GPUtil >=1.4.0
 
 test:
+  imports:
+    - virtual_dataframe
   commands:
-    - python -c "from virtual_dataframe import *"
+    - pip check
+  requires:
+    - pip
 
 about:
   home:    https://github.com/pprados/virtual_dataframe
@@ -47,7 +45,7 @@ about:
   license: Apache-2.0
   license_family: APACHE
   license_file: LICENSE.txt
-  summary: Bridge between pandas, cudf, modin, dask, dask-modin and dask-cudf
+  summary: Bridge between pandas, cudf, modin, dask, dask-modin, dask-cudf, spark or spark+rapids
 
 extra:
   recipe-maintainers:

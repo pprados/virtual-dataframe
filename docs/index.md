@@ -9,7 +9,7 @@ This framework unifies multiple Panda-compatible components, to allow the writin
 With some parameters and Virtual classes, it's possible to write a code, and execute this code:
 
 - With or without multicore
-- With or without cluster (multi nodes)
+- With or without cluster (multi nodes on Dask or Spark)
 - With or without GPU
 
 To do that, we create some virtual classes, add some methods in others classes, etc.
@@ -19,13 +19,17 @@ These classes propose the methods `.to_pandas()` and `.compute()` for each versi
 of the selected framework.
 
 With some parameters, the real classes may be `pandas.DataFrame`, `modin.pandas.DataFrame`,
-`cudf.DataFrame`, `pyspark.pandas.DataFrame`, `dask.dataframe.DataFrame` with Pandas or
+`cudf.DataFrame`,
+`pyspark.pandas.DataFrame` without GPU,
+`pyspark.pandas.DataFrame` with GPU,
+`dask.dataframe.DataFrame` with Pandas or
 `dask.dataframe.DataFrame` with cudf (with Pandas or cudf for each partition).
 
 A new `@delayed` annotation can be use, with or without Dask.
 
-To manage the initialisation of a Dask ou Spark, you must use the `VClient()`. This alias, can be automatically
-initialized with some environment variables.
+To manage the initialisation of a Dask ou Spark, you must use the `VClient()`,
+a connector to the cluster.
+This alias, can be automatically initialized with some environment variables.
 
 ```python
 # Sample of code, compatible Pandas, cudf, dask, dask_modin and dask_cudf
@@ -64,6 +68,8 @@ With this framework, you can select your environment, to run or debug your code.
 | VDF_MODE=pyspark<br />VDF_CLUSTER=spark://.local    | PySpark with local cluster and modin        |
 | VDF_MODE=pyspark<br />VDF_CLUSTER=spark://...:ppp   | PySpark with remote cluster and modin       |
 
+*For pyspark with GPU, read [this](cluster.md).*
+
 The real compatibilty between the differents simulation of Pandas, depends on the implement of the modin, cudf, pyspark
 or dask. Sometime, you can use the `VDF_MODE` variable, to update some part of code, between
 the selected backend.
@@ -78,3 +84,4 @@ For the deployment of your project, you can select the best framework for your p
 (in a dockerfile? or virtual environment),
 with only one ou two environment variables.
 
+With conda environment, you can use [variables](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#setting-environment-variables).

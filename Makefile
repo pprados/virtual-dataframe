@@ -476,12 +476,7 @@ configure: $(CONDA_HOME)/bin/mamba
 		--name "$(VENV)" \
 		-y $(CONDA_ARGS) \
 		python==$(PYTHON_VERSION)
-ifeq ($(USE_GPU),-gpu)
-	$(CONDA) env update \
-		--name "$(VENV)" \
-		$(CONDA_ARGS) \
-		--file environment-gpu.yml
-endif
+	touch environment-*.yml
 	@if [[ "base" == "$(CONDA_DEFAULT_ENV)" ]] || [[ -z "$(CONDA_DEFAULT_ENV)" ]] ; \
 	then echo -e "Use: $(cyan)conda activate $(VENV)$(normal)" ; fi
 
@@ -1024,7 +1019,7 @@ clean: clean-pyc clean-build clean-notebooks conda-purge
 .PHONY: clean-all
 # Clean all environments
 clean-all: remove-kernel clean remove-venv
-	@rm -Rf .pytest_cache .pytype
+	@rm -Rf .pytest_cache .pytype .pytest_cache dask-worker-space/
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour executer les tests unitaires et les tests fonctionnels.
@@ -1147,7 +1142,7 @@ test: .make-test
 # SNIPPET pour vérifier les TU et le recalcul de tout les notebooks et scripts.
 # Cette règle est invoqué avant un commit sur la branche master de git.
 .PHONY: validate
-.make-validate: .make-test clean-notebooks $(DATA)/raw .make-typing notebooks/* # build/html build/linkcheck
+.make-validate: $(REQUIREMENTS) .make-test clean-notebooks $(DATA)/raw .make-typing notebooks/* # build/html build/linkcheck
 	@date >.make-validate
 ## Validate the version before release
 validate: .make-validate

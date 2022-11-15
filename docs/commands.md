@@ -5,7 +5,6 @@ The Makefile contains the central entry points for common tasks related to this 
 ## Commands
 * `make help` will print all majors target
 * `make configure`  will prepare the environment (conda venv, kernel, ...)
-* `make run-%` will invoke all script in lexical order from scripts/<% dir>
 * `make lint` will lint the code
 * `make test` will run all tests
 * `make typing` will check the typing

@@ -25,7 +25,7 @@ setup(
     name='virtual_dataframe',
     author="Philippe Prados",
     author_email="github@prados.fr",
-    description="Bridge between pandas, cudf, dask dask-modin, and dask-cudf",
+    description="Bridge between pandas, cudf, modin, dask, dask-modin, dask-cudf, spark or spark+rapids",
     long_description=open('README.md', mode='r', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
     url="https://github.com/pprados/virtual_dataframe",

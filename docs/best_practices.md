@@ -8,14 +8,14 @@ For write a code, optimized with all frameworks, you must use some *best practic
 - **Stop using Dask when no longer needed:** like when you are iterating on a much smaller amount of data.
 - **Persist in dsitributed RAM when you can:** in doing so, accessing RAM memory will be faster.
 - **Processes and threads:** be careful to separate numeric work from text data to maintain efficiency.
-- **Load data with Dask**: for instance, if you need to work with large Python objects, let Dask create them
-  (instead of creating them outside of Dask and then handing thom over the framework).
+- **Load data with Dask or Spark**: for instance, if you need to work with large Python objects, let Dask create them
+  (instead of creating them outside Dask or Spark and then handing thom over the framework).
 - **Avoid using `VDataFrame` or `VSeries`** outside the unit tests
 - **Avoid calling compute repeatedly:** as this can lower performance.
 - **Avoid iterate over rows or columns of DataFrame:** Use `apply()` or `apply_rows()` to distribute the code in
 the cluster and GPU.
 
 
-If you known the volume of the data is compatible with one node, you can convert a distributed dataframe to a local
-dataframe and continue to manipulate the data locally. Use the `.to_backend()` to convert a `Dataframe` to Pandas or
-cudf Dataframe.
+If you know that the volume of data is compatible with one node, you can convert a distributed dataframe
+to `BackendDataFrame` and continue to manipulate the data locally.
+Use the `.to_backend()` to convert a `Dataframe` to Pandas or cudf Dataframe.

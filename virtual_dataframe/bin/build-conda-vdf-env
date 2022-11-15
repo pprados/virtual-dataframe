@@ -54,7 +54,9 @@ do
     -n|--name) NAME="$2" ; shift ;;
     -p|--prefix) PREFIX="$2" ; shift ;;
     --remove|--delete) do_remove=true ;;
-    -h|--help) echo "Usage: $(basename $0) [--delete] [-p <PREFIX> | -n <NAME>] [<modes>*]"; exit 0 ;;
+    -h|--help) echo "Usage: $(basename $0) [--delete] [-p <PREFIX> | -n <NAME>] [<modes>*]";
+      echo "modes: " ${VDF_MODES[@]}
+      exit 0 ;;
     (--) shift; break;;
     (-*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
     (*) break;;

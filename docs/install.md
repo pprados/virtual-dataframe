@@ -2,7 +2,7 @@
 
 ### Installing with Conda (recommended)
 ```shell
-$ conda install -c conda-forge 'virtual_dataframe'
+$ conda install -c conda-forge "virtual_dataframe"
 ```
 
 ### Installing with pip
@@ -37,11 +37,11 @@ One `vdf-XXX` where you must set the `VDF_CLUSTER` variable and another `vdf-XXX
 of `VDF_CLUSTER=dask://.local` or `VDF_CLUSTER=spark://.local` to use a *local* cluster.
 
 For `pyspark_gpu`̀, somes environment variables will be set, to reference the
-`rapids-4-spark_2.12-22.10.0.jar` file.
+`rapids-4-spark_2.12-22.10.0.jar` file. You have this file in the root of your project.
 
 You can find all environement Yaml file [here](https://github.com/pprados/virtual_dataframe/tree/develop/virtual_dataframe/bin).
 
-You can remove all versions with:
+You can remove all or specific versions with:
 ```shell
-$ ./build-conda-vdf-envs.sh --remove
+$ build-conda-vdf-envs --remove
 ```

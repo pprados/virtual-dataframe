@@ -1,6 +1,6 @@
 ## Test
 
-To test your code with all scenario, you can write a  ̀Makefile`:
+To test your code with all scenario, you can write a  `Makefile`:
 ```
 # Makefile
 export VDF_MODES=pandas cudf dask dask_modin dask_cudf pyspark
