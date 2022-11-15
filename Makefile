@@ -120,8 +120,7 @@ endif
 # avant le lancement du Makefile (`VENV=cntk_p36 make`)
 PRJ:=$(shell basename "$(shell pwd)")
 VENV ?= $(PRJ)
-REF_VENV=--name "$(VENV)"
-KERNEL ?=$(PRJ)
+KERNEL ?=$(VENV)
 REMOTE_GIT_URL?=$(shell git remote get-url origin)
 PRJ_URL=$(REMOTE_GIT_URL:.git=)
 PRJ_DOC_URL=$(PRJ_URL)
@@ -140,15 +139,14 @@ export DATA?=data
 
 
 # Conda environment
-# To optimize conda, export `CONDA_EXE=mamba` or  ̀make CONDA_EXE=mamba ...`
-CONDA_EXE?=$(shell which /usr/bin/conda)
+# To optimize conda, use mamba
+CONDA?=mamba
 export MAMBA_NO_BANNER=1
-CONDA_BASE:=$(shell $(CONDA_EXE) info --base)
+CONDA_BASE:=$(shell conda info --base)
 CONDA_PACKAGE:=$(CONDA_PREFIX)/lib/python$(PYTHON_VERSION)/site-packages
 CONDA_PYTHON:=$(CONDA_PREFIX)/bin/python
 CONDA_BLD_DIR?=$(CONDA_PREFIX)/conda-bld
 CONDA_CHANNELS?=-c rapidsai -c nvidia -c conda-forge
-CONDA_SOLVER?=--solver libmamba
 CONDA_ARGS?=
 CONDA_RECIPE=conda-recipe/staged-recipes/recipes/virtual_dataframe
 
@@ -166,10 +164,7 @@ JUPYTER_LABEXTENSIONS_DIR:=$(CONDA_PREFIX)/share/jupyter/labextensions
 _JUPYTER_LABEXTENSIONS:=$(foreach ext,$(JUPYTER_LABEXTENSIONS),$(JUPYTER_LABEXTENSIONS_DIR)/$(ext))
 
 # Project variable
-# Error pyspark pyspark_gpu dask_modin
-export VDF_MODES=pandas cudf dask dask_modin dask_cudf pyspark pyspark_gpu
-# all modes (with alias)
-# export VDF_MODES=pandas cudf dask modin pyspark pyspark_gpu dask_modin dask_array dask_cudf dask_cupy
+export VDF_MODES=pandas cudf dask dask_modin dask_cudf pyspark
 
 CHECK_GIT_STATUS=[[ `git status --porcelain` ]] && echo "$(yellow)Warning: All files are not commited$(normal)"
 
@@ -404,12 +399,6 @@ endif
 		--file environment-dev.yml
 	touch $(CONDA_PACKAGE)
 
-
-sqlite-jdbc-3.34.0.jar:
-	wget https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.34.0/sqlite-jdbc-3.34.0.jar
-
-rapids-4-spark_2.12-22.10.0.jar:
-	wget https://repo1.maven.org/maven2/com/nvidia/rapids-4-spark_2.12/22.10.0/rapids-4-spark_2.12-22.10.0.jar
 
 .PHONY: requirements dependencies
 REQUIREMENTS= $(CONDA_PACKAGE) $(PIP_PACKAGE) sqlite-jdbc-3.34.0.jar rapids-4-spark_2.12-22.10.0.jar \
