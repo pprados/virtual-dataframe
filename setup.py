@@ -10,7 +10,10 @@ PYTHON_VERSION = "3.8"
 
 # Run package dependencies
 requirements = [
-    'pandas>1.4',
+    'pandas>=1.4',
+    'pyarrow>=7.0.0',
+    'numba>=0.56.0',
+    'numpy>=1.22',
     'python-dotenv>=0.20',
     'GPUtil>=1.4.0',
 ]

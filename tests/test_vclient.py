@@ -1,5 +1,4 @@
 import os
-from time import sleep
 from unittest.mock import patch
 
 import pytest
@@ -44,7 +43,7 @@ def test_dask_debug(mockClient):
         assert mockClient.call_args == (('threads',), {})
 
 
-@pytest.mark.skipif(VDF_MODE != Mode.dask_cudf, reason="Invalid mode")
+@pytest.mark.skipif(VDF_MODE not in (Mode.dask_cudf,), reason="Invalid mode")
 @patch('dask.distributed.Client')
 @patch('dask_cuda.LocalCUDACluster')
 def test_dask_cudf_implicit_cluster(mockClient, mockLocalCUDACluster):
@@ -61,7 +60,7 @@ def test_dask_cudf_implicit_cluster(mockClient, mockLocalCUDACluster):
         assert mockLocalCUDACluster.called
 
 
-@pytest.mark.skipif(VDF_MODE != Mode.dask_cudf, reason="Invalid mode")
+@pytest.mark.skipif(VDF_MODE not in (Mode.dask_cudf,), reason="Invalid mode")
 @patch('dask.distributed.Client')
 @patch('dask_cuda.LocalCUDACluster')
 def test_dask_cudf_with_local_cluster(mockClient, mockLocalCUDACluster):
@@ -80,7 +79,7 @@ def test_dask_cudf_with_local_cluster(mockClient, mockLocalCUDACluster):
         assert mockLocalCUDACluster.called
 
 
-@pytest.mark.skipif(VDF_MODE != Mode.dask_cudf, reason="Invalid mode")
+@pytest.mark.skipif(VDF_MODE not in (Mode.dask_cudf,), reason="Invalid mode")
 @patch('dask.distributed.Client')
 @patch('dask_cuda.LocalCUDACluster')
 def test_dask_cudf_with_default_cluster(mockClient, mockLocalCUDACluster):
@@ -128,8 +127,8 @@ def test_dask_with_local_cluster(mockClient, mockLocalCluster):
         assert mockLocalCluster.called
 
 
-@pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
-@patch('pyspark.sql.session.SparkSession.Builder.config')
+@pytest.mark.skipif(VDF_MODE not in (Mode.pyspark, Mode.pyspark_gpu), reason="Invalid mode")
+@patch('pyspark.sql.session.SparkSession.Builder.getOrCreate')
 def test_pyspark_implicit_cluster(mockBuilder):
     with vclient._new_VClient(
             mode=Mode.pyspark,
@@ -140,7 +139,7 @@ def test_pyspark_implicit_cluster(mockBuilder):
         assert mockBuilder.call_count == 1
 
 
-@pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
+@pytest.mark.skipif(VDF_MODE not in (Mode.pyspark, Mode.pyspark_gpu), reason="Invalid mode")
 @patch('pyspark.sql.session.SparkSession.Builder.config')
 def test_pyspark_address_cluster(mockBuilder):
     with vclient._new_VClient(
@@ -153,7 +152,7 @@ def test_pyspark_address_cluster(mockBuilder):
         assert master_call[1] == 'local[*]'
 
 
-@pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
+@pytest.mark.skipif(VDF_MODE not in (Mode.pyspark, Mode.pyspark_gpu), reason="Invalid mode")
 @patch('pyspark.sql.session.SparkSession.Builder.config')
 def test_pyspark_local_cluster(mockBuilder):
     with vclient._new_VClient(
@@ -166,7 +165,7 @@ def test_pyspark_local_cluster(mockBuilder):
         assert master_call[1] == 'local[*]'
 
 
-@pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
+@pytest.mark.skipif(VDF_MODE not in (Mode.pyspark, Mode.pyspark_gpu), reason="Invalid mode")
 @patch('pyspark.sql.session.SparkSession.Builder.config')
 def test_pyspark_dot_local_cluster(mockBuilder):
     with vclient._new_VClient(
@@ -179,7 +178,7 @@ def test_pyspark_dot_local_cluster(mockBuilder):
         assert master_call[1] == 'local[*]'
 
 
-@pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
+@pytest.mark.skipif(VDF_MODE not in (Mode.pyspark, Mode.pyspark_gpu), reason="Invalid mode")
 @patch('pyspark.sql.session.SparkSession.Builder.config')
 def test_pyspark_master_env_cluster(mockBuilder):
     with vclient._new_VClient(
@@ -194,14 +193,14 @@ def test_pyspark_master_env_cluster(mockBuilder):
         assert master_call[1] == 'local[*]'
 
 
-@pytest.mark.skipif(VDF_MODE != Mode.pyspark, reason="Invalid mode")
+@pytest.mark.skipif(VDF_MODE not in (Mode.pyspark, Mode.pyspark_gpu), reason="Invalid mode")
 @patch('pyspark.sql.session.SparkSession.Builder.config')
-def test_pyspark_vlocalcluster(mockBuilder):
+@patch('pyspark.sql.session.SparkSession.Builder.getOrCreate')
+def test_pyspark_vlocalcluster(mockBuilder, mockBuilder2):
     with \
             vlocalcluster._new_VLocalCluster(
                 mode=Mode.pyspark,
                 spark_app_name="toto",
-                spark_master="local[*]",
             ) as cluster, \
             vclient._new_VClient(
                 mode=Mode.pyspark,
@@ -209,13 +208,12 @@ def test_pyspark_vlocalcluster(mockBuilder):
                 address=cluster,
             ) as client:
         assert mockBuilder.called
-        master_call = next(filter(lambda c: len(c.args) and c.args[0] == 'spark.master', mockBuilder.mock_calls)).args
-        assert master_call[1] == 'local[*]'
+        assert mockBuilder2.called
 
 
 def test_client_with_local_cluster():
     import virtual_dataframe
-    with virtual_dataframe.VLocalCluster() as local_cluster,\
+    with virtual_dataframe.VLocalCluster() as local_cluster, \
             virtual_dataframe.VClient(local_cluster):
         # Now, use the scheduler
         pass

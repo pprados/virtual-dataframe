@@ -134,3 +134,6 @@ Dockerfile.standalone
 .make-*
 dask-worker-space/
 spark-warehouse/
+virtual_dataframe/_version.py
+/sqlite-jdbc-3.34.0.jar
+/rapids-4-spark_2.12-22.10.0.jar

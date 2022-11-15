@@ -48,7 +48,7 @@ def _test_scenario_dataframe():
     return input_df, rc1
 
 
-@pytest.mark.skipif(vdf.VDF_MODE != vdf.Mode.pandas, reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE not in (vdf.Mode.pandas,), reason="Incompatible mode")
 def test_DataFrame_MODE_pandas():
     import pandas
     with (VClient()) as client:
@@ -89,8 +89,18 @@ def test_DataFrame_MODE_dask_modin():
 #       assert isinstance(rc, modin.pandas.DataFrame)
 #
 #
-@pytest.mark.skipif(vdf.VDF_MODE != vdf.Mode.dask, reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE not in (vdf.Mode.dask,), reason="Incompatible mode")
 def test_DataFrame_MODE_dask():
+    import dask
+    with (VClient()) as client:
+        input_df, rc = _test_scenario_dataframe()
+        assert SimpleDF({"data": [1, 2]}).to_pandas().equals(rc.to_pandas())
+        assert isinstance(input_df, dask.dataframe.DataFrame)
+        assert isinstance(rc, pandas.DataFrame)
+
+
+@pytest.mark.skipif(vdf.VDF_MODE not in (vdf.Mode.dask_array,), reason="Incompatible mode")
+def test_DataFrame_MODE_dask_array():
     import dask
     with (VClient()) as client:
         input_df, rc = _test_scenario_dataframe()
@@ -111,7 +121,7 @@ def test_DataFrame_MODE_cudf():
         assert isinstance(rc, cudf.DataFrame)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE != vdf.Mode.dask_cudf, reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE not in (vdf.Mode.dask_cudf,), reason="Incompatible mode")
 def test_DataFrame_MODE_dask_cudf():
     if not USE_GPU:
         pytest.skip("GPU Not found")

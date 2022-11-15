@@ -1,8 +1,11 @@
 ## Motivation
 
-With Panda like dataframe, do you want to create a code, and choose at the end, the framework to use?
-Do you want to be able to choose the best framework after simply performing performance measurements?
-This framework unifies multiple Panda-compatible components, to allow the writing of a single code, compatible with all.
+With Panda-like dataframe or numby-like array, do you want to create a code, and choose at the end, the framework
+to use?  Do you want to be able to choose the best framework after simply performing performance measurements?
+This framework unifies multiple Panda-compatible,
+to allow the writing of a single code, compatible with all.
+
+This project will *weave* your code with the selected framework, at runtime.
 
 ## Synopsis
 
@@ -55,6 +58,7 @@ With this framework, you can select your environment, to run or debug your code.
 | VDF_MODE=pandas                                     | Only Python with classical pandas           |
 | VDF_MODE=cudf                                       | Python with local cuDF (GPU)                |
 | VDF_MODE=dask                                       | Dask with local multiple process and pandas |
+| VDF_MODE=dask_array                                 | Alias of `dask`                               |
 | VDF_MODE=dask_cudf                                  | Dask with local multiple process and cuDF   |
 | VDF_MODE=dask<br />DEBUG=True                       | Dask with single thread and pandas          |
 | VDF_MODE=dask_cudf<br />DEBUG=True                  | Dask with single thread and cuDF            |
@@ -77,11 +81,16 @@ the selected backend.
 It's not always easy to write a code *compatible* with all scenario, but it's possible.
 Generally, add just `.compute()` and/or `.to_pandas()` at the end of the ETL, is enough.
 But, you must use, only the common feature with all frameworks.
+
 After this effort, it's possible to compare the performance about the differents technologies,
 or propose a component, compatible with differents scenario.
 
 For the deployment of your project, you can select the best framework for your process
 (in a dockerfile? or virtual environment),
 with only one ou two environment variables.
+May be, you can use *Modin* all the time, except for the end of the year periods, when the use of a GPU is preferable.
 
-With conda environment, you can use [variables](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#setting-environment-variables).
+With conda environment, you can use [variables](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#setting-environment-variables)
+to set the variables when you *activate* an environment.
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/pprados/virtual-dataframe?labpath=%2Fmain%2Fnotebooks)

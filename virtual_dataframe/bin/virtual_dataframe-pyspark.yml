@@ -3,9 +3,10 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python>=3.9
+  - python==3.9.*
   - virtual_dataframe
   - openjdk==8.*
   - pyspark==3.2.*
 variables:
   VDF_MODE: pyspark
+  SPARK_RAPIDS_SQL_ENABLED: false

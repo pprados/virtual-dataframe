@@ -2,8 +2,12 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - pandas>=1.4
+  - pyarrow>=7.0.0
+  - ipython
   - pytables
-  #  - graphviz
+  - python-graphviz
+  - conda-libmamba-solver
   - conda-build
   - conda-verify
   - conda-smithy
@@ -11,35 +15,32 @@ dependencies:
   - boa
   - pip
   - modin
-  - dask
+  - dask>=2022.8.0
   - openjdk==8.*
   - pyspark==3.2.*
+  - openpyxl
+  - sqlalchemy
+  - pytables
+
+  - twine
+  - flake8
+  - pylint
+  - pandas-stubs
+  - mkdocs
+  - papermill
+  - werkzeug==2.0
+
+  - jupyterlab
+  - jupyterlab-git
+  - dask-labextension
+  - voila
+
+  - pytest>=2.8
+  - pytest-xdist
+  - pytest-mock
+  - pytest-cov>=3.0.0
 
   - pip:
-      - pytest>=2.8
-      - pytest-xdist
-      - pytest-mock
-      - pytest-cov>=3.0.0
-      - werkzeug==2.0
-      - papermill
-      - ipython
-
       - pip
-      - twine
-      - flake8
-      - pylint
       - daff
       - pytype
-      - mypy
-      - pandas-stubs
-      - mkdocs
-
-      - jupyterlab
-      - jupyterlab-git
-      - dask-labextension
-      - voila
-
-      - graphviz
-      - openpyxl
-      - sqlalchemy
-      - tables

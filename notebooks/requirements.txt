@@ -1,0 +1,6 @@
+python>=3.9
+virtual_dataframe
+pandas>=1.3.0
+dask
+modin[dask]
+pyspark==3.2.*

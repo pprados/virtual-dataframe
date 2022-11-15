@@ -4,9 +4,13 @@
 
 ## Motivation
 
-With Panda-like dataframe, do you want to create a code, and choose at the end, the framework to use?
-Do you want to be able to choose the best framework after simply performing performance measurements?
-This framework unifies multiple Panda-compatible components, to allow the writing of a single code, compatible with all.
+With Panda-like dataframe or numby-like array, do you want to create a code, and choose at the end, the framework
+to use?  Do you want to be able to choose the best framework after simply performing performance measurements?
+This framework unifies multiple Panda-compatible,
+to allow the writing of a single code, compatible with all.
+
+Do you want to use different architectures at different times of the year to be "green" and cheaper?
+Do you want to use a GPU only for the black-friday?
 
 ## Synopsis
 
@@ -28,13 +32,12 @@ you must manage:
 - `dask.DataFrame`, `dask.Series`
 - `pyspark.pandas.DataFrame`, `pyspark.pandas.Series`
 
- With `cudf`, the code must call `.to_pandas()`. With dask, the code must call `.compute()`, can use `@delayed` or
-`dask.distributed.Client`. etc.
-
-We propose to replace all these classes and scenarios, with a *uniform model*,
+ We propose to replace all these classes and scenarios, with a *uniform model*,
 inspired by [dask](https://www.dask.org/) (the more complex API).
 Then, it is possible to write one code, and use it in differents environnements and frameworks.
 
 This project is essentially a back-port of *Dask+Cudf* to others frameworks.
 We try to normalize the API of all frameworks.
+This project will *weave* your code with the selected framework, at runtime.
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/pprados/virtual-dataframe?labpath=%2Fmain%2Fnotebooks)

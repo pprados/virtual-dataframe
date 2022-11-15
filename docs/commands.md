@@ -16,8 +16,6 @@ The Makefile contains the central entry points for common tasks related to this 
 ## Jupyter commands
 * `make notebook` will start a jupyter notebook
 * `make remove-kernel` will remove the project's kernel
-* `make nb-run-%` will execute all notebooks
-* `make nb-convert` will convert all notebooks to python
 * `make clean-notebooks` will clean all datas in the notebooks
 
 ## Twine commands
@@ -34,5 +32,3 @@ The Makefile contains the central entry points for common tasks related to this 
 * `make conda-create` will create a test environment for each mode
 * `make test-conda-forge` will test the conda-forge first step publication
 * `make conda-forge` will publish the project to conda-forge
-
-

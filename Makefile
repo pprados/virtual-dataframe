@@ -120,7 +120,8 @@ endif
 # avant le lancement du Makefile (`VENV=cntk_p36 make`)
 PRJ:=$(shell basename "$(shell pwd)")
 VENV ?= $(PRJ)
-KERNEL ?=$(VENV)
+REF_VENV=--name "$(VENV)"
+KERNEL ?=$(PRJ)
 REMOTE_GIT_URL?=$(shell git remote get-url origin)
 PRJ_URL=$(REMOTE_GIT_URL:.git=)
 PRJ_DOC_URL=$(PRJ_URL)
@@ -139,14 +140,15 @@ export DATA?=data
 
 
 # Conda environment
-# To optimize conda, use mamba
-CONDA?=mamba
+# To optimize conda, export `CONDA_EXE=mamba` or  ̀make CONDA_EXE=mamba ...`
+CONDA_EXE?=$(shell which /usr/bin/conda)
 export MAMBA_NO_BANNER=1
-CONDA_BASE:=$(shell conda info --base)
+CONDA_BASE:=$(shell $(CONDA_EXE) info --base)
 CONDA_PACKAGE:=$(CONDA_PREFIX)/lib/python$(PYTHON_VERSION)/site-packages
 CONDA_PYTHON:=$(CONDA_PREFIX)/bin/python
 CONDA_BLD_DIR?=$(CONDA_PREFIX)/conda-bld
 CONDA_CHANNELS?=-c rapidsai -c nvidia -c conda-forge
+CONDA_SOLVER?=--solver libmamba
 CONDA_ARGS?=
 CONDA_RECIPE=conda-recipe/staged-recipes/recipes/virtual_dataframe
 
@@ -164,7 +166,10 @@ JUPYTER_LABEXTENSIONS_DIR:=$(CONDA_PREFIX)/share/jupyter/labextensions
 _JUPYTER_LABEXTENSIONS:=$(foreach ext,$(JUPYTER_LABEXTENSIONS),$(JUPYTER_LABEXTENSIONS_DIR)/$(ext))
 
 # Project variable
-export VDF_MODES=pandas cudf dask dask_modin dask_cudf pyspark
+# Error pyspark pyspark_gpu dask_modin
+export VDF_MODES=pandas cudf dask dask_modin dask_cudf pyspark pyspark_gpu
+# all modes (with alias)
+# export VDF_MODES=pandas cudf dask modin pyspark pyspark_gpu dask_modin dask_array dask_cudf dask_cupy
 
 CHECK_GIT_STATUS=[[ `git status --porcelain` ]] && echo "$(yellow)Warning: All files are not commited$(normal)"
 
@@ -388,19 +393,26 @@ VALIDATE_VENV=$(CHECK_VENV)
 $(CONDA_PACKAGE): environment-gpu.yml environment-dev.yml
 	@$(VALIDATE_VENV)
 ifeq ($(USE_GPU),-gpu)
-	echo "$(green)  Install conda dependencies...$(normal)"
-	$(CONDA) env update \
-		-q $(CONDA_ARGS) \
+	echo "$(green)  Install conda GPU dependencies...$(normal)"
+	$(CONDA_EXE) env update \
+		-q $(CONDA_ARGS) $(CONDA_SOLVER) \
 		--file environment-gpu.yml
 endif
-	$(CONDA) env update \
-		-q $(CONDA_ARGS) \
+	echo "$(green)  Install conda dependencies...$(normal)"
+	$(CONDA_EXE) env update \
+		-q $(CONDA_ARGS) $(CONDA_SOLVER) \
 		--file environment-dev.yml
 	touch $(CONDA_PACKAGE)
 
 
+sqlite-jdbc-3.34.0.jar:
+	wget https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.34.0/sqlite-jdbc-3.34.0.jar
+
+rapids-4-spark_2.12-22.10.0.jar:
+	wget https://repo1.maven.org/maven2/com/nvidia/rapids-4-spark_2.12/22.10.0/rapids-4-spark_2.12-22.10.0.jar
+
 .PHONY: requirements dependencies
-REQUIREMENTS= $(CONDA_PACKAGE) $(PIP_PACKAGE) \
+REQUIREMENTS= $(CONDA_PACKAGE) $(PIP_PACKAGE) sqlite-jdbc-3.34.0.jar rapids-4-spark_2.12-22.10.0.jar \
 	.gitattributes
 requirements: $(REQUIREMENTS)
 dependencies: requirements
@@ -428,7 +440,7 @@ endif
 # Rule to check the good installation of python in Conda venv
 $(CONDA_PYTHON):
 	@$(VALIDATE_VENV)
-	$(CONDA) install -q "python=$(PYTHON_VERSION).*" -y $(CONDA_ARGS) $(CONDA_CHANNELS)
+	$(CONDA_EXE) install $(CONDA_ARGS) -q "python=$(PYTHON_VERSION).*" -y $(CONDA_CHANNELS)
 
 # Rule to update the current venv, with the dependencies describe in `setup.py`
 $(PIP_PACKAGE): $(CONDA_PYTHON) setup.py | .git # Install pip dependencies
@@ -464,27 +476,24 @@ $(JUPYTER_LABEXTENSIONS_DIR)/%:
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour préparer l'environnement d'un projet juste après un `git clone`
 .PHONY: configure
-$(CONDA_HOME)/bin/mamba:
-	@echo -e "$(green)Install mamba$(normal)"
-	conda install mamba -n base -c conda-forge -y
 
 ## Prepare the work environment (conda venv, kernel, ...)
-configure: $(CONDA_HOME)/bin/mamba
-	@if [[ "$(CONDA_DEFAULT_ENV)" != "base" ]] ; \
+configure: $(CONDA_EXE)
+	@if [[ "$(CONDA_DEFAULT_ENV)" == "$(VENV)" && "$(CONDA_DEFAULT_ENV)" != "" ]] ; \
       then echo -e "$(green)Use: $(cyan)conda deactivate $(VENV)$(green) before using 'make'$(normal)"; exit 1 ; fi
-	$(CONDA) create \
-		--name "$(VENV)" \
+	$(CONDA_EXE) create \
+		$(REF_VENV) \
 		-y $(CONDA_ARGS) \
 		python==$(PYTHON_VERSION)
 	touch environment-*.yml
-	@if [[ "base" == "$(CONDA_DEFAULT_ENV)" ]] || [[ -z "$(CONDA_DEFAULT_ENV)" ]] ; \
+	@if [[ "$(PRJ)" == "$(CONDA_DEFAULT_ENV)" ]] || [[ -z "$(CONDA_DEFAULT_ENV)" ]] ; \
 	then echo -e "Use: $(cyan)conda activate $(VENV)$(normal)" ; fi
 
 # ---------------------------------------------------------------------------------------
 .PHONY: remove-venv
 remove-$(VENV):
 	@$(DEACTIVATE_VENV)
-	$(CONDA) env remove --name "$(VENV)" -y 2>/dev/null
+	$(CONDA_EXE) env remove $(REF_VENV) -y 2>/dev/null
 	echo -e "Use: $(cyan)conda deactivate$(normal)"
 # Remove virtual environement
 remove-venv : remove-$(VENV)
@@ -499,7 +508,7 @@ ifeq ($(OFFLINE),True)
 	@echo -e "$(red)Can not upgrade virtual env in offline mode$(normal)"
 else
 	@$(VALIDATE_VENV)
-	$(CONDA) update --all $(CONDA_ARGS) $(CONDA_CHANNELS)
+	$(CONDA_EXE) update --all $(CONDA_ARGS) $(CONDA_SOLVER) $(CONDA_CHANNELS)
 	pip list --format freeze --outdated | sed 's/(.*//g' | xargs -r -n1 pip install $(EXTRA_INDEX) -U
 	@echo -e "$(cyan)After validation, upgrade the setup.py$(normal)"
 endif
@@ -670,11 +679,11 @@ CONDA_TOKEN?=""
 CONDA_BUILD_TARGET=${CONDA_BLD_DIR}/noarch/${PRJ}-*.tar.bz2
 
 $(CONDA_PREFIX)/bin/conda-build:
-	@$(CONDA) install conda-build conda-verify -y
+	@$(CONDA_EXE) install $(CONDA_ARGS) $(CONDA_SOLVER) conda-build conda-verify -y
 
 $(CONDA_BLD_DIR):
 	@mkdir -p $(CONDA_BLD_DIR)
-	$(CONDA) index $(CONDA_BLD_DIR)
+	$(CONDA_EXE) index $(CONDA_BLD_DIR)
 
 DEBUG_CONDA=--dirty #--keep-old-work --debug --no-remove-work-dir --no-long-test-prefix --no-build-id
 ${CONDA_BUILD_TARGET}: $(REQUIREMENTS) $(CONDA_PACKAGE) clean-build conda-purge dist/$(subst -,_,$(PRJ_PACKAGE))-*.whl $(CONDA_BLD_DIR) \
@@ -690,7 +699,7 @@ ${CONDA_BUILD_TARGET}: $(REQUIREMENTS) $(CONDA_PACKAGE) clean-build conda-purge 
 	# Note: due to a bug in conda-build, it's impossible to run the test with
 	# app packages at the time. So, I desactivate the tests now
 
-	$(CONDA) mambabuild \
+	$(CONDA_EXE) mambabuild \
 		$(CONDA_CHANNELS) \
 		${CONDA_ARGS} \
 		${DEBUG_CONDA} \
@@ -709,7 +718,7 @@ conda-remove-envs:
 	@$(VALIDATE_VENV)
 	for mode in $(VDF_MODES)
 	do
-		$(CONDA) env remove -n test-$$mode
+		$(CONDA_EXE) env remove -n test-$$mode
 	done
 
 ## Build the conda packages
@@ -723,7 +732,7 @@ conda-check: $(REQUIREMENTS) $(CONDA_RECIPE)/meta.yaml
 ## Purge the conda build process
 conda-purge: $(REQUIREMENTS) conda-remove-envs
 	@$(VALIDATE_VENV)
-	$(CONDA) build purge \
+	$(CONDA_EXE) build purge \
 		--output-folder ${CONDA_BLD_DIR}
 	rm -f conda-recipe/*.whl
 	echo -e "$(cyan)Conda cleaned$(normal)"
@@ -736,7 +745,7 @@ conda-debug: $(REQUIREMENTS) $(CONDA_RECIPE)/meta.yaml
 	# cp -f --reflink=auto dist/*.whl conda-recipe/
 	export GIT_DESCRIBE_TAG=$(shell python setup.py --version 2>/dev/null)
 	export WHEEL=$(subst -,_,$(PRJ_PACKAGE))-*.whl
-	$(CONDA) debug \
+	$(CONDA_EXE) debug \
 		$(CONDA_CHANNELS) \
 		${CONDA_ARGS} \
 		--output-id="$(OUTPUT_ID)" \
@@ -744,7 +753,7 @@ conda-debug: $(REQUIREMENTS) $(CONDA_RECIPE)/meta.yaml
 
 ## Convert the package for all platform
 conda-convert: ${CONDA_BUILD_TARGET} $(CONDA_RECIPE)/meta.yaml
-	@$(CONDA) convert \
+	@$(CONDA_EXE) convert \
 		--platform all \
 		-o dist/ \
 		${CONDA_BUILD_TARGET}
@@ -752,7 +761,8 @@ conda-convert: ${CONDA_BUILD_TARGET} $(CONDA_RECIPE)/meta.yaml
 ## Install the built conda package
 conda-install: ${CONDA_BUILD_TARGET} $(CONDA_RECIPE)/meta.yaml
 	@$(VALIDATE_VENV)
-	$(CONDA) install \
+	$(CONDA_EXE) install \
+		$(CONDA_ARGS) $(CONDA_SOLVER) \
 		-c ${CONDA_BLD_DIR} \
 		$(CONDA_CHANNELS) \
 		$(PRJ_PACKAGE)
@@ -760,7 +770,8 @@ conda-install: ${CONDA_BUILD_TARGET} $(CONDA_RECIPE)/meta.yaml
 ## Install a specific version of conda package
 conda-install-%: ${CONDA_BUILD_TARGET} $(CONDA_RECIPE)/meta.yaml
 	@$(CHECK_GIT_STATUS)
-	$(CONDA) install \
+	$(CONDA_EXE) install \
+		$(CONDA_ARGS) $(CONDA_SOLVER) \
 		-c file://${PWD}/${CONDA_BLD_DIR} $(CONDA_CHANNELS) ${CONDA_ARGS} \
 		-y \
 		${PRJ}-$*
@@ -770,11 +781,11 @@ conda-create: $(CONDA_RECIPE)/meta.yaml # ${CONDA_BUILD_TARGET}
 	@$(VALIDATE_VENV)
 	for mode in $(VDF_MODES)
 	do
-		$(CONDA) create -y -n test-$$mode $(CONDA_ARGS) \
+		$(CONDA_EXE) create -y -n test-$$mode $(CONDA_ARGS) $(CONDA_SOLVER) \
 		  -c file://${PWD}/${CONDA_BLD_DIR} $(CONDA_CHANNELS)\
 		  virtual_dataframe-$$mode
 		CONDA_PREFIX=$(CONDA_HOME)/envs/test-$$mode \
-		$(CONDA) env config vars set VDF_MODE=$$mode
+		$(CONDA_EXE) env config vars set VDF_MODE=$$mode
 	done
 
 # ---------------------------------------------------------------------------------------
@@ -1001,7 +1012,7 @@ clean-pip:
 # SNIPPET pour nettoyer complètement l'environnement Conda
 .PHONY: clean-venv clean-$(VENV)
 clean-$(VENV): remove-venv
-	@$(CONDA) create -y -q -n $(VENV) $(CONDA_ARGS) $(CONDA_CHANNELS)
+	@$(CONDA_EXE) create -y -q $(VENV) $(CONDA_ARGS) $(CONDA_SOLVER) $(CONDA_CHANNELS)
 	touch setup.py
 	echo -e "$(yellow)Warning: Conda virtualenv $(VENV) is empty.$(normal)"
 # Set the current VENV empty
@@ -1047,10 +1058,13 @@ unit-test-%: $(REQUIREMENTS)
 
 ifneq ($(USE_GPU),-gpu)
 unit-test-cudf:
-	@echo -e "$(red)Ignore notebook with VDF_MODE=cudf$(normal)"
+	@echo -e "$(red)Ignore notebook with VDF_MODE=$*$(normal)"
 
 unit-test-dask_cudf:
-	@echo -e "$(red)Ignore notebook with VDF_MODE=dask_cudf$(normal)"
+	@echo -e "$(red)Ignore notebook with VDF_MODE=$*$(normal)"
+
+unit-test-pyspark_gpu:
+	@echo -e "$(red)Ignore notebook with VDF_MODE=$*$(normal)"
 endif
 
 .PHONY: unit-test
@@ -1073,7 +1087,7 @@ unit-test: .make-unit-test
 		--log-level ERROR \
 		--no-report-mode \
 		-p mode $* \
-		notebooks/demo.ipynb \
+		notebooks/demo_pandas.ipynb \
 		/dev/null 2>&1 | grep -v -e "the file is not specified with any extension" -e " *warnings.warn("
 	date >.make-notebooks-test-$*
 
@@ -1088,6 +1102,9 @@ ifneq ($(USE_GPU),-gpu)
 
 .make-notebooks-test-dask_cudf:
 	@echo -e "$(red)Ignore VDF_MODE=dask_cudf$(normal)"
+
+.make-notebooks-test-pyspark_gpu:
+	@echo -e "$(red)Ignore VDF_MODE=pyspark_gpu$(normal)"
 endif
 
 .PHONY: notebooks-test-all

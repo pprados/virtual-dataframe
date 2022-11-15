@@ -29,7 +29,7 @@ requirements:
     - python >=3.8
     - python-dotenv >=0.20
     - pandas >=1.4
-    - GPUtil >=1.4.0
+    - gputil >=1.4.0
 
 test:
   imports:

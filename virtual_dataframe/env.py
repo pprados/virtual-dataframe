@@ -17,9 +17,6 @@ if sys.version_info.major == 3 and sys.version_info.minor >= 9:
 else:
     EnvDict = Dict[str, str]
 
-# If GPU detected, set to True
-# If GPU detected and USE_GPU=No, set to False,
-# else set to False
 from enum import Enum
 
 
@@ -29,6 +26,8 @@ class Mode(Enum):
     dask = "dask"
     modin = "modin"
     pyspark = "pyspark"
+    pyspark_gpu = "pyspark_gpu"
+    dask_array = "dask_array"  # Alias of dask
     dask_modin = "dask_modin"
     # ray_modin = "ray_modin"
     dask_cudf = "dask_cudf"
@@ -43,9 +42,14 @@ def _check_cuda() -> bool:
     #                                     f"{os.environ.get('LD_LIBRARY_PATH','')}"
     # assert 'LD_LIBRARY_PATH' in os.environ, "LD_LIBRARY_PATH must be set Nvidia .so files"
     import GPUtil
+    if os.environ.get("USE_GPU", "").lower() in ("no", "false"):
+        return False
     return len(GPUtil.getAvailable()) > 0
 
 
+# If GPU detected, set to True
+# If GPU detected and USE_GPU=No, set to False,
+# else set to False
 USE_GPU = _check_cuda()
 
 # Default is pandas

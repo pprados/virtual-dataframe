@@ -12,7 +12,7 @@ VDF_MODES=(all pandas modin cudf
 # usage ./build-conda-env.sh -h
 CONDA=conda
 which mamba >/dev/null && CONDA=mamba
-
+PYTHON_VERSION=3.9
 BASE=$(dirname $0)
 
 normal=$(tput sgr0)
@@ -31,7 +31,7 @@ create() {
   do
       echo -e "${bold}Create conda env $NAME-$mode...${normal}"
       set -x
-      $CONDA create -y -q $REF-$mode
+      $CONDA create -y -q $REF-$mode python=${PYTHON_VERSION}
       $CONDA env update $REF-$mode -f $BASE/virtual_dataframe-$mode.yml
       set +x
       echo -e "${bold}Create conda env $NAME-$mode done${normal}"

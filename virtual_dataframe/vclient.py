@@ -34,11 +34,11 @@ def _analyse_cluster_url(mode: Mode, env) -> Tuple[ParseResult, Optional[str], i
     else:
         vdf_cluster = env.get("VDF_CLUSTER", None)
     if not vdf_cluster:
-        if mode in (Mode.dask, Mode.dask_modin, Mode.dask_cudf):
+        if mode in (Mode.dask, Mode.dask_array, Mode.dask_modin, Mode.dask_cudf,):
             vdf_cluster = f"{Mode.dask.name}://threads"
         # elif mode == Mode.ray_modin:
         #     vdf_cluster = "ray://"
-        elif mode == Mode.pyspark:
+        elif mode in (Mode.pyspark, Mode.pyspark_gpu):
             vdf_cluster = "spark://.local"
         else:
             vdf_cluster = ""
@@ -134,16 +134,34 @@ _params_local_cuda_cluster = _params_local_cluster + [
     "scheduler_sync_interval",
 ]
 
-if VDF_MODE == Mode.pyspark:
+
+def _read_properties(default_conf: Path) -> Dict[str, str]:
+    with open(default_conf) as f:
+        ln = [line.split("=", 1) for line in f.readlines() if line.strip() and not line.startswith("#")]
+        return {key.strip(): value.strip().strip('"') for key, value in ln if ln}
+
+
+def get_spark_conf() -> Dict[str, str]:
+    conf = {}
+    global_default_conf = Path(os.environ.get("SPARK_HOME", "."), "conf/spark-defaults.conf")
+    if global_default_conf.exists():
+        conf = {**conf, **_read_properties(global_default_conf)}
+
+    default_conf = Path("./spark.conf")
+    if default_conf.exists():
+        conf = {**conf, **_read_properties(default_conf)}
+
+    # Add env. variables
+    conf = {**conf,
+            **dict(
+                map(lambda t: (t[0], t[1]), filter(lambda s: s[0].startswith("spark."), os.environ.items())))}
+    return conf
+
+
+if VDF_MODE in (Mode.pyspark, Mode.pyspark_gpu):
     from pyspark.sql import SparkSession
 
     DEFAULT_APP_NAME = "virtual_dataframe"
-
-
-    def _read_properties(default_conf: Path) -> Dict[str, str]:
-        with open(default_conf) as f:
-            ln = [line.split("=", 1) for line in f.readlines() if line.strip() and not line.startswith("#")]
-            return {key.strip(): value.strip() for key, value in ln if ln}
 
 
     def get_spark_builder() -> Tuple[SparkSession.Builder, Optional[str]]:
@@ -157,20 +175,7 @@ if VDF_MODE == Mode.pyspark:
 
         And return a builder
         """
-        conf = {}
-        global_default_conf = Path(os.environ.get("SPARK_HOME", "."), "conf/spark-defaults.conf")
-        if global_default_conf.exists():
-            conf = {**conf, **_read_properties(global_default_conf)}
-
-        default_conf = Path("./spark.conf")
-        if default_conf.exists():
-            conf = {**conf, **_read_properties(default_conf)}
-
-        # Add env. variables
-        conf = {**conf,
-                **dict(
-                    map(lambda t: (t[0], t[1]), filter(lambda s: s[0].startswith("spark."), os.environ.items())))}
-
+        conf = get_spark_conf()
         app_name = conf.get("spark.app.name")
         if not app_name:
             app_name = DEFAULT_APP_NAME
@@ -254,15 +259,15 @@ def _new_VClient(mode: Mode,
 
     if address:
 
-        if mode in (Mode.dask, Mode.dask_cudf, Mode.dask_modin):
+        if mode in (Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_modin):
             import dask.distributed
             return dask.distributed.Client(**kwargs)
-        elif mode == Mode.pyspark:
+        elif mode in (Mode.pyspark, Mode.pyspark_gpu):
             return SparkClient(env, address=address)
     else:
         vdf_cluster, host, port = _analyse_cluster_url(mode, env)
 
-        if mode in (Mode.dask, Mode.dask_cudf, Mode.dask_modin):
+        if mode in (Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_modin):
             import dask
             import dask.distributed
             assert vdf_cluster.scheme == Mode.dask.name
@@ -270,7 +275,7 @@ def _new_VClient(mode: Mode,
                 dask.config.set(scheduler='synchronous')  # type: ignore
                 LOGGER.warning("Use synchronous scheduler for debuging")
             elif host in ('threads', '', None):
-                if mode != Mode.dask_cudf:
+                if mode not in (Mode.dask_cudf,):
                     dask.config.set(scheduler='threads')  # type: ignore
                     client = _ClientDummy("threads")
                 else:
@@ -287,14 +292,14 @@ def _new_VClient(mode: Mode,
                 if host.endswith(".local"):
                     local_default_params = dask.config.global_config['local'] \
                         if 'local' in dask.config.global_config else {}
-                    if mode == Mode.dask_cudf:
+                    if mode in (Mode.dask_cudf,):
                         from dask_cuda import LocalCUDACluster
                         client = dask.distributed.Client(address=
                         LocalCUDACluster(
                             **local_default_params
                         ),
                             **kwargs)
-                    elif mode in (Mode.dask, Mode.dask_cudf, Mode.dask_modin):
+                    elif mode in (Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_modin):
                         # Purge params
                         for key in params_cuda_local_cluster:
                             if key in local_default_params:
@@ -310,7 +315,7 @@ def _new_VClient(mode: Mode,
                         address=f"{host}:{port}",
                         **kwargs)
                     LOGGER.warning(f"Use remote cluster on {host}:{port}")
-        elif mode == Mode.pyspark:
+        elif mode in (Mode.pyspark, Mode.pyspark_gpu):
 
             client = SparkClient(env)
 

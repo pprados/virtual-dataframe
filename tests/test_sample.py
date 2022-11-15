@@ -1,5 +1,3 @@
-import pytest
-
 import virtual_dataframe as vpd
 from virtual_dataframe import *
 

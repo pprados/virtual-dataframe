@@ -1,5 +1,6 @@
 from typing import Any
 
+from . import vclient
 from .env import VDF_MODE, Mode
 
 params_cuda_local_cluster = [
@@ -41,27 +42,30 @@ class _LocalClusterDummy:
     def __exit__(self, type: None, value: None, traceback: None) -> None:
         pass
 
+
 class SparkLocalCluster:
     def __init__(self, **kwargs):
-        from pyspark.conf import SparkConf
 
-        self.conf = SparkConf()
-        self.conf.set("spark.master", "local[*]")  # Default value
+        conf = vclient.get_spark_conf()
+        conf["spark.master"] = "local[*]"
         for k, v in kwargs.items():
-            self.conf.set(k.replace("_", "."), v)
+            if k.startswith("spark_"):
+                k = k.replace('_', '.')
+                conf[k] = v
+        self.spark_conf = conf
         self.session = None
 
-    def __str__(self):
-        return f"SparkLocalCluster(\'{self.conf.get('spark.master')}\')"
+    def __str__(self) -> str:
+        return f"SparkLocalCluster(\'{self.spark_conf.get('spark.master')}\')"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
     def __enter__(self):
         if not self.session:
             from pyspark.sql import SparkSession
             builder = SparkSession.builder
-            for k, v in self.conf.getAll():
+            for k, v in self.spark_conf.items():
                 builder.config(k, v)
             self.session = builder.getOrCreate()
             return self
@@ -77,16 +81,16 @@ def _new_VLocalCluster(
         **kwargs) -> Any:
     if mode in (Mode.pandas, Mode.cudf, Mode.modin):
         return _LocalClusterDummy()
-    elif mode == Mode.pyspark:
+    elif mode in (Mode.pyspark, Mode.pyspark_gpu):
         return SparkLocalCluster(**kwargs)
-    elif mode in (Mode.dask, Mode.dask_modin):
+    elif mode in (Mode.dask, Mode.dask_array, Mode.dask_modin):
         from dask.distributed import LocalCluster
         # Purge kwargs
         for key in params_cuda_local_cluster:
             if key in kwargs:
                 del kwargs[key]
         return LocalCluster(**kwargs)
-    elif mode == Mode.dask_cudf:
+    elif mode in (Mode.dask_cudf,):
         try:
             from dask_cuda import LocalCUDACluster
             return LocalCUDACluster(**kwargs)
