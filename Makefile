@@ -824,8 +824,8 @@ $(CONDA_RECIPE)/meta.yaml: $(CONDA_RECIPE) conda-recipe/meta.template.yaml
 # Test a new version of meta.yaml files
 test-conda-forge: _rm_meta $(CONDA_RECIPE)/meta.yaml
 	@(
-		cd $(CONDA_RECIPE) ; \
-		git commit -a --amend -m "Test $(PRJ_PACKAGE)" $$RECIPE ; \
+		cd $(CONDA_RECIPE) ;
+		git commit -a --amend -m "Test $(PRJ_PACKAGE)" $$RECIPE ;
 		git push --force
 	)
 	echo -e "$(green)A new version was published. The CI will begin to test \
@@ -835,8 +835,11 @@ test-conda-forge: _rm_meta $(CONDA_RECIPE)/meta.yaml
 ## First release in conda-forge. Add a version tag before use.
 conda-forge: _rm_meta $(CONDA_RECIPE)/meta.yaml
 	@PRJ_VERSION=v$(shell python setup.py --version)
-	git commit -a -m "Add a new version $$PRJ_VERSION for $(PRJ_PACKAGE)" $$RECIPE
-	git push
+	@(
+		cd $(CONDA_RECIPE) ;
+		git commit -a -m "Release $(PRJ_VERSION)" $$RECIPE ;
+		git push
+	)
 
 # ---------------------------------------------------------------------------------------
 # SNIPPET pour créer une distribution des binaires au format whl.
