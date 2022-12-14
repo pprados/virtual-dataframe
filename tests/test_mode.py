@@ -48,7 +48,7 @@ def _test_scenario_dataframe():
     return input_df, rc1
 
 
-@pytest.mark.skipif(vdf.VDF_MODE not in (vdf.Mode.pandas,), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE not in (vdf.Mode.pandas, vdf.Mode.numpy), reason="Incompatible mode")
 def test_DataFrame_MODE_pandas():
     import pandas
     with (VClient()) as client:
@@ -121,7 +121,7 @@ def test_DataFrame_MODE_cudf():
         assert isinstance(rc, cudf.DataFrame)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE not in (vdf.Mode.dask_cudf,), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE not in (vdf.Mode.dask_cudf, vdf.Mode.dask_cupy), reason="Incompatible mode")
 def test_DataFrame_MODE_dask_cudf():
     if not USE_GPU:
         pytest.skip("GPU Not found")

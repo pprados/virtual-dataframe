@@ -18,4 +18,5 @@ the cluster and GPU.
 
 If you know that the volume of data is compatible with one node, you can convert a distributed dataframe
 to `BackendDataFrame` and continue to manipulate the data locally.
-Use the `.to_backend()` to convert a `Dataframe` to a local Pandas like Dataframe.
+Use the `.to_backend()` to convert a `Dataframe` to a local Pandas like Dataframe
+or `.to_ndarray()` to convert a `DataFrame` to a local numpy like array.

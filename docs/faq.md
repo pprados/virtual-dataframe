@@ -16,6 +16,14 @@ real_result,=compute(f())  # Warning, compute return a tuple. The comma is impor
 a,b = compute(f(),f())
 ```
 
+### `.compute()` is not defined with numpy?
+It's impossible to add this method inside the classes `numpy.ndarray` or `cupy.ndarray`.
+In place, use the global function `compute(...)`.
+```python
+ar=vnp.array([1,2,3])
+compute(ar)[0]
+```
+
 ### With CUDA, I receive `NVMLError_NoPermission`
 It's a problem with Dask. You have not the privilege to ask the size of memory for the GPU.
 To resolve that, add in dask [configuration files](https://docs.dask.org/en/stable/configuration.html):

@@ -27,6 +27,39 @@ This project is just a wrapper. So, it inherits limitations and bugs from other 
 | [Read this](https://spark.apache.org/docs/latest/api/python/reference/pyspark.pandas/index.html) |
 
 
+| Limitations of Numpy like framework                                     |
+|-------------------------------------------------------------------------|
+| <br/>**numpy**</br/>                                                    |
+| All data must be in RAM                                                 |
+| <br/>**cupy**</br/>                                                     |
+| [Read this](https://docs.cupy.dev/en/stable/user_guide/difference.html) |
+| - block() not implemented                                               |
+| - delete() not implemented                                              |
+| - insert() not implemented                                              |
+| <br/>**dask array**</br/>                                               |
+| [Read this](https://docs.dask.org/en/stable/array.html#scope)           |
+| - identity() not implemented                                            |
+| - asfarray() not implemented                                            |
+| - asfortranarray() not implemented                                      |
+| - ascontiguousarray() not implemented                                   |
+| - asarray_chkfinite() not implemented                                   |
+| - require() not implemented                                             |
+| - column_stack() not implemented                                        |
+| - row_stack() not implemented                                           |
+| - \*split\*() not implemented                                           |
+| - resize() not implemented                                              |
+| - trim_zeros() not implemented                                          |
+| - in1d() not implemented                                                |
+| - intersect1d() not implemented                                         |
+| - setdiff1d() not implemented                                           |
+| - setxor1d() not implemented                                            |
+| - column_stack() not implemented                                        |
+| - row_stack() not implemented                                           |
+| - fromiter() not implemented                                           |
+
+
+For compatibility between numpy and cupy,
+see [here](https://numpy.org/doc/stable/user/basics.interoperability.html#basics-interoperability).
 
 ### File format compatibility
 To be compatible with all framework, you must only use the common features.
@@ -59,13 +92,22 @@ if you use a function not compatible with others frameworks.
 | VSeries.to_sql            |   ✓    |      |   ✓   |  ✓   |     ✓      |           |    ✓    |
 
 
-## Cross framework compatibility
+| load... / save...  | numpy | cupy | dask.array |
+|--------------------|:-----:|:----:|:----------:|
+| **vpd.load() npy** |   ✓   |  ✓   |     ✓      |
+| **vpd.save() npy** |   ✓   |  ✓   |     ✓      |
+| vpd.savez() npz    |   ✓   |  ✓   |            |
+| vpd.loadtxt()      |   ✓   |  ✓   |            |
+| vpd.savetxt()      |   ✓   |  ✓   |            |
 
-|       | small data             | middle data                | big data                                                        |
-|-------|------------------------|----------------------------|-----------------------------------------------------------------|
-| 1-CPU | pandas<br/>*Limits:+*  |                            |                                                                 |
-| n-CPU |                        | modin<br/>*Limits+* | dask, dask_modin or pyspark<br/>*Limits:++*      |
-| GPU   | cudf<br/>*Limits:++*   |                            | dask_cudf, pyspark+spark-rapids<br/>*Limits:+++* |
+
+### Cross framework compatibility
+
+|       | small data                   | middle data                | big data                                                        |
+|-------|------------------------------|----------------------------|-----------------------------------------------------------------|
+| 1-CPU | pandas, numpy<br/>*Limits:+* |                            |                                                                 |
+| n-CPU |                              | modin, numpy<br/>*Limits+* | dask, dask_modin or pyspark and dask.array<br/>*Limits:++*      |
+| GPU   | cudf, cupy<br/>*Limits:++*   |                            | dask_cudf, pyspark+spark-rapids and dask.array<br/>*Limits:+++* |
 
 To develop, you can choose the level to be compatible with others frameworks.
 Each cell is strongly compatible with the upper left part.
@@ -73,11 +115,11 @@ Each cell is strongly compatible with the upper left part.
 ### No need of GPU?
 If you don't need to use a GPU, then develop for `dask` and use mode in *bold*.
 
-|       | small data                 | middle data                    | big data                                                        |
-|-------|----------------------------|--------------------------------|-----------------------------------------------------------------|
-| 1-CPU | **pandas<br/>*Limits:+***  |                                |                                                                 |
-| n-CPU |                            | **modin<br/>*Limits+*** | **dask, dask_modin or pyspark<br/>*Limits:++***  |
-| *GPU* | *cudf<br/>Limits:++*       |                                | *dask_cudf, pyspark+spark-rapids<br/>Limits:+++* |
+|       | small data                       | middle data                    | big data                                                        |
+|-------|----------------------------------|--------------------------------|-----------------------------------------------------------------|
+| 1-CPU | **pandas, numpy<br/>*Limits:+*** |                                |                                                                 |
+| n-CPU |                                  | **modin, numpy<br/>*Limits+*** | **dask, dask_modin or pyspark and dask.array<br/>*Limits:++***  |
+| *GPU* | *cudf, cupy<br/>Limits:++*       |                                | *dask_cudf, pyspark+spark-rapids and dask.array<br/>Limits:+++* |
 
 You can ignore this API:
 
@@ -87,11 +129,11 @@ You can ignore this API:
 
 If you don't need to use big data, then develop for `cudf` and use mode in *bold*..
 
-|       | small data                 | middle data                    | big data                                                        |
-|-------|----------------------------|--------------------------------|-----------------------------------------------------------------|
-| 1-CPU | **pandas<br/>*Limits:+***  |                                |                                                                 |
-| n-CPU |                            | **modin<br/>*Limits+*** | *dask, dask_modin or pyspark<br/>Limits:++*      |
-| GPU   | **cudf<br/>*Limits:++***   |                                | *dask_cudf, pyspark+spark-rapids<br/>Limits:+++* |
+|       | small data                       | middle data                    | big data                                                        |
+|-------|----------------------------------|--------------------------------|-----------------------------------------------------------------|
+| 1-CPU | **pandas, numpy<br/>*Limits:+*** |                                |                                                                 |
+| n-CPU |                                  | **modin, numpy<br/>*Limits+*** | *dask, dask_modin or pyspark and dask.array<br/>Limits:++*      |
+| GPU   | **cudf, cupy<br/>*Limits:++***   |                                | *dask_cudf, pyspark+spark-rapids and dask.array<br/>Limits:+++* |
 
 You can ignore these API:
 
@@ -105,10 +147,10 @@ You can ignore these API:
 
 To be compatible with all modes, develop for `dask_cudf`.
 
-|       | small data              | middle data                | big data                                                        |
-|-------|-------------------------|----------------------------|-----------------------------------------------------------------|
-| 1-CPU | pandas<br/>*Limits:+*   |                            |                                                                 |
-| n-CPU |                         | modin<br/>*Limits+* | dask, dask_modin or pyspark<br/>*Limits:++*      |
-| GPU   | cudf<br/>*Limits:++*    |                            | dask_cudf, pyspark+spark-rapids<br/>*Limits:+++* |
+|       | small data                   | middle data                | big data                                                        |
+|-------|------------------------------|----------------------------|-----------------------------------------------------------------|
+| 1-CPU | pandas, numpy<br/>*Limits:+* |                            |                                                                 |
+| n-CPU |                              | modin, numpy<br/>*Limits+* | dask, dask_modin or pyspark and dask.array<br/>*Limits:++*      |
+| GPU   | cudf, cupy<br/>*Limits:++*   |                            | dask_cudf, pyspark+spark-rapids and dask.array<br/>*Limits:+++* |
 
 and accept all the limitations.

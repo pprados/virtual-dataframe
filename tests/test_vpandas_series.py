@@ -28,7 +28,7 @@ def test_Series_to_from_pandas():
     assert s.to_pandas().equals(pandas.Series([1, 2, 3, None, 4]))
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask_cudf,), reason="Incompatible mode")
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.cupy, Mode.dask_cudf, Mode.dask_cupy), reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
 def test_Series_to_csv():
@@ -41,7 +41,7 @@ def test_Series_to_csv():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask, Mode.dask_array, Mode.dask_cudf,),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.cupy, Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_cupy),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
@@ -86,7 +86,7 @@ def test_Series_to_json():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask_cudf,
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.cupy, Mode.dask_cudf, Mode.dask_cupy,
                                      Mode.pyspark, Mode.pyspark_gpu),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
@@ -97,7 +97,7 @@ def test_Series_to_sql():
         import sqlalchemy
         db_uri = f'sqlite:////{filename}'
         s = vdf.VSeries(list(range(0, 3)), npartitions=2)
-        s.to_sql('test',
+        s.to_sql('test_series',
                  con=db_uri,
                  index_label="a",
                  if_exists='replace',
@@ -105,6 +105,14 @@ def test_Series_to_sql():
     finally:
         Path(filename).unlink(missing_ok=True)
         pass
+
+
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
+def test_Series_to_from_numpy():
+    s = vdf.VSeries([0.0, 1.0, 2.0, 3.0], npartitions=2)
+    n = s.to_numpy()
+    s2 = vdf.VSeries(n, npartitions=2)
+    assert s.to_backend().equals(s2.to_backend())
 
 
 def test_Series_map_partitions():

@@ -9,7 +9,7 @@
       <env name="spark.rapids.sql.concurrentGpuTasks" value="1" />
       <env name="spark.rapids.sql.enabled" value="false" />
       <env name="USE_GPU" value="No" />
-      <env name="VDF_MODE" value="cudf" />
+      <env name="VDF_MODE" value="pandas" />
     </envs>
     <option name="SDK_HOME" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />

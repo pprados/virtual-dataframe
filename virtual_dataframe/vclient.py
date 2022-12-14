@@ -34,7 +34,7 @@ def _analyse_cluster_url(mode: Mode, env) -> Tuple[ParseResult, Optional[str], i
     else:
         vdf_cluster = env.get("VDF_CLUSTER", None)
     if not vdf_cluster:
-        if mode in (Mode.dask, Mode.dask_array, Mode.dask_modin, Mode.dask_cudf,):
+        if mode in (Mode.dask, Mode.dask_array, Mode.dask_modin, Mode.dask_cudf, Mode.dask_cupy):
             vdf_cluster = f"{Mode.dask.name}://threads"
         # elif mode == Mode.ray_modin:
         #     vdf_cluster = "ray://"
@@ -186,80 +186,80 @@ if VDF_MODE in (Mode.pyspark, Mode.pyspark_gpu):
         return builder, conf.get("spark.master")
 
 
-class SparkClient:
-    def __init__(self,
-                 env,
-                 address=None,
-                 ):
-        self.env = dict(env)
-        self.session = None
-        self.vdf_cluster = self.env.get("VDF_CLUSTER", None)
-        if isinstance(address, str):
-            self.vdf_cluster = address
-            self.address = None
-        else:
-            self.address = address
-
-    def cancel(self, futures, asynchronous=None, force=False) -> None:
-        pass
-
-    def close(self, timeout='__no_default__') -> None:
-        self.shutdown()
-
-    def __enter__(self) -> Any:
-        if not self.address:
-            builder, master = get_spark_builder()
-            if "SPARK_MASTER_HOST" in self.env:
-                master = self.env["SPARK_MASTER_HOST"]
-                if "SPARK_MASTER_PORT" in self.env:
-                    master = master + ":" + self.env["SPARK_MASTER_PORT"]
-                builder.config("spark.master", master)
-
-            if self.vdf_cluster:
-                if self.vdf_cluster.startswith("spark:local"):
-                    self.vdf_cluster = self.vdf_cluster[6:]
-                else:
-                    _, host, *_ = urlparse(self.vdf_cluster)
-                    if host and host.endswith(".local"):
-                        self.vdf_cluster = "local[*]"
-                builder.config("spark.master", self.vdf_cluster)
-            else:
-                if not master:
-                    builder.config("spark.master", "local[*]")
-            self.session = builder.getOrCreate().__enter__()
-        else:
-            self.address.__enter__()
-            self.session = self.address.session
-        return self
-
-    def __exit__(self, type: None, value: None, traceback: None) -> None:
-        if self.session:
-            self.session.__exit__(type, None, None)
-            if self.address:
-                self.address.__exit__(type, None, None)
-            self.address = None
+    class SparkClient:
+        def __init__(self,
+                     env,
+                     address=None,
+                     ):
+            self.env = dict(env)
             self.session = None
+            self.vdf_cluster = self.env.get("VDF_CLUSTER", None)
+            if isinstance(address, str):
+                self.vdf_cluster = address
+                self.address = None
+            else:
+                self.address = address
 
-    def __str__(self) -> str:
-        return f"<Spark: '{self.session.conf.get('spark.master')}'>"
+        def cancel(self, futures, asynchronous=None, force=False) -> None:
+            pass
 
-    def __repr__(self) -> str:
-        return self.__str__()
+        def close(self, timeout='__no_default__') -> None:
+            self.shutdown()
 
-    def shutdown(self) -> None:
-        self.__exit__(None, None, None)
+        def __enter__(self) -> Any:
+            if not self.address:
+                builder, master = get_spark_builder()
+                if "SPARK_MASTER_HOST" in self.env:
+                    master = self.env["SPARK_MASTER_HOST"]
+                    if "SPARK_MASTER_PORT" in self.env:
+                        master = master + ":" + self.env["SPARK_MASTER_PORT"]
+                    builder.config("spark.master", master)
+
+                if self.vdf_cluster:
+                    if self.vdf_cluster.startswith("spark:local"):
+                        self.vdf_cluster = self.vdf_cluster[6:]
+                    else:
+                        _, host, *_ = urlparse(self.vdf_cluster)
+                        if host and host.endswith(".local"):
+                            self.vdf_cluster = "local[*]"
+                    builder.config("spark.master", self.vdf_cluster)
+                else:
+                    if not master:
+                        builder.config("spark.master", "local[*]")
+                self.session = builder.getOrCreate().__enter__()
+            else:
+                self.address.__enter__()
+                self.session = self.address.session
+            return self
+
+        def __exit__(self, type: None, value: None, traceback: None) -> None:
+            if self.session:
+                self.session.__exit__(type, None, None)
+                if self.address:
+                    self.address.__exit__(type, None, None)
+                self.address = None
+                self.session = None
+
+        def __str__(self) -> str:
+            return f"<Spark: '{self.session.conf.get('spark.master')}'>"
+
+        def __repr__(self) -> str:
+            return self.__str__()
+
+        def shutdown(self) -> None:
+            self.__exit__(None, None, None)
 
 
 def _new_VClient(mode: Mode,
                  env: EnvDict,
                  address: Union[str, Any],
                  **kwargs) -> Any:
-    if mode in (Mode.pandas, Mode.cudf, Mode.modin):
+    if mode in (Mode.pandas, Mode.numpy, Mode.cudf, Mode.cupy, Mode.modin):
         return _ClientDummy("")
 
     if address:
 
-        if mode in (Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_modin):
+        if mode in (Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_cupy, Mode.dask_modin):
             import dask.distributed
             return dask.distributed.Client(**kwargs)
         elif mode in (Mode.pyspark, Mode.pyspark_gpu):
@@ -267,7 +267,7 @@ def _new_VClient(mode: Mode,
     else:
         vdf_cluster, host, port = _analyse_cluster_url(mode, env)
 
-        if mode in (Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_modin):
+        if mode in (Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_cupy, Mode.dask_modin):
             import dask
             import dask.distributed
             assert vdf_cluster.scheme == Mode.dask.name
@@ -275,7 +275,7 @@ def _new_VClient(mode: Mode,
                 dask.config.set(scheduler='synchronous')  # type: ignore
                 LOGGER.warning("Use synchronous scheduler for debuging")
             elif host in ('threads', '', None):
-                if mode not in (Mode.dask_cudf,):
+                if mode not in (Mode.dask_cudf, Mode.dask_cupy):
                     dask.config.set(scheduler='threads')  # type: ignore
                     client = _ClientDummy("threads")
                 else:
@@ -292,14 +292,14 @@ def _new_VClient(mode: Mode,
                 if host.endswith(".local"):
                     local_default_params = dask.config.global_config['local'] \
                         if 'local' in dask.config.global_config else {}
-                    if mode in (Mode.dask_cudf,):
+                    if mode in (Mode.dask_cudf, Mode.dask_cupy):
                         from dask_cuda import LocalCUDACluster
                         client = dask.distributed.Client(address=
                         LocalCUDACluster(
                             **local_default_params
                         ),
                             **kwargs)
-                    elif mode in (Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_modin):
+                    elif mode in (Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_cupy, Mode.dask_modin):
                         # Purge params
                         for key in params_cuda_local_cluster:
                             if key in local_default_params:

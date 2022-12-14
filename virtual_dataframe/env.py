@@ -22,7 +22,9 @@ from enum import Enum
 
 class Mode(Enum):
     pandas = "pandas"
+    numpy = "numpy"  # Alias of pandas
     cudf = "cudf"
+    cupy = "cupy"  # Alias of cupy
     dask = "dask"
     modin = "modin"
     pyspark = "pyspark"
@@ -31,6 +33,7 @@ class Mode(Enum):
     dask_modin = "dask_modin"
     # ray_modin = "ray_modin"
     dask_cudf = "dask_cudf"
+    dask_cupy = "dask_cupy"  # Alias of dask_cupy
 
 
 def _check_cuda() -> bool:

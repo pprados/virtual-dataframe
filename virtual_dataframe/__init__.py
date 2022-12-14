@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 from virtual_dataframe.env import DEBUG, VDF_MODE, Mode
 from virtual_dataframe.vclient import VClient
 from virtual_dataframe.vlocalcluster import VLocalCluster
-from virtual_dataframe.vpandas import BackEndDataFrame, BackEndSeries, BackEndPandas
-from virtual_dataframe.vpandas import FrontEndPandas
+from virtual_dataframe.vpandas import BackEndDataFrame, BackEndSeries, BackEndNumpy, BackEndPandas
+from virtual_dataframe.vpandas import FrontEndPandas, FrontEndNumpy
 from virtual_dataframe.vpandas import VDataFrame, VSeries
 from virtual_dataframe.vpandas import compute, concat, delayed, persist, visualize
 from virtual_dataframe.vpandas import from_pandas, from_backend
@@ -22,9 +22,9 @@ load_dotenv()
 
 __all__: List[str] = [
     'DEBUG', 'VDF_MODE', 'Mode',
-    'VDataFrame', 'VSeries', 'VClient', 'VLocalCluster',
-    'FrontEndPandas',
-    'BackEndDataFrame', 'BackEndSeries', 'BackEndPandas',
+    'VDataFrame', 'VSeries', 'VClient', 'VLocalCluster', 'numpy',
+    'FrontEndPandas', 'FrontEndNumpy',
+    'BackEndDataFrame', 'BackEndSeries', 'BackEndNumpy', 'BackEndPandas',
     'compute', 'concat', 'delayed', 'persist', 'visualize',
     'from_pandas', 'from_backend',
     'read_csv', 'read_excel', 'read_feather', 'read_fwf', 'read_hdf',

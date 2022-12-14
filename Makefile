@@ -169,7 +169,7 @@ _JUPYTER_LABEXTENSIONS:=$(foreach ext,$(JUPYTER_LABEXTENSIONS),$(JUPYTER_LABEXTE
 # Error pyspark pyspark_gpu dask_modin
 export VDF_MODES=pandas cudf dask dask_modin dask_cudf pyspark pyspark_gpu
 # all modes (with alias)
-# export VDF_MODES=pandas cudf dask modin pyspark pyspark_gpu dask_modin dask_array dask_cudf dask_cupy
+# export VDF_MODES=pandas numpy cudf cupy dask modin pyspark pyspark_gpu dask_modin dask_array dask_cudf dask_cupy
 
 CHECK_GIT_STATUS=[[ `git status --porcelain` ]] && echo "$(yellow)Warning: All files are not commited$(normal)"
 
@@ -1089,6 +1089,13 @@ unit-test: .make-unit-test
 		--no-report-mode \
 		-p mode $* \
 		notebooks/demo_pandas.ipynb \
+		/dev/null 2>&1 | grep -v -e "the file is not specified with any extension" -e " *warnings.warn("
+	python $(PYTHON_ARGS) -m papermill \
+		-k $(KERNEL) \
+		--log-level ERROR \
+		--no-report-mode \
+		-p mode $* \
+		notebooks/demo_numpy.ipynb \
 		/dev/null 2>&1 | grep -v -e "the file is not specified with any extension" -e " *warnings.warn("
 	date >.make-notebooks-test-$*
 

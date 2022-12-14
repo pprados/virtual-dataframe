@@ -13,13 +13,25 @@ def test_panda():
     assert repr(local_cluster) == "LocalClusterDummy('localhost:8786')"
 
 
+def test_numpy():
+    local_cluster = vlocalcluster._new_VLocalCluster(mode=Mode.numpy)
+    assert type(local_cluster).__name__ == "_LocalClusterDummy"
+    assert repr(local_cluster) == "LocalClusterDummy('localhost:8786')"
+
+
 def test_cudf():
     local_cluster = vlocalcluster._new_VLocalCluster(mode=Mode.cudf)
     assert type(local_cluster).__name__ == "_LocalClusterDummy"
     assert repr(local_cluster) == "LocalClusterDummy('localhost:8786')"
 
 
-@pytest.mark.skipif(VDF_MODE not in (Mode.dask, Mode.dask_array, Mode.dask_cudf,),
+def test_cupy():
+    local_cluster = vlocalcluster._new_VLocalCluster(mode=Mode.cupy)
+    assert type(local_cluster).__name__ == "_LocalClusterDummy"
+    assert repr(local_cluster) == "LocalClusterDummy('localhost:8786')"
+
+
+@pytest.mark.skipif(VDF_MODE not in (Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_cupy),
                     reason="Incompatible mode")
 @patch('dask.distributed.LocalCluster')
 def test_dask(mockLocalCluster):
@@ -33,7 +45,7 @@ def test_modin():
     assert repr(local_cluster) == "LocalClusterDummy('localhost:8786')"
 
 
-@pytest.mark.skipif(VDF_MODE not in (Mode.dask, Mode.dask_array, Mode.dask_cudf,),
+@pytest.mark.skipif(VDF_MODE not in (Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_cupy),
                     reason="Incompatible mode")
 @patch('dask.distributed.LocalCluster')
 def test_dask_modin(mockLocalCluster):
@@ -42,7 +54,7 @@ def test_dask_modin(mockLocalCluster):
 
 
 if USE_GPU:
-    @pytest.mark.skipif(VDF_MODE not in (Mode.dask_cudf,),
+    @pytest.mark.skipif(VDF_MODE not in (Mode.dask_cudf, Mode.dask_cupy),
                         reason="Incompatible mode")
     @patch('dask_cuda.LocalCUDACluster')
     def test_dask_cudf(mockLocalCUDACluster):

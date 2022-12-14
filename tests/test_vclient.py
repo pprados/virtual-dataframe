@@ -31,6 +31,18 @@ def test_cudf():
         assert repr(client) == '<Client: in-process scheduler>'
 
 
+def test_cupy():
+    env = {
+    }
+    with vclient._new_VClient(
+            mode=Mode.cupy,
+            env=env,
+            address=None,
+    ) as client:
+        assert type(client).__name__ == "_ClientDummy"
+        assert repr(client) == '<Client: in-process scheduler>'
+
+
 @pytest.mark.skipif(not VDF_MODE.name.startswith("dask"), reason="Invalid mode")
 @patch('virtual_dataframe.vclient._ClientDummy')
 def test_dask_debug(mockClient):
@@ -43,7 +55,7 @@ def test_dask_debug(mockClient):
         assert mockClient.call_args == (('threads',), {})
 
 
-@pytest.mark.skipif(VDF_MODE not in (Mode.dask_cudf,), reason="Invalid mode")
+@pytest.mark.skipif(VDF_MODE not in (Mode.dask_cudf, Mode.dask_cupy), reason="Invalid mode")
 @patch('dask.distributed.Client')
 @patch('dask_cuda.LocalCUDACluster')
 def test_dask_cudf_implicit_cluster(mockClient, mockLocalCUDACluster):
@@ -60,7 +72,7 @@ def test_dask_cudf_implicit_cluster(mockClient, mockLocalCUDACluster):
         assert mockLocalCUDACluster.called
 
 
-@pytest.mark.skipif(VDF_MODE not in (Mode.dask_cudf,), reason="Invalid mode")
+@pytest.mark.skipif(VDF_MODE not in (Mode.dask_cudf, Mode.dask_cupy), reason="Invalid mode")
 @patch('dask.distributed.Client')
 @patch('dask_cuda.LocalCUDACluster')
 def test_dask_cudf_with_local_cluster(mockClient, mockLocalCUDACluster):
@@ -85,6 +97,19 @@ def test_dask_cudf_with_local_cluster(mockClient, mockLocalCUDACluster):
 def test_dask_cudf_with_default_cluster(mockClient, mockLocalCUDACluster):
     with vclient._new_VClient(
             mode=Mode.dask_cudf,
+            env=dict(),
+            address=None,
+    ):
+        assert mockClient.called
+        assert mockLocalCUDACluster.called
+
+
+@pytest.mark.skipif(VDF_MODE not in (Mode.dask_cupy,), reason="Invalid mode")
+@patch('dask.distributed.Client')
+@patch('dask_cuda.LocalCUDACluster')
+def test_dask_cupy_with_default_cluster(mockClient, mockLocalCUDACluster):
+    with vclient._new_VClient(
+            mode=Mode.dask_cupy,
             env=dict(),
             address=None,
     ):

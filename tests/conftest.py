@@ -5,6 +5,7 @@ from typing import Dict
 import pytest
 import logging
 
+import virtual_dataframe.numpy as vnp
 import virtual_dataframe as vdf
 
 _old_environ: Dict[str, str] = None
@@ -27,7 +28,6 @@ def _convert_size(size_bytes):
         s = -s
     return f"{s} {size_name[i]}"
 
-
 def save_context():
     global _old_environ
     _old_environ = dict(os.environ)
@@ -42,11 +42,11 @@ def restore_context():
     del sys.modules["virtual_dataframe.vpandas"]
 
 
+
 try:
     import nvidia_smi
 
     nvidia_smi.nvmlInit()
-
 
     def _dump_nvidia_memory() -> int:
         import logging
@@ -64,13 +64,13 @@ except ImportError:
     def _dump_nvidia_memory() -> int:
         return 0
 
-
 @pytest.fixture(scope="session")
 def local_cluster():
     return vdf.VLocalCluster(
         scheduler_port=0,
         device_memory_limit="1g",
     )
+
 
 
 @pytest.fixture(scope="session")

@@ -54,7 +54,7 @@ def test_DataFrame_to_read_csv():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask, Mode.dask_array, Mode.dask_cudf,),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.cupy, Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_cupy),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
@@ -73,8 +73,8 @@ def test_DataFrame_to_read_excel():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.pyspark,
-                                     Mode.pyspark_gpu),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.dask, Mode.dask_array, Mode.dask_cudf, Mode.dask_cupy,
+                                     Mode.pyspark, Mode.pyspark_gpu),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
@@ -93,8 +93,8 @@ def test_DataFrame_to_read_feather():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask_cudf, Mode.pyspark,
-                                     Mode.pyspark_gpu),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.cupy, Mode.dask_cudf, Mode.dask_cupy,
+                                     Mode.pyspark, Mode.pyspark_gpu),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
@@ -106,7 +106,7 @@ def test_DataFrame_read_fwf():
         df2.sort_values("a").to_backend().reset_index(drop=True))
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (Mode.dask_cudf, Mode.pyspark, Mode.pyspark_gpu),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.dask_cudf, Mode.dask_cupy, Mode.pyspark, Mode.pyspark_gpu),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
@@ -173,8 +173,8 @@ def test_DataFrame_to_read_orc():
         shutil.rmtree(d)
 
 
-@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.dask_cudf, Mode.pyspark,
-                                     Mode.pyspark_gpu),
+@pytest.mark.skipif(vdf.VDF_MODE in (Mode.cudf, Mode.cupy, Mode.dask_cudf, Mode.dask_cupy,
+                                     Mode.pyspark, Mode.pyspark_gpu),
                     reason="Incompatible mode")
 @pytest.mark.filterwarnings("ignore:Function ")
 @pytest.mark.filterwarnings("ignore:.*defaulting to pandas")
@@ -189,12 +189,12 @@ def test_DataFrame_to_read_sql():
 
         df = vdf.VDataFrame({'a': list(range(0, 3)), 'b': list(range(0, 30, 10))}, npartitions=2)
         df = df.set_index("a")
-        df.to_sql('test',
+        df.to_sql('test_dataframe',
                   con=db_uri,
                   index_label="a",
                   if_exists='replace',
                   index=True)
-        df2 = vdf.read_sql_table("test",
+        df2 = vdf.read_sql_table("test_dataframe",
                                  con=db_uri,
                                  index_col='a',  # For dask and dask_cudf
                                  )
@@ -202,6 +202,14 @@ def test_DataFrame_to_read_sql():
     finally:
         Path(filename).unlink(missing_ok=True)
         pass
+
+
+@pytest.mark.filterwarnings("ignore:.*This may take some time.")
+def test_DataFrame_to_from_numpy():
+    df = vdf.VDataFrame({'a': [0.0, 1.0, 2.0, 3.0]}, npartitions=2)
+    n = df.to_numpy()
+    df2 = vdf.VDataFrame(n, columns=df.columns, npartitions=2)
+    assert df.to_backend().equals(df2.to_backend())
 
 
 def test_DataFrame_map_partitions():

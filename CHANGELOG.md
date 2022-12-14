@@ -6,9 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.6] - 2022-12-XX TODO
 
-Fix pandas frameworks
+Add support of Numpy frameworks (numpy, cupy, dask_array, dask_cupy)
 
 ### Added
+- `numpy`, `cupy`, `dask.array` frameworks
+- `to_numpy()`
+- `to_ndarray()`
+- `FrontEndNumpy`, `BackEndNumpy`
+- `import vdf.numpy`
+- `vdf.numpy.array(..., chunks=...)`
+- `vdf.numpy.asnumpy(d)`
+- `vdf.numpy.asdarray(d)`
+- `vdf.numpy.save(d)`
+- `vdf.numpy.load(d)`
 
 ### Changed
 - Rename `FrontEnd` to `FrontEndPandas`

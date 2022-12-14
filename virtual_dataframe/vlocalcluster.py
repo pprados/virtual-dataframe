@@ -79,7 +79,7 @@ class SparkLocalCluster:
 def _new_VLocalCluster(
         mode: Mode,
         **kwargs) -> Any:
-    if mode in (Mode.pandas, Mode.cudf, Mode.modin):
+    if mode in (Mode.pandas, Mode.numpy, Mode.cudf, Mode.cupy, Mode.modin):
         return _LocalClusterDummy()
     elif mode in (Mode.pyspark, Mode.pyspark_gpu):
         return SparkLocalCluster(**kwargs)
@@ -90,7 +90,7 @@ def _new_VLocalCluster(
             if key in kwargs:
                 del kwargs[key]
         return LocalCluster(**kwargs)
-    elif mode in (Mode.dask_cudf,):
+    elif mode in (Mode.dask_cudf, Mode.dask_cupy):
         try:
             from dask_cuda import LocalCUDACluster
             return LocalCUDACluster(**kwargs)

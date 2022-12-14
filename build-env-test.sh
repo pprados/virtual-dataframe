@@ -39,7 +39,7 @@ test_mode() {
     pip uninstall virtual_dataframe -y  # Remove old version
     pip install -e . # Install current version
     make VENV=$NAME-$mode dependencies
-    python -m pytest --rootdir=. -s tests/test_vpandas_dataframe.py tests/test_vclient.py
+    python -m pytest --rootdir=. -s tests/test_vnumpy.py tests/test_vpandas.py tests/test_vclient.py
     err=$?
     conda deactivate
 
@@ -72,7 +72,7 @@ do
         m=${all_mode%-local}
         echo "test all-${m}"
         export VDF_MODE=$m
-        python -m pytest --rootdir=. -s tests/test_vpandas_dataframe.py tests/test_vclient.py
+        python -m pytest --rootdir=. -s tests/test_vnumpy.py tests/test_vpandas.py tests/test_vclient.py
         err=$?
         if [[ $err == 0 ]]; then
           echo -e "${bold}Test conda env $NAME-$mode with $m ok${normal}\n"
