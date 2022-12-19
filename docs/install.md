@@ -11,7 +11,7 @@ Use
 $ pip install "virtual_dataframe"
 ```
 
-### Installing from the GitHub master branch
+### Installing from the GitHub main branch
 ```shell
 $ pip install "virtual_dataframe@git+https://github.com/pprados/virtual-dataframe"
 ```
@@ -32,12 +32,12 @@ $ conda activate vdf-dask_cudf-local
 ```
 
 The `VDF_MODE` is set for each environment.
-If you create an environment for a *dask* or *spark* framework, two environment will be created.
+If you create an environment for a *dask*, *spark* or *pyspark* framework, two environment will be created.
 One `vdf-XXX` where you must set the `VDF_CLUSTER` variable and another `vdf-XXX-local` with a pre set
 of `VDF_CLUSTER=dask://.local` or `VDF_CLUSTER=spark://.local` to use a *local* cluster.
 
 For `pyspark_gpu`̀, somes environment variables will be set, to reference the
-`rapids-4-spark_2.12-22.10.0.jar` file. You have this file in the root of your project.
+`rapids-4-spark_2.12-22.10.0.jar` file. You must have this file in the root of your project.
 
 You can find all environement Yaml file [here](https://github.com/pprados/virtual_dataframe/tree/develop/virtual_dataframe/bin).
 

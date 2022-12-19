@@ -44,7 +44,6 @@ jobs:
           make PYTHON_VERSION=${{ matrix.python-version }} dependencies
 
       # To debug github action with SSH, use the two next lines
-      # Find the connection line, connect and set -e set -x
 #      - name: Setup upterm session
 #        uses: lhotari/action-upterm@v1
 
