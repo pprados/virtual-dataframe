@@ -80,6 +80,8 @@
               </ul>
               <p class="caption"><span class="caption-text">Contribute</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../tech/">Tech</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../contribute/">Contribute</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../commands/">Commands</a>
@@ -122,6 +124,38 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>VDF_MODE</td>
+<td>The current mode</td>
+</tr>
+<tr>
+<td>Mode</td>
+<td>The enumeration of differents mode</td>
+</tr>
+<tr>
+<td>FrontEndPandas</td>
+<td><code>pandas</code>, <code>cudf</code>, <code>modin.pandas</code>, <code>dask_cudf</code>, <code>dask.dataframe</code> or <code>pyspark.pandas</code></td>
+</tr>
+<tr>
+<td>FrontEndNumpy</td>
+<td><code>numpy</code>, <code>cupy</code> or <code>dask.array</code></td>
+</tr>
+<tr>
+<td>BackEndDataFrame</td>
+<td><code>pandas</code> or <code>cudf</code></td>
+</tr>
+<tr>
+<td>BackEndSeries</td>
+<td><code>pandas.Series</code>, <code>cudf.Series</code> or <code>modin.pandas.Series</code></td>
+</tr>
+<tr>
+<td>BackEndNDArray</td>
+<td><code>numpy.ndarray</code> or <code>cupy.ndarray</code></td>
+</tr>
+<tr>
+<td>BackEndNumpy</td>
+<td><code>pandas</code>, <code>cudf</code> or <code>modin.pandas</code></td>
+</tr>
 <tr>
 <td>vdf.@delayed</td>
 <td>Delayed function (do nothing or dask.delayed)</td>
@@ -187,18 +221,6 @@
 <td>Create a dask Local Cluster (Dask, Cuda or Spark)</td>
 </tr>
 <tr>
-<td>BackEndDataFrame</td>
-<td>The class of dask backend dataframe</td>
-</tr>
-<tr>
-<td>BackEndSeries</td>
-<td>The class of dask backend series</td>
-</tr>
-<tr>
-<td>BackEnd</td>
-<td>The backend framework</td>
-</tr>
-<tr>
 <td>VDataFrame.compute()</td>
 <td>Compute the virtual dataframe</td>
 </tr>
@@ -217,6 +239,10 @@
 <tr>
 <td>VDataFrame.to_pandas()</td>
 <td>Convert to pandas dataframe</td>
+</tr>
+<tr>
+<td>VDataFrame.to_backend()</td>
+<td>Convert to backend dataframe</td>
 </tr>
 <tr>
 <td>VDataFrame.to_csv()</td>
@@ -255,10 +281,6 @@
 <td>Convert to numpy array</td>
 </tr>
 <tr>
-<td>VDataFrame.to_backend()</td>
-<td>Convert to backend dataframe</td>
-</tr>
-<tr>
 <td>VDataFrame.categorize()</td>
 <td>Detect all categories</td>
 </tr>
@@ -269,6 +291,14 @@
 <tr>
 <td>VDataFrame.map_partitions()</td>
 <td>Apply function for each parttions</td>
+</tr>
+<tr>
+<td>VDataFrame.to_ndarray()</td>
+<td>Convert to numpy or cupy ndarray</td>
+</tr>
+<tr>
+<td>VDataFrame.to_numpy()</td>
+<td>Convert to numpy, cupy or dask array</td>
 </tr>
 <tr>
 <td>VSeries.compute()</td>
@@ -292,41 +322,105 @@
 </tr>
 <tr>
 <td>VSeries.to_backend()</td>
-<td>Convert to backend series</td>
+<td>Convert to backend series (pandas, cudf, dask.Series)</td>
 </tr>
 <tr>
 <td>VSeries.to_numpy()</td>
-<td>Convert to numpy array</td>
+<td>Convert to numpy ndarray</td>
+</tr>
+<tr>
+<td>VSeries.to_ndarray()</td>
+<td>Convert to numpy backend (numpy, cupy or dask.array)</td>
 </tr>
 <tr>
 <td>VClient(...)</td>
 <td>The connexion with the cluster</td>
 </tr>
 <tr>
-<td>VDF_MODE</td>
-<td>The current mode</td>
+<td>import vdf.numpy</td>
+<td>Import numpy, cupy or dask.array</td>
 </tr>
 <tr>
-<td>Mode</td>
-<td>The enumeration of differents mode</td>
+<td>vdf.numpy.array(..., chunks=...)</td>
+<td>Create an numpy-like array</td>
+</tr>
+<tr>
+<td>vdf.numpy.arange(...)</td>
+<td>Return evenly spaced values within a given interval.</td>
+</tr>
+<tr>
+<td>vdf.numpy.zeros(...)</td>
+<td>Return a new array of given shape and type, filled with zeros.</td>
+</tr>
+<tr>
+<td>vdf.numpy.zeros_like(...)</td>
+<td>Return an array of zeros with the same shape and type as a given array.</td>
+</tr>
+<tr>
+<td>vdf.numpy.asnumpy(d)</td>
+<td>Convert to <code>numpy.ndarray</code></td>
+</tr>
+<tr>
+<td>vdf.numpy.save(d)</td>
+<td>Save to npy format</td>
+</tr>
+<tr>
+<td>vdf.numpy.load(d)</td>
+<td>Load npy format</td>
+</tr>
+<tr>
+<td>vdf.numpy.random.xxx(..., chunks=...)</td>
+<td>Generate random values</td>
+</tr>
+<tr>
+<td>vdf.numpy.compute(ar)</td>
+<td>Similare of <code>ar.compute()</code></td>
+</tr>
+<tr>
+<td>vdf.numpy.rechuck(df)</td>
+<td>Alias of `ar.rechuck()</td>
+</tr>
+<tr>
+<td>vdf.numpy.asnumpy(df)</td>
+<td>Return a numpy ndarray from a DataFrame</td>
+</tr>
+<tr>
+<td>vdf.numpy.asndarray(df)</td>
+<td>Return a ndarray from a DataFrame (may be be numpy, cupy or dask.array)</td>
 </tr>
 </tbody>
 </table>
 <p><sup>*</sup> some frameworks do not implement it</p>
-<p>You can read a sample notebook <a href="https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo.ipynb">here</a>
-for an exemple of all API.</p>
+<p>With numpy like framework, it's impossible to add some methods like <code>.compute()</code> to <code>numpy.ndarray</code> or <code>cupy.ndarray</code>.
+To be compatible, you must use a global simulare function like <code>vnp.compute(a)[0] # in place of a.compute()</code>.</p>
+<p>You can read a sample notebook
+<a href="https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo_pandas.ipynb">here for Pandas</a>
+or <a href="https://github.com/pprados/virtual-dataframe/blob/master/notebooks/demo_numpy.ipynb">here for Numpy</a>
+for an example of the use of API.</p>
+<p>Keep in mind, the current framework are in <code>FrontEndPandas</code> and <code>FrontEndNumpy</code>,
+and the backend API (use <em>inside</em> dask) are in <code>BackEndPandas</code> and <code>BackEndNumpy</code>.
+To maintain this relationship, use:</p>
+<ul>
+<li><code>.to_backend()</code> in place of <code>df.to_pandas()</code></li>
+<li><code>.to_ndarray()</code> in place of <code>df.to_numpy()</code></li>
+<li><code>vdf.numpy.asndarray(df)</code> in place of <code>numpy.asarray(df)</code></li>
+</ul>
+<p>The <code>.to_backend()</code> can return a Pandas or a Cudf dataframe.
+The <code>.to_ndarray()</code> can return a Numpy, a Cupy or a dask.array array.
+The <code>.asndarray(...)</code> can return a Numpy, a Cupy or a dask.array array.</p>
 <p>Each API propose a specific version for each framework. For example:</p>
 <ul>
 <li>the  <code>toPandas()</code> with Panda, return <code>self</code></li>
 <li><code>@delayed</code> use the dask <code>@delayed</code> or do nothing, and apply the code when the function was called.
 In the first case, the function return a part of the dask graph. In the second case, the function return immediately
 the result.</li>
-<li><code>read_csv("file*.csv")</code> read each file in parallele with dask or spark by each worker,
+<li><code>read_csv("file*.csv")</code> read each file in parallele with dask, spark or pyspark by each worker,
 or read sequencially each file and combine each dataframe with a framework without distribution (pandas, modin, cudf)</li>
-<li><code>save_csv("file*.csv")</code> write each file in parallele with dask or spark,
+<li><code>save_csv("file*.csv")</code> write each file in parallele with dask, spark or pyspark,
 or write one file <code>"file.csv"</code> (without the star) with a framework without distribution (pandas, modin, cudf)</li>
 <li>...</li>
 </ul>
+<p>All adjustement was described <a href="../tech/">here</a></p>
               
             </div>
           </div><footer>

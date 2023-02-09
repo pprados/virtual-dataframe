@@ -80,6 +80,8 @@
               </ul>
               <p class="caption"><span class="caption-text">Contribute</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../tech/">Tech</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../contribute/">Contribute</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../commands/">Commands</a>
@@ -119,8 +121,8 @@
 <li><strong>Avoid very large partition:</strong> so that they fit in a worker's available memory.</li>
 <li><strong>Avoid very large graphs:</strong> because that can create an overhead on task.</li>
 <li><strong>Learn techniques for customization:</strong> in order to improve the efficiency of your processes.</li>
-<li><strong>Stop using Dask when no longer needed:</strong> like when you are iterating on a much smaller amount of data.</li>
-<li><strong>Persist in dsitributed RAM when you can:</strong> in doing so, accessing RAM memory will be faster.</li>
+<li><strong>Stop using Dask when no longer needed:</strong> like when you are iterating on a much smaller amount of data (<code>to_backend()</code>.</li>
+<li><strong>Persist in distributed RAM when you can:</strong> in doing so, accessing RAM memory will be faster.</li>
 <li><strong>Processes and threads:</strong> be careful to separate numeric work from text data to maintain efficiency.</li>
 <li><strong>Load data with Dask or Spark</strong>: for instance, if you need to work with large Python objects, let Dask create them
   (instead of creating them outside Dask or Spark and then handing thom over the framework).</li>
@@ -131,7 +133,8 @@ the cluster and GPU.</li>
 </ul>
 <p>If you know that the volume of data is compatible with one node, you can convert a distributed dataframe
 to <code>BackendDataFrame</code> and continue to manipulate the data locally.
-Use the <code>.to_backend()</code> to convert a <code>Dataframe</code> to Pandas or cudf Dataframe.</p>
+Use the <code>.to_backend()</code> to convert a <code>Dataframe</code> to a local Pandas like Dataframe
+or <code>.to_ndarray()</code> to convert a <code>DataFrame</code> to a local numpy like array.</p>
               
             </div>
           </div><footer>

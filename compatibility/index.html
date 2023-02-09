@@ -90,6 +90,8 @@
               </ul>
               <p class="caption"><span class="caption-text">Contribute</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../tech/">Tech</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../contribute/">Contribute</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../commands/">Commands</a>
@@ -128,7 +130,7 @@
 <table>
 <thead>
 <tr>
-<th>Limitations</th>
+<th>Limitations of Pandas like framework</th>
 </tr>
 </thead>
 <tbody>
@@ -197,6 +199,98 @@
 </tr>
 </tbody>
 </table>
+<table>
+<thead>
+<tr>
+<th>Limitations of Numpy like framework</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><br/><strong>numpy</strong></br/></td>
+</tr>
+<tr>
+<td>All data must be in RAM</td>
+</tr>
+<tr>
+<td><br/><strong>cupy</strong></br/></td>
+</tr>
+<tr>
+<td><a href="https://docs.cupy.dev/en/stable/user_guide/difference.html">Read this</a></td>
+</tr>
+<tr>
+<td>- block() not implemented</td>
+</tr>
+<tr>
+<td>- delete() not implemented</td>
+</tr>
+<tr>
+<td>- insert() not implemented</td>
+</tr>
+<tr>
+<td><br/><strong>dask array</strong></br/></td>
+</tr>
+<tr>
+<td><a href="https://docs.dask.org/en/stable/array.html#scope">Read this</a></td>
+</tr>
+<tr>
+<td>- identity() not implemented</td>
+</tr>
+<tr>
+<td>- asfarray() not implemented</td>
+</tr>
+<tr>
+<td>- asfortranarray() not implemented</td>
+</tr>
+<tr>
+<td>- ascontiguousarray() not implemented</td>
+</tr>
+<tr>
+<td>- asarray_chkfinite() not implemented</td>
+</tr>
+<tr>
+<td>- require() not implemented</td>
+</tr>
+<tr>
+<td>- column_stack() not implemented</td>
+</tr>
+<tr>
+<td>- row_stack() not implemented</td>
+</tr>
+<tr>
+<td>- *split*() not implemented</td>
+</tr>
+<tr>
+<td>- resize() not implemented</td>
+</tr>
+<tr>
+<td>- trim_zeros() not implemented</td>
+</tr>
+<tr>
+<td>- in1d() not implemented</td>
+</tr>
+<tr>
+<td>- intersect1d() not implemented</td>
+</tr>
+<tr>
+<td>- setdiff1d() not implemented</td>
+</tr>
+<tr>
+<td>- setxor1d() not implemented</td>
+</tr>
+<tr>
+<td>- column_stack() not implemented</td>
+</tr>
+<tr>
+<td>- row_stack() not implemented</td>
+</tr>
+<tr>
+<td>- fromiter() not implemented</td>
+</tr>
+</tbody>
+</table>
+<p>For compatibility between numpy and cupy,
+see <a href="https://numpy.org/doc/stable/user/basics.interoperability.html#basics-interoperability">here</a>.</p>
 <h3 id="file-format-compatibility">File format compatibility</h3>
 <p>To be compatible with all framework, you must only use the common features.
 We accept some function to read or write files, but we write a warning
@@ -437,6 +531,48 @@ if you use a function not compatible with others frameworks.</p>
 </tr>
 </tbody>
 </table>
+<table>
+<thead>
+<tr>
+<th>load... / save...</th>
+<th align="center">numpy</th>
+<th align="center">cupy</th>
+<th align="center">dask.array</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>vpd.load() npy</strong></td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td><strong>vpd.save() npy</strong></td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td>vpd.savez() npz</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>vpd.loadtxt()</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td>vpd.savetxt()</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
 <h3 id="cross-framework-compatibility">Cross framework compatibility</h3>
 <table>
 <thead>
@@ -450,21 +586,21 @@ if you use a function not compatible with others frameworks.</p>
 <tbody>
 <tr>
 <td>1-CPU</td>
-<td>pandas<br/><em>Limits:+</em></td>
+<td>pandas, numpy<br/><em>Limits:+</em></td>
 <td></td>
 <td></td>
 </tr>
 <tr>
 <td>n-CPU</td>
 <td></td>
-<td>modin<br/><em>Limits+</em></td>
-<td>dask, dask_modin or pyspark<br/><em>Limits:++</em></td>
+<td>modin, numpy<br/><em>Limits+</em></td>
+<td>dask, dask_modin or pyspark and dask.array<br/><em>Limits:++</em></td>
 </tr>
 <tr>
 <td>GPU</td>
-<td>cudf<br/><em>Limits:++</em></td>
+<td>cudf, cupy<br/><em>Limits:++</em></td>
 <td></td>
-<td>dask_cudf, pyspark+spark-rapids<br/><em>Limits:+++</em></td>
+<td>dask_cudf, pyspark+spark-rapids and dask.array<br/><em>Limits:+++</em></td>
 </tr>
 </tbody>
 </table>
@@ -484,21 +620,21 @@ Each cell is strongly compatible with the upper left part.</p>
 <tbody>
 <tr>
 <td>1-CPU</td>
-<td><strong>pandas<br/><em>Limits:+</em></strong></td>
+<td><strong>pandas, numpy<br/><em>Limits:+</em></strong></td>
 <td></td>
 <td></td>
 </tr>
 <tr>
 <td>n-CPU</td>
 <td></td>
-<td><strong>modin<br/><em>Limits+</em></strong></td>
-<td><strong>dask, dask_modin or pyspark<br/><em>Limits:++</em></strong></td>
+<td><strong>modin, numpy<br/><em>Limits+</em></strong></td>
+<td><strong>dask, dask_modin or pyspark and dask.array<br/><em>Limits:++</em></strong></td>
 </tr>
 <tr>
 <td><em>GPU</em></td>
-<td><em>cudf<br/>Limits:++</em></td>
+<td><em>cudf, cupy<br/>Limits:++</em></td>
 <td></td>
-<td><em>dask_cudf, pyspark+spark-rapids<br/>Limits:+++</em></td>
+<td><em>dask_cudf, pyspark+spark-rapids and dask.array<br/>Limits:+++</em></td>
 </tr>
 </tbody>
 </table>
@@ -520,21 +656,21 @@ Each cell is strongly compatible with the upper left part.</p>
 <tbody>
 <tr>
 <td>1-CPU</td>
-<td><strong>pandas<br/><em>Limits:+</em></strong></td>
+<td><strong>pandas, numpy<br/><em>Limits:+</em></strong></td>
 <td></td>
 <td></td>
 </tr>
 <tr>
 <td>n-CPU</td>
 <td></td>
-<td><strong>modin<br/><em>Limits+</em></strong></td>
-<td><em>dask, dask_modin or pyspark<br/>Limits:++</em></td>
+<td><strong>modin, numpy<br/><em>Limits+</em></strong></td>
+<td><em>dask, dask_modin or pyspark and dask.array<br/>Limits:++</em></td>
 </tr>
 <tr>
 <td>GPU</td>
-<td><strong>cudf<br/><em>Limits:++</em></strong></td>
+<td><strong>cudf, cupy<br/><em>Limits:++</em></strong></td>
 <td></td>
-<td><em>dask_cudf, pyspark+spark-rapids<br/>Limits:+++</em></td>
+<td><em>dask_cudf, pyspark+spark-rapids and dask.array<br/>Limits:+++</em></td>
 </tr>
 </tbody>
 </table>
@@ -560,21 +696,21 @@ Each cell is strongly compatible with the upper left part.</p>
 <tbody>
 <tr>
 <td>1-CPU</td>
-<td>pandas<br/><em>Limits:+</em></td>
+<td>pandas, numpy<br/><em>Limits:+</em></td>
 <td></td>
 <td></td>
 </tr>
 <tr>
 <td>n-CPU</td>
 <td></td>
-<td>modin<br/><em>Limits+</em></td>
-<td>dask, dask_modin or pyspark<br/><em>Limits:++</em></td>
+<td>modin, numpy<br/><em>Limits+</em></td>
+<td>dask, dask_modin or pyspark and dask.array<br/><em>Limits:++</em></td>
 </tr>
 <tr>
 <td>GPU</td>
-<td>cudf<br/><em>Limits:++</em></td>
+<td>cudf, cupy<br/><em>Limits:++</em></td>
 <td></td>
-<td><strong>dask_cudf</strong>, pyspark+spark-rapids<br/><em>Limits:+++</em></td>
+<td>dask_cudf, pyspark+spark-rapids and dask.array<br/><em>Limits:+++</em></td>
 </tr>
 </tbody>
 </table>

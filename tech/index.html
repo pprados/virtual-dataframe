@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/pprados/virtual_dataframe/tech/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Tech - virtual_dataframe</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Tech";
+        var mkdocs_page_input_path = "tech.md";
+        var mkdocs_page_url = "/pprados/virtual_dataframe/tech/";
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> virtual_dataframe
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../cluster/">Cluster</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../install/">Install</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../compatibility/">Compatibility</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../api/">API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../best_practices/">Best Practice</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../test/">Test</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../bench/">Bench</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../faq/">FAQ</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Contribute</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Tech</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../contribute/">Contribute</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../commands/">Commands</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../CHANGELOG/">Changelog</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">virtual_dataframe</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>Contribute &raquo;</li>
+      <li>Tech</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/pprados/virtual_dataframe/edit/master/docs/tech.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="technical-point-of-view">Technical point of view</h1>
+<p><code>virtual_dataframe</code> framework patch others frameworks to unify the API.</p>
+<p><code>VDF_MODE</code>:</p>
+<ul>
+<li>Pandas like<ul>
+<li><a href="#pandas">pandas</a></li>
+<li><a href="#cudf">cudf</a></li>
+<li><a href="#modin-or-dask_modin">modin</a></li>
+<li><a href="#dask">dask</a></li>
+<li><a href="#dask_cudf">dask_cudf</a></li>
+<li><a href="#pyspark">pyspark</a></li>
+</ul>
+</li>
+<li>Numpy like<ul>
+<li><a href="#numpy">numpy</a></li>
+<li><a href="#cupy">cupy</a></li>
+<li><a href="#dask_array">dask_array</a></li>
+</ul>
+</li>
+</ul>
+<h1 id="pandas-like-frameworks">Pandas like frameworks</h1>
+<h2 id="pandas">Pandas</h2>
+<ul>
+<li>Add <code>vdf.BackEndDataFrame = pandas.DataFrame</code></li>
+<li>Add <code>vdf.BackEndSeries = pandas.Series</code></li>
+<li>Add <code>vdf.BackEndArray = numpy.ndarray</code></li>
+<li>Add <code>vdf.BackEndPandas = pandas</code></li>
+<li>Add <code>vdf.FrontEndPandas = pandas</code></li>
+<li>
+<p>Add <code>vdf.FrontEndNumpy = numpy</code></p>
+</li>
+<li>
+<p>Add <code>vdf.compute()</code> to return a tuple of args and be compatible with <a href="https://docs.dask.org/en/stable/api.html#dask.compute"><code>dask.compute()</code></a></p>
+</li>
+<li>Add <code>vdf.concat()</code> an alias of <code>panda.concat()</code></li>
+<li>Add <code>vdf.delayed()</code> to delay a calland be compatible with <a href="https://docs.dask.org/en/stable/delayed.html"><code>dask.delayed()</code></a></li>
+<li>Add <code>vdf.persist()</code> to parameters and empty image and be compatible with <a href="https://docs.dask.org/en/stable/persist.html"><code>dask.persist()</code></a></li>
+<li>
+<p>Add <code>vdf.visualize()</code> to return an empty image and be compatible with <a href="https://docs.dask.org/en/stable/api.html#dask.visualize"><code>dask.visualize()</code></a></p>
+</li>
+<li>
+<p>Add <code>vdf.from_pandas()</code> to return df and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.from_pandas.html">`dask.from_pandas()</a></p>
+</li>
+<li>
+<p>Add <code>vdf.from_backend()</code> an alias of <code>from_pandas()</code></p>
+</li>
+<li>
+<p>Add <code>vdf.numpy</code> an alias of <code>numpy</code> module</p>
+</li>
+<li>
+<p>Remove extra parameters used by Dask in:</p>
+</li>
+<li><code>*.to_csv()</code>, <code>*.to_excel()</code>, <code>*.to_feather()</code>, <code>*.to_hdf()</code>, <code>*.to_json()</code></li>
+<li>Update the pandas API to accept glob filename in:</li>
+<li><code>vdf.read_csv()</code>, <code>vdf.read_excel()</code>, <code>vdf.read_feather()</code>, <code>vdf.read_fwf()</code>, <code>vdf.read_hdf</code>, <code>vdf.read_json()</code>,
+<code>vdf.read_orc()</code>, <code>vdf.read_parquet()</code>, <code>vdf.read_sql_table()</code></li>
+<li><code>DF.to_csv()</code>, <code>DF.to_excel()</code>, <code>DF.to_feather()</code>, <code>DF.to_hdf()</code>, <code>DF.to_json()</code>,</li>
+<li><code>Series.to_csv()</code>, <code>Series.to_excel()</code>, <code>Series.to_hdf()</code>, <code>Series.to_json()</code></li>
+<li>Add methods with <code>_not_implemented</code></li>
+<li><code>DF.to_fwf()</code></li>
+<li>Add <code>DF.to_pandas()</code> to return <code>self</code></li>
+<li>Add <code>DF.to_backend()</code> to return <code>self</code></li>
+<li>Add <code>DF.to_ndarray()</code> an alias to <code>to_numpy()</code></li>
+<li>Add <code>DF.apply_rows()</code> to be compatible with <a href="https://docs.rapids.ai/api/cudf/nightly/api_docs/api/cudf.DataFrame.apply_rows.html"><code>cudf.apply_rows()</code></a></li>
+<li>Add <code>DF.map_partitions()</code> to be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.map_partitions.html"><code>dask.map_partitions()</code></a></li>
+<li>Add <code>DF.compute()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.compute.html">`dask.DataFrame.compute()</a></li>
+<li>Add <code>DF.repartition()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.repartition.html#dask.dataframe.DataFrame.repartition">`dask.DataFrame.repartition()</a></li>
+<li>Add <code>DF.visualize()</code> to return <code>visualize(self)</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.visualize.html">`dask.DataFrame.visualize()</a></li>
+<li>
+<p>Add <code>DF.categorize()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.categorize.html">`dask.DataFrame.categorize()</a></p>
+</li>
+<li>
+<p>Add <code>Series.to_pandas()</code> to return <code>self</code></p>
+</li>
+<li>Add <code>Series.to_backend()</code> to return <code>self</code></li>
+<li>
+<p>Add <code>Series.to_ndarray()</code> alias of <code>to_numpy</code></p>
+</li>
+<li>
+<p>Add <code>Series.compute()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.compute.html">`dask.Series.compute()</a></p>
+</li>
+<li>Add <code>Series.map_partitions()</code> to return <code>self.map()</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.map_partitions.html">`dask.Series.map_partitions()</a></li>
+<li>Add <code>Series.persist()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.persist.html">'dask.Series.persist()</a></li>
+<li>Add <code>Series.repartition()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.repartition.html">'dask.Series.repartition()</a></li>
+<li>Add <code>Series.visualize()</code> to return <code>visualize(self)</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.visualize.html">'dask.Series.visualize()</a></li>
+</ul>
+<h2 id="cudf">cudf</h2>
+<ul>
+<li>Add <code>vdf.BackEndDataFrame = cudf.DataFrame</code></li>
+<li>Add <code>vdf.BackEndSeries = cudf.Series</code></li>
+<li>Add <code>vdf.BackEndArray = cupy.ndarray</code></li>
+<li>Add <code>vdf.BackEndPandas = cudf</code></li>
+<li>Add <code>vdf.FrontEndPandas = cudf</code></li>
+<li>
+<p>Add <code>vdf.FrontEndNumpy = cupy</code></p>
+</li>
+<li>
+<p>Add <code>vdf.compute()</code> to return an tuple of args and be compatible with <a href="https://docs.dask.org/en/stable/api.html#dask.compute"><code>dask.compute()</code></a></p>
+</li>
+<li>Add <code>vdf.concat()</code> an alias of <code>panda.concat()</code></li>
+<li>Add <code>vdf.delayed()</code> to delay a calland be compatible with <a href="https://docs.dask.org/en/stable/delayed.html"><code>dask.delayed()</code></a></li>
+<li>Add <code>vdf.persist()</code> to parameters and empty image and be compatible with <a href="https://docs.dask.org/en/stable/persist.html"><code>dask.persist()</code></a></li>
+<li>
+<p>Add <code>vdf.visualize()</code> to return an empty image and be compatible with <a href="https://docs.dask.org/en/stable/api.html#dask.visualize"><code>dask.visualize()</code></a></p>
+</li>
+<li>
+<p>Add <code>vdf.from_pandas()</code> to return df and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.from_pandas.html">`dask.from_pandas()</a></p>
+</li>
+<li>
+<p>Add <code>vdf.from_backend()</code> an alias of <code>from_pandas()</code></p>
+</li>
+<li>
+<p>Add <code>vdf.numpy</code> an alias of <code>cupy</code> module</p>
+</li>
+<li>
+<p>Remove extra parameters used by Dask in:</p>
+</li>
+<li><code>*.to_csv()</code>, <code>*.to_excel()</code>, <code>*.to_feather()</code>, <code>*.to_hdf()</code>, <code>*.to_json()</code></li>
+<li>Update the pandas API to accept glob filename in:</li>
+<li><code>vdf.read_csv()</code>, <code>vdf.read_feather()</code>, <code>vdf.read_json()</code></li>
+<li><code>DF.to_csv()</code>, <code>DF.to_excel()</code>, <code>DF.to_feather()</code>, <code>DF.to_hdf()</code>, <code>DF.to_json()</code>,</li>
+<li><code>Series.to_hdf()</code>, <code>Series.to_json()</code></li>
+<li>Add methods with <code>_not_implemented</code></li>
+<li><code>vdf.read_excel()</code>, <code>vdf.read_fwf()</code>, <code>vdf.read_sql_table()</code></li>
+<li><code>DF.to_csv()</code>, <code>DF.to_excel()</code></li>
+<li>Add <code>pandas.DataFrame.to_pandas()</code> to return <code>self</code></li>
+<li>Add <code>DF.to_backend()</code> to return <code>self</code></li>
+<li>Add <code>DF.to_ndarray()</code> to convert DataFrame to <code>cupy.ndarray</code></li>
+<li>Add <code>DF.map_partitions()</code> to be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.map_partitions.html"><code>dask.map_partitions()</code></a></li>
+<li>Add <code>DF.compute()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.compute.html">`dask.DataFrame.compute()</a></li>
+<li>Add <code>DF.repartition()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.repartition.html#dask.dataframe.DataFrame.repartition">`dask.DataFrame.repartition()</a></li>
+<li>Add <code>DF.visualize()</code> to return <code>visualize(self)</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.visualize.html">`dask.DataFrame.visualize()</a></li>
+<li>
+<p>Add <code>DF.categorize()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.categorize.html">`dask.DataFrame.categorize()</a></p>
+</li>
+<li>
+<p>Add <code>pandas.Series.to_pandas()</code> to return <code>self</code></p>
+</li>
+<li>Add <code>Series.to_backend()</code> to return <code>self</code></li>
+<li>
+<p>Add <code>Series.to_ndarray()</code> alias of <code>to_numpy</code></p>
+</li>
+<li>
+<p>Add <code>Series.compute()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.compute.html">`dask.Series.compute()</a></p>
+</li>
+<li>Add <code>Series.map_partitions()</code> to return <code>self.map()</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.map_partitions.html">`dask.Series.map_partitions()</a></li>
+<li>Add <code>Series.persist()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.persist.html">'dask.Series.persist()</a></li>
+<li>Add <code>Series.repartition()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.repartition.html">'dask.Series.repartition()</a></li>
+<li>Add <code>Series.visualize()</code> to return <code>visualize(self)</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.visualize.html">'dask.Series.visualize()</a></li>
+</ul>
+<h2 id="modin-or-dask_modin">modin or dask_modin</h2>
+<ul>
+<li>Set <code>MODIN_ENGINE=dask</code> for <code>dask_modin</code></li>
+<li>Set <code>MODIN_ENGINE=python</code> for <code>modin</code></li>
+<li>Add <code>vdf.BackEndDataFrame = modin.pandas.DataFrame</code></li>
+<li>Add <code>vdf.BackEndSeries = modin.pandas.Series</code></li>
+<li>Add <code>vdf.BackEndArray = numpy.ndarray</code></li>
+<li>Add <code>vdf.BackEndPandas = modin.pandas</code></li>
+<li>Add <code>vdf.FrontEndPandas = modin.pandas</code></li>
+<li>
+<p>Add <code>vdf.FrontEndNumpy = numpy</code></p>
+</li>
+<li>
+<p>Add <code>vdf.compute()</code> to return a tuple of args and be compatible with <a href="https://docs.dask.org/en/stable/api.html#dask.compute"><code>dask.compute()</code></a></p>
+</li>
+<li>Add <code>vdf.concat()</code> an alias of <code>modin.pandas.concat()</code></li>
+<li>Add <code>vdf.delayed()</code> to delay a calland be compatible with <a href="https://docs.dask.org/en/stable/delayed.html"><code>dask.delayed()</code></a></li>
+<li>Add <code>vdf.persist()</code> to parameters and empty image and be compatible with <a href="https://docs.dask.org/en/stable/persist.html"><code>dask.persist()</code></a></li>
+<li>
+<p>Add <code>vdf.visualize()</code> to return an empty image and be compatible with <a href="https://docs.dask.org/en/stable/api.html#dask.visualize"><code>dask.visualize()</code></a></p>
+</li>
+<li>
+<p>Add <code>vdf.from_pandas()</code> to return modin DataFrame or Series and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.from_pandas.html">`dask.from_pandas()</a></p>
+</li>
+<li>
+<p>Add <code>vdf.from_backend()</code> an alias of <code>from_pandas()</code></p>
+</li>
+<li>
+<p>Add <code>vdf.numpy</code> an alias of <code>numpy</code> module</p>
+</li>
+<li>
+<p>Remove extra parameters used by Dask in:</p>
+</li>
+<li><code>*.to_csv()</code>, <code>*.to_excel()</code>, <code>*.to_feather()</code>, <code>*.to_hdf()</code>, <code>*.to_json()</code></li>
+<li>Add warning when using:</li>
+<li><code>read_excel()</code>, <code>read_feather()</code>, <code>read_fwf()</code>, <code>read_hdf()</code>, <code>read_sql_table()</code></li>
+<li><code>DF.to_excel()</code>, <code>DF.to_feather()</code>, <code>DF.to_hdf()</code>, <code>DF.to_sql()</code></li>
+<li><code>Series.to_csv()</code>, <code>Series.to_excel()</code>, <code>Series.to_hdf()</code>, <code>Series.to_json()</code></li>
+<li>Update the pandas API to accept glob filename in:</li>
+<li><code>vdf.read_excel()</code>, <code>vdf.read_feather()</code>, <code>vdf.read_fwf()</code>, <code>vdf.read_hdf</code>,
+<code>vdf.read_orc()</code></li>
+<li><code>DF.to_excel()</code>, <code>DF.to_feather()</code>, <code>DF.to_hdf()</code>, <code>DF.to_sql()</code></li>
+<li><code>Series.to_csv()</code>, <code>Series.to_excel()</code>, <code>Series.to_hdf()</code>, <code>Series.to_json()</code></li>
+<li>Add methods with <code>_not_implemented</code></li>
+<li><code>DF.to_orc()</code></li>
+<li>Add <code>DF.to_pandas()</code> to convert to <code>panda.DataFrame</code></li>
+<li>Add <code>DF.to_backend()</code> to return <code>self</code></li>
+<li>
+<p>Add <code>DF.to_ndarray()</code> an alias to <code>to_numpy()</code></p>
+</li>
+<li>
+<p>Add <code>DF.apply_rows()</code> to be compatible with <a href="https://docs.rapids.ai/api/cudf/nightly/api_docs/api/cudf.DataFrame.apply_rows.html"><code>cudf.apply_rows()</code></a></p>
+</li>
+<li>Add <code>DF.map_partitions()</code> to be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.map_partitions.html"><code>dask.map_partitions()</code></a></li>
+<li>Add <code>DF.compute()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.compute.html">`dask.DataFrame.compute()</a></li>
+<li>Add <code>DF.repartition()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.repartition.html#dask.dataframe.DataFrame.repartition">`dask.DataFrame.repartition()</a></li>
+<li>Add <code>DF.visualize()</code> to return <code>visualize(self)</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.visualize.html">`dask.DataFrame.visualize()</a></li>
+<li>
+<p>Add <code>DF.categorize()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.categorize.html">`dask.DataFrame.categorize()</a></p>
+</li>
+<li>
+<p>Add <code>Series.to_pandas()</code> to return <code>modin.pandas.Series.to_pandas()</code></p>
+</li>
+<li>Add <code>Series.to_backend()</code> to return <code>self</code></li>
+<li>
+<p>Add <code>Series.to_ndarray()</code> alias of <code>to_numpy</code></p>
+</li>
+<li>
+<p>Add <code>Series.compute()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.compute.html">`dask.Series.compute()</a></p>
+</li>
+<li>Add <code>Series.map_partitions()</code> to return <code>self.map()</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.map_partitions.html">`dask.Series.map_partitions()</a></li>
+<li>Add <code>Series.persist()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.persist.html">'dask.Series.persist()</a></li>
+<li>Add <code>Series.repartition()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.repartition.html">'dask.Series.repartition()</a></li>
+<li>
+<p>Add <code>Series.visualize()</code> to return <code>visualize(self)</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.visualize.html">'dask.Series.visualize()</a></p>
+</li>
+<li>
+<p>And all patch in <a href="#pandas">pandas</a></p>
+</li>
+</ul>
+<h2 id="dask">dask</h2>
+<ul>
+<li>Add <code>vdf.BackEndDataFrame = pandas.DataFrame</code></li>
+<li>Add <code>vdf.BackEndSeries = pandas.Series</code></li>
+<li>Add <code>vdf.BackEndArray = numpy.ndarray</code></li>
+<li>Add <code>vdf.BackEndPandas = pandas</code></li>
+<li>Add <code>vdf.FrontEndPandas = dask.dataframe</code></li>
+<li>
+<p>Add <code>vdf.FrontEndNumpy = dask.array</code></p>
+</li>
+<li>
+<p>Add <code>vdf.concat()</code> an alias of <code>dask.dataframe.multi.concat()</code></p>
+</li>
+<li>
+<p>Add <code>vdf.from_pandas()</code> an alias of <code>dask.dataframe.from_pandas()</code></p>
+</li>
+<li>
+<p>Add <code>vdf.from_backend()</code> an alias of <code>from_pandas()</code></p>
+</li>
+<li>
+<p>Add <code>vdf.numpy</code> an alias of <code>numpy</code> module</p>
+</li>
+<li>
+<p>Add warning in:</p>
+</li>
+<li><code>read_fwf()</code>, <code>read_hdf()</code>, <code>read_sql_table()</code></li>
+<li>Add methods with <code>_not_implemented</code></li>
+<li><code>read_excel()</code>, <code>read_feather()</code></li>
+<li><code>DF.to_excel()</code>, <code>DF.to_feather()</code>, <code>DF.to_fwf()</code></li>
+<li>Add <code>DF.to_pandas()</code> to return <code>self.compute()</code></li>
+<li>Add <code>DF.to_backend()</code> an alias of <code>to_pandas()</code></li>
+<li>Add <code>DF.to_numpy()</code> to return <code>self.compute().to_numpy()</code></li>
+<li>Add <code>DF.to_ndarray()</code> an alias to <code>dask.DataFrame.to_dask_array()</code></li>
+<li>Add <code>DF.apply_rows()</code> to be compatible with <a href="https://docs.rapids.ai/api/cudf/nightly/api_docs/api/cudf.DataFrame.apply_rows.html"><code>cudf.apply_rows()</code></a></li>
+<li>Patch <code>DF.to_sql()</code> and <code>Series.to_sql()</code> to accept <code>con</code> or <code>uri</code></li>
+<li>Add <code>Series.to_pandas()</code> to return <code>self.compute()</code></li>
+<li>Add <code>Series.to_backend()</code> an alias of <code>to_pandas()</code></li>
+<li>Add <code>Series.to_numpy()</code> to return <code>self.compute().to_numpy()</code></li>
+<li>
+<p>Add <code>Series.to_ndarray()</code> alias of <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.to_dask_array.html"><code>dask.dataframe.Series.to_dask_array()</code></a></p>
+</li>
+<li>
+<p>And all patch in <a href="#pandas">pandas</a></p>
+</li>
+</ul>
+<h2 id="dask_cudf">dask_cudf</h2>
+<ul>
+<li>Add <code>vdf.BackEndDataFrame = cudf.DataFrame</code></li>
+<li>Add <code>vdf.BackEndSeries = cudf.Series</code></li>
+<li>Add <code>vdf.BackEndArray = cudf</code></li>
+<li>Add <code>vdf.BackEndPandas = pandas</code></li>
+<li>Add <code>vdf.FrontEndPandas = dask_cudf</code></li>
+<li>
+<p>Add <code>vdf.FrontEndNumpy = cupy</code></p>
+</li>
+<li>
+<p>Add <code>vdf.compute()</code> to <code>dask.compute()</code></p>
+</li>
+<li>Add <code>vdf.concat()</code> to <code>dask.dataframe.multi.concat()</code></li>
+<li>Add <code>vdf.delayed()</code> to <code>dask.delayed()</code></li>
+<li>Add <code>vdf.persist()</code> to <code>dask.persist()</code></li>
+<li>
+<p>Add <code>vdf.visualize()</code> to <code>dask.visualize()</code></p>
+</li>
+<li>
+<p>Add <code>vdf.from_pandas()</code> to <code>dask_cudf.from_cudf()</code></p>
+</li>
+<li>
+<p>Add <code>vdf.from_backend()</code> to <code>dask_cudf.from_cudf()</code></p>
+</li>
+<li>
+<p>Add <code>vdf.numpy</code> an alias of <code>cupy</code> module</p>
+</li>
+<li>
+<p>Add a warning in:</p>
+</li>
+<li><code>Series.to_hdf()</code>, <code>Series.to_json()</code></li>
+<li>Add methods with <code>_not_implemented</code></li>
+<li><code>read_excel()</code>, <code>read_feather()</code>, <code>read_fwf()</code>, <code>read_hdf()</code>, <code>read_sql_table()</code></li>
+<li><code>DF.to_excel()</code>, <code>DF.to_feather()</code>, <code>DF.to_fwf()</code>, <code>DF.to_hdf()</code>,<code>DF.to_sql()</code>,</li>
+<li><code>Series.to_csv()</code>, <code>Series.to_excel()</code>,</li>
+<li>Add <code>DF.to_pandas()</code> to return <code>self.compute().to_pandas()</code></li>
+<li>Add <code>DF.to_backend()</code> to return <code>self.compute()</code> and return <code>cudf.DataFrame</code></li>
+<li>Add <code>DF.to_numpy()</code> to <code>self.compute().to_numpy()</code></li>
+<li>
+<p>Add <code>DF.to_ndarray()</code> an alias to <code>self.compute()</code> and return <code>cudf.DataFrame</code></p>
+</li>
+<li>
+<p>Add <code>Series.to_pandas()</code> to return <code>self.compute().to_pandas()</code></p>
+</li>
+<li>Add <code>Series.to_backend()</code> to return <code>self.compute()</code> and return <code>cudf.Series</code></li>
+<li>Add <code>Series.to_numpy()</code> to return <code>self.compute().to_numpy()</code></li>
+<li>
+<p>Add <code>Series.to_ndarray()</code> to return a <code>cudf.Series</code></p>
+</li>
+<li>
+<p>Add <code>Series.compute()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.compute.html">`dask.Series.compute()</a></p>
+</li>
+<li>Add <code>Series.map_partitions()</code> to return <code>self.map()</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.map_partitions.html">`dask.Series.map_partitions()</a></li>
+<li>Add <code>Series.persist()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.persist.html">'dask.Series.persist()</a></li>
+<li>Add <code>Series.repartition()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.repartition.html">'dask.Series.repartition()</a></li>
+<li>
+<p>Add <code>Series.visualize()</code> to return <code>visualize(self)</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.visualize.html">'dask.Series.visualize()</a></p>
+</li>
+<li>
+<p>And all patch in <a href="#cudf">cudf</a></p>
+</li>
+</ul>
+<h2 id="pyspark">pyspark</h2>
+<ul>
+<li>Add <code>vdf.BackEndDataFrame = pandas.DataFrame</code></li>
+<li>Add <code>vdf.BackEndSeries = pandas.Series</code></li>
+<li>Add <code>vdf.BackEndArray = numpy.ndarray</code></li>
+<li>Add <code>vdf.BackEndPandas = pandas</code></li>
+<li>Add <code>vdf.FrontEndPandas = pyspark.pandas</code></li>
+<li>
+<p>Add <code>vdf.FrontEndNumpy = numpy</code></p>
+</li>
+<li>
+<p>Add <code>vdf.compute()</code> to return a tuple of args and be compatible with <a href="https://docs.dask.org/en/stable/api.html#dask.compute"><code>dask.compute()</code></a></p>
+</li>
+<li>Add <code>vdf.concat()</code> an alias of <code>pyspark.pandas.concat()</code></li>
+<li>Add <code>vdf.delayed()</code> to delay a call and be compatible with <a href="https://docs.dask.org/en/stable/delayed.html"><code>dask.delayed()</code></a></li>
+<li>Add <code>vdf.persist()</code> to persist the current DF</li>
+<li>
+<p>Add <code>vdf.visualize()</code> to return an empty image and be compatible with <a href="https://docs.dask.org/en/stable/api.html#dask.visualize"><code>dask.visualize()</code></a></p>
+</li>
+<li>
+<p>Add <code>vdf.from_backend()</code> an alias of <code>from_pandas()</code></p>
+</li>
+<li>
+<p>Add <code>vdf.numpy</code> an alias of <code>numpy</code> module</p>
+</li>
+<li>
+<p>Remove extra parameters used by Dask in:</p>
+</li>
+<li><code>*.to_csv()</code>, <code>*.to_excel()</code>, <code>*.to_feather()</code>, <code>*.to_hdf()</code>, <code>*.to_json()</code></li>
+<li><code>from_pandas()</code></li>
+<li>Add warning in:</li>
+<li><code>read_excel()</code>, <code>reql_sql_table()</code></li>
+<li>Update the pandas API to accept glob filename in:</li>
+<li><code>vdf.read_csv()</code>, <code>vdf.read_excel()</code>, <code>vdf.read_json()</code>, <code>vdf.read_orc()</code></li>
+<li><code>DF.to_csv()</code>, <code>DF.to_excel()</code>, <code>DF.to_feather()</code>, <code>DF.to_hdf()</code>, <code>DF.to_json()</code>,</li>
+<li><code>Series.to_csv()</code>, <code>Series.to_excel()</code>, <code>Series.to_hdf()</code>, <code>Series.to_json()</code></li>
+<li>Add methods with <code>_not_implemented</code></li>
+<li><code>vdf.read_feather()</code>, <code>vdf.read_fwf()</code>, <code>vdf.read_hdf()</code></li>
+<li><code>DF.to_sql()</code>, <code>Series.to_sql()</code></li>
+<li>Add <code>DF.to_backend()</code> an alias of <code>to_pandas()</code></li>
+<li>
+<p>Add <code>DF.to_ndarray()</code> an alias to <code>to_numpy()</code></p>
+</li>
+<li>
+<p>Add <code>DF.apply_rows()</code> to be compatible with <a href="https://docs.rapids.ai/api/cudf/nightly/api_docs/api/cudf.DataFrame.apply_rows.html"><code>cudf.apply_rows()</code></a></p>
+</li>
+<li>Add <code>DF.categorize()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.categorize.html">`dask.DataFrame.categorize()</a></li>
+<li>Add <code>DF.compute()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.compute.html">`dask.DataFrame.compute()</a></li>
+<li>Add <code>DF.map_partitions()</code> to be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.map_partitions.html"><code>dask.map_partitions()</code></a></li>
+<li>Add <code>DF.persist()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.visualize.html">`dask.DataFrame.visualize()</a></li>
+<li>Add <code>DF.repartition()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.repartition.html#dask.dataframe.DataFrame.repartition">`dask.DataFrame.repartition()</a></li>
+<li>
+<p>Add <code>DF.visualize()</code> to return <code>visualize(self)</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.DataFrame.visualize.html">`dask.DataFrame.visualize()</a></p>
+</li>
+<li>
+<p>Add <code>Series.to_backend()</code> alias of <code>to_pandas()</code></p>
+</li>
+<li>
+<p>Add <code>Series.to_ndarray()</code> alias of <code>to_numpy()</code></p>
+</li>
+<li>
+<p>Add <code>Series.compute()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.compute.html">`dask.Series.compute()</a></p>
+</li>
+<li>Add <code>Series.map_partitions()</code> to return <code>self.map()</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.map_partitions.html">`dask.Series.map_partitions()</a></li>
+<li>Add <code>Series.persist()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.persist.html">'dask.Series.persist()</a></li>
+<li>Add <code>Series.repartition()</code> to return <code>self</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.repartition.html">'dask.Series.repartition()</a></li>
+<li>Add <code>Series.visualize()</code> to return <code>visualize(self)</code> and be compatible with <a href="https://docs.dask.org/en/stable/generated/dask.dataframe.Series.visualize.html">'dask.Series.visualize()</a></li>
+</ul>
+<h1 id="numpy-like-familly">Numpy like familly</h1>
+<h2 id="numpy">Numpy</h2>
+<p>It's not possible to update some method in <code>numpy.ndarray</code>.</p>
+<ul>
+<li><code>vdf.numpy</code> is an alias of <code>numpy</code></li>
+<li>Add <code>vdf.numpy.asnumpy(ar)</code> to return <code>ar</code></li>
+<li>Add <code>vdf.numpy.asndarray(ar)</code> to return <code>ar.to_numpy()</code></li>
+<li>Add <code>vdf.numpy.compute(...)</code> to return a tuple with parameters</li>
+<li>Add <code>vdf.numpy.compute_chunk_sizes(ar)</code> to return <code>ar</code></li>
+<li>Add <code>vdf.numpy.rechunk(ar)</code> to return <code>ar</code></li>
+<li>Add <code>vdf.numpy.arange()</code>, remove the parameter <code>chunks</code>, invoke <code>numpy.arange()</code> and return a view with <code>Vndarray</code></li>
+<li>Add <code>vdf.numpy.from_array()</code>, remove the parameter <code>chunks</code>, invoke <code>numpy.arange()</code> and return a view with <code>Vndarray</code></li>
+<li>Add <code>vdf.numpy.load()</code> to remove the parameter <code>chunks</code></li>
+<li>Add <code>vdf.numpy.save()</code> to remove the parameter <code>chunks</code></li>
+<li>Add <code>vdf.numpy.savez()</code> to remove the parameter <code>chunks</code></li>
+<li>Add <code>vdf.numpy.random.*</code> to remove the parameter <code>chunks</code></li>
+</ul>
+<h2 id="cupy">cupy</h2>
+<ul>
+<li><code>vdf.numpy</code> is an alias of <code>cupy</code></li>
+<li>Add <code>vdf.numpy.asndarray(ar)</code> to return <code>ar.to_numpy()</code></li>
+<li>Add <code>vdf.numpy.compute(...)</code> to return a tuple with parameters</li>
+<li>Add <code>vdf.numpy.compute_chunk_sizes(ar)</code> to return <code>ar</code></li>
+<li>Add <code>vdf.numpy.rechunk(ar)</code> to return <code>ar</code></li>
+<li>Add <code>vdf.numpy.arange()</code>, remove the parameter <code>chunks</code>, invoke <code>numpy.arange()</code> and return a view with <code>Vndarray</code></li>
+<li>Add <code>vdf.numpy.from_array()</code>, remove the parameter <code>chunks</code>, invoke <code>numpy.arange()</code> and return a view with <code>Vndarray</code></li>
+<li>Add <code>vdf.numpy.load()</code> to remove the parameter <code>chunks</code></li>
+<li>Add <code>vdf.numpy.save()</code> to remove the parameter <code>chunks</code></li>
+<li>Add <code>vdf.numpy.savez()</code> to remove the parameter <code>chunks</code></li>
+<li>Add <code>vdf.numpy.random.*</code> to remove the parameter <code>chunks</code></li>
+</ul>
+<h2 id="dask_array">dask_array</h2>
+<ul>
+<li><code>vdf.numpy</code> is an alias of <code>dasl.array</code></li>
+<li>Add <code>vdf.numpy.asarray(ar)</code> to return array of numpy or cupy</li>
+<li>Add <code>vdf.numpy.asndarray(ar)</code> to return <code>ar.to_numpy()</code></li>
+<li>Add <code>vdf.numpy.compute(...)</code> to return a tuple with parameters</li>
+<li>Add <code>vdf.numpy.compute_chunk_sizes(ar)</code> to return <code>ar</code></li>
+<li>Add <code>vdf.numpy.rechunk(ar)</code> to return <code>ar</code></li>
+<li>Add <code>vdf.numpy.arange()</code>, remove the parameter <code>chunks</code>, invoke <code>numpy.arange()</code> and return a view with <code>Vndarray</code></li>
+<li>Add <code>vdf.numpy.from_array()</code>, remove the parameter <code>chunks</code>, invoke <code>numpy.arange()</code> and return a view with <code>Vndarray</code></li>
+<li>Add <code>vdf.numpy.load()</code> to remove the parameter <code>chunks</code></li>
+<li>Add <code>vdf.numpy.save()</code> to remove the parameter <code>chunks</code></li>
+<li>Add <code>vdf.numpy.savez()</code> to remove the parameter <code>chunks</code></li>
+<li>Add <code>vdf.numpy.random.*</code> to remove the parameter <code>chunks</code></li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../faq/" class="btn btn-neutral float-left" title="FAQ"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../contribute/" class="btn btn-neutral float-right" title="Contribute">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/pprados/virtual_dataframe" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../faq/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../contribute/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

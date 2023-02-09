@@ -78,6 +78,8 @@
               </ul>
               <p class="caption"><span class="caption-text">Contribute</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../tech/">Tech</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../contribute/">Contribute</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../commands/">Commands</a>
@@ -86,11 +88,19 @@
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="./">Changelog</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#v05-2022-11-15">[v0.5] - 2022-11-15</a>
+    <li class="toctree-l2"><a class="reference internal" href="#v06-2022-12-xx-todo">[v0.6] - 2022-12-XX TODO</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#added">Added</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#changed">Changed</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#v05-2022-11-15">[v0.5] - 2022-11-15</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#added_1">Added</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#changed_1">Changed</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#deprecated">Deprecated</a>
     </li>
@@ -133,13 +143,33 @@
 <p>All notable changes to this project will be documented in this file.</p>
 <p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
 and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h2 id="v06-2022-12-xx-todo">[v0.6] - 2022-12-XX TODO</h2>
+<p>Add support of Numpy frameworks (numpy, cupy, dask_array, dask_cupy)</p>
+<h3 id="added">Added</h3>
+<ul>
+<li><code>numpy</code>, <code>cupy</code>, <code>dask.array</code> frameworks</li>
+<li><code>to_numpy()</code></li>
+<li><code>to_ndarray()</code></li>
+<li><code>FrontEndNumpy</code>, <code>BackEndNumpy</code></li>
+<li><code>import vdf.numpy</code></li>
+<li><code>vdf.numpy.array(..., chunks=...)</code></li>
+<li><code>vdf.numpy.asnumpy(d)</code></li>
+<li><code>vdf.numpy.asdarray(d)</code></li>
+<li><code>vdf.numpy.save(d)</code></li>
+<li><code>vdf.numpy.load(d)</code></li>
+</ul>
+<h3 id="changed">Changed</h3>
+<ul>
+<li>Rename <code>FrontEnd</code> to <code>FrontEndPandas</code></li>
+<li>Rename <code>BackEnd</code> to <code>BackEndPandas</code></li>
+</ul>
 <h2 id="v05-2022-11-15">[v0.5] - 2022-11-15</h2>
 <p>First version published on the repositories (pip and conda-forge).</p>
-<h3 id="added">Added</h3>
+<h3 id="added_1">Added</h3>
 <ul>
 <li>Pandas, cudf, modin, dask, dask_cudf, dask_modin, pyspark and pyspark+rapids frameworks</li>
 </ul>
-<h3 id="changed">Changed</h3>
+<h3 id="changed_1">Changed</h3>
 <ul>
 <li>Nop</li>
 </ul>
