@@ -197,6 +197,9 @@ Convert columns of the DataFrame to category dtype.
 # %% tools
 
 def _remove_args(func, _params: List[str]):
+    """
+    removes the specified parameters from the keyword arguments passed to func.
+    """
     def wrapper(*args, **kwargs):
         for k in _params:
             kwargs.pop(k, None)
@@ -206,14 +209,15 @@ def _remove_args(func, _params: List[str]):
 
 
 def _not_implemented(*args, **kwargs):
+    """ Raise a NotImplementedError """
     raise NotImplementedError()
 
 
 _printed_warning = set()
 
-
 def _warn(func: Callable, scope: str,
           ) -> Callable:
+    """ Decorator to warn when a function is not implemented in a specific mode """
     def _wrapper(*args, **kwargs):
         if func.__name__ not in _printed_warning:
             _printed_warning.add(func.__name__)
@@ -225,6 +229,7 @@ def _warn(func: Callable, scope: str,
 
 
 def _rm_to(func):
+    """ Remove parameters from to_* functions """
     return _remove_args(func,
                         ["single_file",
                          "name_function",
@@ -248,7 +253,6 @@ def _patch_to(func, rm_params, scope=None):
 
     _patch.__name__ = func.__name__
     return _patch
-
 
 def _patch_read(front, func, scope=None):
     def _wrapper(filepath_or_buffer, *args, **kwargs) -> Union[_VDataFrame, Iterator[_VDataFrame]]:

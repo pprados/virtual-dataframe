@@ -148,7 +148,12 @@ CONDA_PACKAGE:=$(CONDA_PREFIX)/lib/python$(PYTHON_VERSION)/site-packages
 CONDA_PYTHON:=$(CONDA_PREFIX)/bin/python
 CONDA_BLD_DIR?=$(CONDA_PREFIX)/conda-bld
 CONDA_CHANNELS?=-c rapidsai -c nvidia -c conda-forge
+ifneq ("$(wildcard $(CONDA_PREFIX)/lib/libmamba.so)","")
 CONDA_SOLVER?=--solver libmamba
+else
+CONDA_SOLVER?=
+endif
+
 CONDA_ARGS?=
 CONDA_RECIPE=conda-recipe/staged-recipes/recipes/virtual_dataframe
 
@@ -392,16 +397,16 @@ VALIDATE_VENV=$(CHECK_VENV)
 # All dependencies of the project must be here
 $(CONDA_PACKAGE): environment-gpu.yml environment-dev.yml
 	@$(VALIDATE_VENV)
+	echo "$(green)  Install conda dependencies...$(normal)"
+	$(CONDA_EXE) env update \
+		-q $(CONDA_ARGS) $(CONDA_SOLVER) \
+		--file environment-dev.yml
 ifeq ($(USE_GPU),-gpu)
 	echo "$(green)  Install conda GPU dependencies...$(normal)"
 	$(CONDA_EXE) env update \
 		-q $(CONDA_ARGS) $(CONDA_SOLVER) \
 		--file environment-gpu.yml
 endif
-	echo "$(green)  Install conda dependencies...$(normal)"
-	$(CONDA_EXE) env update \
-		-q $(CONDA_ARGS) $(CONDA_SOLVER) \
-		--file environment-dev.yml
 	touch $(CONDA_PACKAGE)
 
 

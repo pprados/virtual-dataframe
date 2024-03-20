@@ -2,7 +2,7 @@
 
 With Panda-like dataframe or numby-like array, do you want to create a code, and choose at the end, the framework
 to use?  Do you want to be able to choose the best framework after simply performing performance measurements?
-This framework unifies multiple Panda-compatible or Numpy-comptaible components,
+This framework unifies multiple Panda-compatible or Numpy-comptatible components,
 to allow the writing of a single code, compatible with all.
 
 This project will *weave* your code with the selected framework, at runtime.
@@ -98,3 +98,7 @@ With conda environment, you can use [variables](https://docs.conda.io/projects/c
 to set the variables when you *activate* an environment.
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/pprados/virtual-dataframe?labpath=%2Fmain%2Fnotebooks)
+
+# Alternative
+- The projet [Fugue](https://fugue-tutorials.readthedocs.io/) propose another approch
+to distribute a job with Spark, Dask or Ray.

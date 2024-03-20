@@ -136,12 +136,35 @@ _params_local_cuda_cluster = _params_local_cluster + [
 
 
 def _read_properties(default_conf: Path) -> Dict[str, str]:
+    """
+    This Python function, _read_properties(default_conf: Path) -> Dict[str, str], takes a file path default_conf
+    as its input and returns a dictionary with key-value pairs parsed from the file.
+    The file at default_conf is expected to contain lines in the format of key = value,
+    where the key and value strings are separated by an equals sign. The function opens the
+    file and reads each line, ignoring blank lines and lines starting with the
+    `#` character (i.e., comments). It then splits each line on the equals sign
+    and adds each key-value pair to the dictionary, with leading and trailing
+    whitespace stripped from the key and any surrounding quotes stripped from the value.
+    Finally, the function returns the resulting dictionary with the parsed key-value pairs from the file.
+    """
     with open(default_conf) as f:
         ln = [line.split("=", 1) for line in f.readlines() if line.strip() and not line.startswith("#")]
         return {key.strip(): value.strip().strip('"') for key, value in ln if ln}
 
 
 def get_spark_conf() -> Dict[str, str]:
+    """
+    This Python code defines a function called get_spark_conf() that reads and
+    returns a dictionary of Spark configuration parameters.
+
+    The function reads Spark configuration properties from two different files,
+    namely ./spark.conf and <SPARK_HOME>/conf/spark-defaults.conf in that order.
+    It then merges them into a single dictionary.
+
+    It also looks for environment variables that start with spark. and adds them to
+    the dictionary.
+    Finally, the function returns this dictionary of Spark configuration properties.
+    """
     conf = {}
     global_default_conf = Path(os.environ.get("SPARK_HOME", "."), "conf/spark-defaults.conf")
     if global_default_conf.exists():
@@ -166,6 +189,10 @@ if VDF_MODE in (Mode.pyspark, Mode.pyspark_gpu):
 
     def get_spark_builder() -> Tuple[SparkSession.Builder, Optional[str]]:
         """
+        The get_spark_builder() function returns a SparkSession builder with configuration
+        settings, such as the application name, taken from either the environment variables,
+        Spark configuration files or hardcoded values.
+
         Load config in this order, from:
         - ${SPARK_HOME}/conf/spark-default.conf
         - ./spark.conf
@@ -187,6 +214,13 @@ if VDF_MODE in (Mode.pyspark, Mode.pyspark_gpu):
 
 
     class SparkClient:
+        """
+        The SparkClient class is a client to connect to a Spark cluster,
+        which is created by calling builder.getOrCreate().__enter__().
+        The context manager (__enter__() and __exit__()) is used to ensure
+        the Spark session is cleaned up correctly,
+        regardless of how the session was created.
+        """
         def __init__(self,
                      env,
                      address=None,
@@ -250,10 +284,19 @@ if VDF_MODE in (Mode.pyspark, Mode.pyspark_gpu):
             self.__exit__(None, None, None)
 
 
+
 def _new_VClient(mode: Mode,
                  env: EnvDict,
                  address: Union[str, Any],
                  **kwargs) -> Any:
+    """
+    The function _new_VClient() creates a client object based on the Mode enum passed as an argument.
+    If Mode is pandas, numpy, cudf, cupy, or modin, the function returns a _ClientDummy object,
+    which is an empty dummy object. Otherwise, if an address is passed as an argument,
+    the function creates a client object for Dask or PySpark.
+    If no address is passed, the function analyses the cluster URL and creates a
+    Dask client object or a PySpark client object accordingly.
+    """
     if mode in (Mode.pandas, Mode.numpy, Mode.cudf, Mode.cupy, Mode.modin):
         return _ClientDummy("")
 
